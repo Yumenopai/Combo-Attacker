@@ -36,6 +36,13 @@ public:
 
 	struct Material
 	{
+		struct WaterSurface
+		{
+			DirectX::XMFLOAT2 waveScroll1 = { +0.0003f, -0.00030f };
+			DirectX::XMFLOAT2 waveScroll2 = { -0.0003f, -0.00048f };
+			WaterSurface() {}
+		} waterSurface;
+
 		std::string name;
 		std::string diffuseTextureFileName;
 		XMFLOAT4	color = { 1,1,1,1 };

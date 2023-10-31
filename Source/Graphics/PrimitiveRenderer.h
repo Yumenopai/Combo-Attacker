@@ -13,6 +13,9 @@ public:
 	// 頂点追加
 	void AddVertex(const DirectX::XMFLOAT3& position, const DirectX::XMFLOAT4& color);
 
+	// クリアリセット
+	void Clear();
+
 	// 軸描画(D3D11_PRIMITIVE_TOPOLOGY_LINELIST)
 	void DrawAxis(const DirectX::XMFLOAT4X4& transform, const DirectX::XMFLOAT4& color);
 

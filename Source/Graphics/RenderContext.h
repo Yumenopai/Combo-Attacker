@@ -28,4 +28,10 @@ struct RenderContext
 
 	const ShadowMap*	shadowMap;
 	XMFLOAT3			shadowColor;
+
+	//water
+	float timer = 0.0f;
+	ID3D11ShaderResourceView* reflectShaderResourceView = nullptr; //”½ŽËƒ}ƒbƒv
+	XMFLOAT4X4 reflectViewProjection;
+
 };

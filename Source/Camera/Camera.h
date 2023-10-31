@@ -46,6 +46,9 @@ public:
 	//‰E•ûŒüŽæ“¾
 	const XMFLOAT3& GetRight() const { return right; }
 
+	//ImGui
+	void DebugImGui();
+
 private:
 	XMFLOAT4X4 view;
 	XMFLOAT4X4 projection;

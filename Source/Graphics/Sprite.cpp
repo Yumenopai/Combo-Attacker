@@ -206,7 +206,6 @@ void Sprite::Render(ID3D11DeviceContext* dc,
 	dc->VSSetShader(vertexShader.Get(), nullptr, 0);
 	dc->PSSetShader(pixelShader.Get(), nullptr, 0);
 	dc->PSSetShaderResources(0, 1, shaderResourceView.GetAddressOf());
-	//	dc->PSSetSamplers(0, 1, samplerState.GetAddressOf());
 
 	//•`‰æ
 	dc->Draw(4, 0);

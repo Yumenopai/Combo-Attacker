@@ -41,7 +41,9 @@ void SceneGame::Initialize()
 	stage = std::make_unique<Stage>();
 	player = std::make_unique<Player>();
 
-	sprites[0] = std::make_unique<Sprite>(device, "Data/Sprite/view.jpg");
+	//スカイボックス
+	skyBox = std::make_unique<SkyBox>("Data/Texture/incskies_002_8k.png");
+	
 	//sprites[1] = std::make_unique<Sprite>(device);
 	//sprites[2] = std::make_unique<Sprite>(device, "Data/Sprite/3.png");
 	//sprites[3] = std::make_unique<Sprite>(device, "Data/Sprite/4.png");
@@ -81,7 +83,7 @@ void SceneGame::Initialize()
 
 	//ライト設定
 	DirectionalLight directionalLight;
-	directionalLight.direction = { 2, -4, 3 };
+	directionalLight.direction = { 1, -1, -2 };
 	directionalLight.color = { 1,1,1 };
 	lightManager.SetDirectionalLight(directionalLight);
 }
@@ -117,6 +119,8 @@ void SceneGame::Render()
 	ShadowMap* shadowMap = Graphics::Instance().GetShadowMap();
 	
 	RenderContext rc;
+	rc.timer = ++waterTimer;
+
 	//カメラ更新処理
 	rc.view = camera.GetView();
 	rc.projection = camera.GetProjection();
@@ -161,31 +165,35 @@ void SceneGame::Render()
 
 	float screenWidth = static_cast<float>(graphics.GetScreenWidth());
 	float screenHeight = static_cast<float>(graphics.GetScreenHeight());
-	float textureWidth = static_cast<float>(sprites[0]->GetTextureWidth());
-	float textureHeight = static_cast<float>(sprites[0]->GetTextureHeight());
+	//float textureWidth = static_cast<float>(sprites[0]->GetTextureWidth());
+	//float textureHeight = static_cast<float>(sprites[0]->GetTextureHeight());
+	// ビューポートの設定
+	D3D11_VIEWPORT vp = {};
+	vp.Width = graphics.GetScreenWidth();
+	vp.Height = graphics.GetScreenHeight();
+	vp.MinDepth = 0.0f;
+	vp.MaxDepth = 1.0f;
+	dc->RSSetViewports(1, &vp);
 
-	sprites[0]->Render(rc.deviceContext, ViewPosition.x, ViewPosition.y, ViewPosition.z, textureWidth, textureHeight, 0, 0, textureWidth, textureHeight, 0, 1, 1, 1, 1);
+	// スカイボックスの描画
+	skyBox->Render(rc);
+
+	//sprites[0]->Render(rc.deviceContext, 0, 0, 0, textureWidth, textureHeight, 0, 0, textureWidth, textureHeight, 0, 1, 1, 1, 1);
 
 	ModelShader* shader = Graphics::Instance().GetShader(ShaderId::Toon);
 	shader->Begin(rc);
 	player->Render(rc, shader);
+	stage->Render(rc, shader);
 	EnemyManager::Instance().Render(rc, shader);
 	shader->End(rc);
 
-	ModelShader* stageShader = Graphics::Instance().GetShader(ShaderId::Phong);
-	stageShader->Begin(rc);
-	stage->Render(rc, stageShader);
-	stageShader->End(rc);
+	ModelShader* waterShader = Graphics::Instance().GetShader(ShaderId::WaterSurface);
+	waterShader->Begin(rc);
+	stage->Render(rc, waterShader);
+	waterShader->End(rc);
 
-	//{
-	//	PrimitiveRenderer* primitiveRenderer = Graphics::Instance().GetPrimitiveRenderer();
-
-	//	// ポリゴン描画
-	//	primitiveRenderer->Render(rc.deviceContext, rc.camera->GetView(), rc.camera->GetProjection(), D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
-	//	// グリッド描画
-	//	primitiveRenderer->DrawGrid(20, 1);
-	//	primitiveRenderer->Render(rc.deviceContext, rc.camera->GetView(), rc.camera->GetProjection(), D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
-	//}
+	player->PrimitiveRender(rc);
+	player->HPBarRender(rc, gauge.get());
 
 	//3Dエフェクト描画
 	EffectManager::Instance().Render(rc.view, rc.projection);
@@ -210,8 +218,8 @@ void SceneGame::Render()
 	}
 
 
-	font->Textout(rc, "Unity-Chan:", 16, 0, 1.0f, { -10, 10, 0 }, 32, 32, 32, 32, 16, 16, 0, 1, 1, 1, 1);
-	font->Textout(rc, "Time:" + std::to_string((int)gameTimer), 16, 0, 1.0f, { 910, 10, 0 }, 32, 32, 32, 32, 16, 16, 0, 1, 1, 1, 1);
+	font->Textout(rc, "Player", 16, 0, 1.0f, { -10, 10, 0 }, 12, 16, 32, 32, 16, 16, 0, 1, 1, 1, 1);
+	//font->Textout(rc, "Time:" + std::to_string((int)gameTimer), 16, 0, 1.0f, { 910, 10, 0 }, 32, 32, 32, 32, 16, 16, 0, 1, 1, 1, 1);
 	// 3Dデバッグ描画
 	{
 		//プレイヤーデバッグプリミティブ描画
@@ -223,6 +231,7 @@ void SceneGame::Render()
 	//デバッグメニュー描画
 	//DrawSceneGUI();
 	//DrawPropertyGUI();
+	camera.DebugImGui();
 #if 0
 	// shadowMap
 	{
@@ -239,23 +248,6 @@ void SceneGame::Render()
 		ImGui::End();
 	}
 
-	//デバッグメニュー描画
-	{
-		ImVec2 pos = ImGui::GetMainViewport()->GetWorkPos();
-		ImGui::SetNextWindowPos(ImVec2(pos.x + 10, pos.y + 10), ImGuiCond_FirstUseEver);
-		ImGui::SetNextWindowSize(ImVec2(300, 300), ImGuiCond_FirstUseEver);
-
-		if (ImGui::Begin("Player", nullptr, ImGuiWindowFlags_None))
-		{
-			if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
-			{
-				//スケール
-				ImGui::DragInt("playCount", &playCount, 1);
-			}
-
-			ImGui::End();
-		}
-	}
 #endif
 }
 

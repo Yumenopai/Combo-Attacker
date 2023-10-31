@@ -70,6 +70,11 @@ void PrimitiveRenderer::AddVertex(const DirectX::XMFLOAT3& position, const Direc
 	v.position = position;
 	v.color = color;
 }
+// クリアリセット
+void PrimitiveRenderer::Clear()
+{
+	vertices.clear();
+}
 
 // 軸描画
 void PrimitiveRenderer::DrawAxis(const DirectX::XMFLOAT4X4& transform, const DirectX::XMFLOAT4& color)

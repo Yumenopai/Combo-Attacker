@@ -13,7 +13,7 @@ Stage::Stage()
 
 	//ステージモデル読み込み
 	//model = std::make_unique<Model>(device, "Data/Model/ExampleStage/ExampleStage.fbx");
-	model = std::make_unique<Model>(device, "Data/Model/StageMain/terrain.fbx",0.1f);
+	model = std::make_unique<Model>(device, "Data/Model/StageLowPoly/Environment.fbx",0.02f);
 }
 
 bool Stage::RayCast(const XMFLOAT3& start, const XMFLOAT3& end, HitResult& hit)
@@ -41,6 +41,12 @@ void Stage::ShadowRender(const RenderContext& rc, ShadowMap* shadowMap)
 }
 void Stage::Render(const RenderContext& rc, ModelShader* shader)
 {
-	//シェーダーにモデル描画
-	shader->Draw(rc, model.get());
+	for (const auto& mat : model->GetMaterials())
+	{
+		if (mat.name == "Water" && shader != Graphics::Instance().GetShader(ShaderId::WaterSurface)) continue;
+		if (mat.name != "Water" && shader == Graphics::Instance().GetShader(ShaderId::WaterSurface)) continue;
+
+		//シェーダーにモデル描画
+		shader->Draw(rc, model.get());
+	}
 }

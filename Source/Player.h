@@ -107,6 +107,8 @@ public:
 	void ShadowRender(const RenderContext& rc, ShadowMap* shadowMap);
 	//描画
 	void Render(const RenderContext& rc, ModelShader* shader);
+	void PrimitiveRender(const RenderContext& rc);
+	void HPBarRender(const RenderContext& rc, Sprite* gauge);
 
 	//ジャンプ入力処理
 	bool InputJumpButton();
@@ -145,6 +147,10 @@ private:
 	// Update
 	void UpdateArmPositions(Model* model, Arms& arm);
 
+	//軌跡
+	void ShiftTrailPositions();
+	void RenderTrail();
+
 	// プレイヤーとエネミーとの衝突処理
 	void CollisionPlayerVsEnemies();
 	// 武器ととエネミーの衝突処理
@@ -182,7 +188,8 @@ private:
 	void TransitionAttackSwordJumpState(float elapsedTime);
 	void TransitionCliffGrabState();
 
-
+	//デバッグ
+	void DebugMenu();
 
 	// 各ステージごとの更新処理
 	void UpdateEachState(float elapsedTime);
@@ -200,6 +207,7 @@ private:
 	static const int MAX_POLYGON = 32;
 	XMFLOAT3 trailPositions[2][MAX_POLYGON];
 	DirectX::XMFLOAT4 color = { 1, 1, 1, 1 };
+	bool isAddVertex = true;
 
 	float moveSpeed = 5.0f;
 	float turnSpeed = XMConvertToRadians(720);

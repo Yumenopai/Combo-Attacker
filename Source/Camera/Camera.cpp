@@ -1,4 +1,5 @@
 #include "Camera.h"
+#include "imgui.h"
 
 //指定方向を向く
 void Camera::SetLookAt(const DirectX::XMFLOAT3& eye, const DirectX::XMFLOAT3& focus, const DirectX::XMFLOAT3& up)
@@ -32,6 +33,30 @@ void Camera::SetLookAt(const DirectX::XMFLOAT3& eye, const DirectX::XMFLOAT3& fo
 	this->eye = eye;
 	this->focus = focus;
 }
+
+//デバッグメニュー描画
+void Camera::DebugImGui()
+{
+	ImVec2 pos = ImGui::GetMainViewport()->GetWorkPos();
+	ImGui::SetNextWindowPos(ImVec2(pos.x + 10, pos.y + 10), ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowSize(ImVec2(300, 300), ImGuiCond_FirstUseEver);
+
+	if (ImGui::Begin("Camera", nullptr, ImGuiWindowFlags_None))
+	{
+		if (ImGui::CollapsingHeader("Camera", ImGuiTreeNodeFlags_DefaultOpen))
+		{
+			ImGui::DragFloat3("eye", &this->eye.x, 0.1f);
+			ImGui::DragFloat3("focus", &this->focus.x, 0.1f);
+			ImGui::DragFloat3("front", &this->front.x, 0.1f);
+			ImGui::DragFloat3("up", &this->up.x, 0.1f);
+			ImGui::DragFloat3("right", &this->right.x, 0.1f);
+		}
+
+		ImGui::End();
+	}
+}
+
+
 
 //パースペクティブ設定
 void Camera::SetPerspectiveFov(float fovY, float aspect, float nearZ, float farZ)

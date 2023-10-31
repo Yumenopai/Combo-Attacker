@@ -2,6 +2,7 @@
 #include "Graphics.h"
 #include "Shader/PhongShader.h"
 #include "Shader/ToonShader.h"
+#include "Shader/WaterSurfaceShader.h"
 
 //初期化
 void Graphics::Initialize(HWND hWnd)
@@ -124,6 +125,7 @@ void Graphics::Initialize(HWND hWnd)
 	//シェーダ生成
 	shaders[static_cast<int>(ShaderId::Phong)] = std::make_unique<PhongShader>(device.Get());
 	shaders[static_cast<int>(ShaderId::Toon)] = std::make_unique<ToonShader>(device.Get());
+	shaders[static_cast<int>(ShaderId::WaterSurface)] = std::make_unique<WaterSurfaceShader>(device.Get());
 
 	//シャドウマップ生成
 	shadowMap = std::make_unique<ShadowMap>(device.Get());

@@ -16,6 +16,12 @@ enum class ShaderId
 {
 	Phong,
 	Toon,
+	WaterSurface,
+
+	EnumCount
+};
+enum class SShaderId
+{
 
 	EnumCount
 };

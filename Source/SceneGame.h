@@ -1,6 +1,7 @@
 #include "Graphics/FontSprite.h"
 #include "Stage.h"
 #include "Player.h"
+#include "Shader/Skybox.h"
 
 //ÉQÅ[ÉÄÉVÅ[Éì
 class SceneGame : public Scene
@@ -34,6 +35,7 @@ private:
 	void DrawPropertyGUI();
 
 	std::unique_ptr<Sprite> sprites[8];
+	std::unique_ptr<SkyBox> skyBox;
 
 	std::unique_ptr<Stage> stage;
 	std::unique_ptr<Player> player;
@@ -51,6 +53,8 @@ private:
 
 	float timer = 0.0f;
 	float grav = 20.0f;
+
+	int waterTimer = 0.0f;
 
 	Model::Node* selectionNode = nullptr;
 	FreeCameraController freeCameraController;

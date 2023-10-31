@@ -40,14 +40,53 @@
     <Filter Include="Source\Effect">
       <UniqueIdentifier>{9d07265a-e587-451a-8208-221a8766799a}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source\Object\Enemy">
-      <UniqueIdentifier>{4b91f531-a73c-4c7a-b184-5e118f804e6e}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source\Object\Item">
       <UniqueIdentifier>{9847f38e-fe0e-474b-a0b4-d578f3aee035}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source\Object\Player">
+    <Filter Include="Shader\2D">
+      <UniqueIdentifier>{0fcc07b1-aa29-424a-a132-de8afbc99690}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shader\2D\UVScroll">
+      <UniqueIdentifier>{bfd74416-f45e-4e91-87dc-2cc5574522c1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shader\3D">
+      <UniqueIdentifier>{a4220758-1c31-4e54-add8-bbeb759ef886}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shader\2D\FullScreenQuad">
+      <UniqueIdentifier>{58002e0b-023b-45d3-83de-ccf2c2efc409}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shader\2D\Skybox">
+      <UniqueIdentifier>{e60585f1-875f-4f34-ae01-466b97e1a34b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shader\3D\Phong">
+      <UniqueIdentifier>{c66d871b-478a-46ca-8b23-c7a7febc60aa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shader\3D\Gizmos">
+      <UniqueIdentifier>{6d66e25f-8430-4cc7-bd21-98305d1f7c56}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shader\2D\PrimitiveRenderer">
+      <UniqueIdentifier>{8f1b9c42-702e-4f0e-872c-3e414c5e657e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shader\3D\Toon">
+      <UniqueIdentifier>{b42ef368-74cd-40bd-a24f-a68706b3e028}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shader\3D\ShadowMap">
+      <UniqueIdentifier>{5a452d20-79fd-4745-b0cd-1bf263dfcf32}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shader\2D\Sprite">
+      <UniqueIdentifier>{d9391b97-afa6-42d5-be5c-dc05a867548c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shader\3D\WaterSurface">
+      <UniqueIdentifier>{5abf6e6c-b3be-4bda-bd07-f17efbea794f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Object\Character">
+      <UniqueIdentifier>{46a36559-5766-462b-8455-5f050d849460}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Object\Character\Player">
       <UniqueIdentifier>{0844e901-e901-4515-9bc9-ccc9de102ad8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Object\Character\Enemy">
+      <UniqueIdentifier>{4b91f531-a73c-4c7a-b184-5e118f804e6e}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -150,9 +189,6 @@
     <ClInclude Include="Source\Shader\PhongShader.h">
       <Filter>Source\Shader</Filter>
     </ClInclude>
-    <ClInclude Include="Source\Shader\ShadowMap.h">
-      <Filter>Source\Shader</Filter>
-    </ClInclude>
     <ClInclude Include="Source\SceneTitle.h">
       <Filter>Source\scene</Filter>
     </ClInclude>
@@ -177,23 +213,20 @@
     <ClInclude Include="Source\SceneClear.h">
       <Filter>Source\scene</Filter>
     </ClInclude>
-    <ClInclude Include="Source\Character.h">
-      <Filter>Source\Object</Filter>
-    </ClInclude>
     <ClInclude Include="Source\Enemy.h">
-      <Filter>Source\Object\Enemy</Filter>
+      <Filter>Source\Object\Character\Enemy</Filter>
     </ClInclude>
     <ClInclude Include="Source\EnemyManager.h">
-      <Filter>Source\Object\Enemy</Filter>
+      <Filter>Source\Object\Character\Enemy</Filter>
     </ClInclude>
     <ClInclude Include="Source\EnemySlime.h">
-      <Filter>Source\Object\Enemy</Filter>
+      <Filter>Source\Object\Character\Enemy</Filter>
     </ClInclude>
     <ClInclude Include="Source\Graphics\FontSprite.h">
       <Filter>Source\Graphics</Filter>
     </ClInclude>
     <ClInclude Include="Source\EnemyTurtleShell.h">
-      <Filter>Source\Object\Enemy</Filter>
+      <Filter>Source\Object\Character\Enemy</Filter>
     </ClInclude>
     <ClInclude Include="Source\ItemManager.h">
       <Filter>Source\Object\Item</Filter>
@@ -208,10 +241,25 @@
       <Filter>Source\Shader</Filter>
     </ClInclude>
     <ClInclude Include="Source\Player.h">
-      <Filter>Source\Object\Player</Filter>
+      <Filter>Source\Object\Character\Player</Filter>
     </ClInclude>
     <ClInclude Include="Source\Graphics\PrimitiveRenderer.h">
       <Filter>Source\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Shader\Skybox.h">
+      <Filter>Source\Shader</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\EnemyBlue.h">
+      <Filter>Source\Object\Character\Enemy</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Shader\WaterSurfaceShader.h">
+      <Filter>Source\Shader</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Character.h">
+      <Filter>Source\Object\Character</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Shader\ShadowMap.h">
+      <Filter>Source\Shader</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -299,9 +347,6 @@
     <ClCompile Include="Source\Shader\PhongShader.cpp">
       <Filter>Source\Shader</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Shader\ShadowMap.cpp">
-      <Filter>Source\Shader</Filter>
-    </ClCompile>
     <ClCompile Include="Source\SceneTitle.cpp">
       <Filter>Source\scene</Filter>
     </ClCompile>
@@ -326,23 +371,20 @@
     <ClCompile Include="Source\SceneClear.cpp">
       <Filter>Source\scene</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Character.cpp">
-      <Filter>Source\Object</Filter>
-    </ClCompile>
     <ClCompile Include="Source\Enemy.cpp">
-      <Filter>Source\Object\Enemy</Filter>
+      <Filter>Source\Object\Character\Enemy</Filter>
     </ClCompile>
     <ClCompile Include="Source\EnemyManager.cpp">
-      <Filter>Source\Object\Enemy</Filter>
+      <Filter>Source\Object\Character\Enemy</Filter>
     </ClCompile>
     <ClCompile Include="Source\EnemySlime.cpp">
-      <Filter>Source\Object\Enemy</Filter>
+      <Filter>Source\Object\Character\Enemy</Filter>
     </ClCompile>
     <ClCompile Include="Source\Graphics\FontSprite.cpp">
       <Filter>Source\Graphics</Filter>
     </ClCompile>
     <ClCompile Include="Source\EnemyTurtleShell.cpp">
-      <Filter>Source\Object\Enemy</Filter>
+      <Filter>Source\Object\Character\Enemy</Filter>
     </ClCompile>
     <ClCompile Include="Source\ItemManager.cpp">
       <Filter>Source\Object\Item</Filter>
@@ -354,90 +396,123 @@
       <Filter>Source\Shader</Filter>
     </ClCompile>
     <ClCompile Include="Source\Player.cpp">
-      <Filter>Source\Object\Player</Filter>
+      <Filter>Source\Object\Character\Player</Filter>
     </ClCompile>
     <ClCompile Include="Source\Graphics\PrimitiveRenderer.cpp">
       <Filter>Source\Graphics</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Shader\Skybox.cpp">
+      <Filter>Source\Shader</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\EnemyBlue.cpp">
+      <Filter>Source\Object\Character\Enemy</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Shader\WaterSurfaceShader.cpp">
+      <Filter>Source\Shader</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Character.cpp">
+      <Filter>Source\Object\Character</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Shader\ShadowMap.cpp">
+      <Filter>Source\Shader</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
-    <None Include="Shader\Gizmos.hlsli">
-      <Filter>Shader</Filter>
+    <None Include="Shader\FullScreenQuad.hlsli">
+      <Filter>Shader\2D\FullScreenQuad</Filter>
     </None>
-    <None Include="Shader\Sprite.hlsli">
-      <Filter>Shader</Filter>
+    <None Include="Shader\Gizmos.hlsli">
+      <Filter>Shader\3D\Gizmos</Filter>
     </None>
     <None Include="Shader\Phong.hlsli">
-      <Filter>Shader</Filter>
+      <Filter>Shader\3D\Phong</Filter>
     </None>
-    <None Include="Shader\Skinning.hlsli">
-      <Filter>Shader</Filter>
-    </None>
-    <None Include="Shader\FullScreenQuad.hlsli">
-      <Filter>Shader</Filter>
-    </None>
-    <None Include="Shader\PostEffect.hlsli">
-      <Filter>Shader</Filter>
+    <None Include="Shader\Skybox.hlsli">
+      <Filter>Shader\2D\Skybox</Filter>
     </None>
     <None Include="Shader\UVScroll.hlsli">
-      <Filter>Shader</Filter>
+      <Filter>Shader\2D\UVScroll</Filter>
     </None>
-    <None Include="Shader\Toon.hlsli">
-      <Filter>Shader</Filter>
+    <None Include="Shader\PostEffect.hlsli">
+      <Filter>Shader\2D\FullScreenQuad</Filter>
     </None>
     <None Include="Shader\PrimitiveRenderer.hlsli">
-      <Filter>Shader</Filter>
+      <Filter>Shader\2D\PrimitiveRenderer</Filter>
+    </None>
+    <None Include="Shader\Sprite.hlsli">
+      <Filter>Shader\2D\Sprite</Filter>
+    </None>
+    <None Include="Shader\Toon.hlsli">
+      <Filter>Shader\3D\Toon</Filter>
+    </None>
+    <None Include="Shader\Skinning.hlsli">
+      <Filter>Shader\3D\ShadowMap</Filter>
+    </None>
+    <None Include="Shader\WaterSurface.hlsli">
+      <Filter>Shader\3D\WaterSurface</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="Shader\SpritePS.hlsl">
-      <Filter>Shader</Filter>
-    </FxCompile>
-    <FxCompile Include="Shader\SpriteVS.hlsl">
-      <Filter>Shader</Filter>
-    </FxCompile>
-    <FxCompile Include="Shader\GizmosVS.hlsl">
-      <Filter>Shader</Filter>
+    <FxCompile Include="Shader\FullScreenQuadVS.hlsl">
+      <Filter>Shader\2D\FullScreenQuad</Filter>
     </FxCompile>
     <FxCompile Include="Shader\GizmosPS.hlsl">
-      <Filter>Shader</Filter>
+      <Filter>Shader\3D\Gizmos</Filter>
     </FxCompile>
-    <FxCompile Include="Shader\PhongVS.hlsl">
-      <Filter>Shader</Filter>
-    </FxCompile>
-    <FxCompile Include="Shader\PhongPS.hlsl">
-      <Filter>Shader</Filter>
-    </FxCompile>
-    <FxCompile Include="Shader\FullScreenQuadVS.hlsl">
-      <Filter>Shader</Filter>
+    <FxCompile Include="Shader\GizmosVS.hlsl">
+      <Filter>Shader\3D\Gizmos</Filter>
     </FxCompile>
     <FxCompile Include="Shader\LuminanceExtractionPS.hlsl">
-      <Filter>Shader</Filter>
+      <Filter>Shader\2D\FullScreenQuad</Filter>
     </FxCompile>
     <FxCompile Include="Shader\BloomPS.hlsl">
-      <Filter>Shader</Filter>
+      <Filter>Shader\2D\FullScreenQuad</Filter>
+    </FxCompile>
+    <FxCompile Include="Shader\PhongPS.hlsl">
+      <Filter>Shader\3D\Phong</Filter>
+    </FxCompile>
+    <FxCompile Include="Shader\PhongVS.hlsl">
+      <Filter>Shader\3D\Phong</Filter>
+    </FxCompile>
+    <FxCompile Include="Shader\SkyboxPS.hlsl">
+      <Filter>Shader\2D\Skybox</Filter>
+    </FxCompile>
+    <FxCompile Include="Shader\SkyboxVS.hlsl">
+      <Filter>Shader\2D\Skybox</Filter>
     </FxCompile>
     <FxCompile Include="Shader\UVScrollPS.hlsl">
-      <Filter>Shader</Filter>
+      <Filter>Shader\2D\UVScroll</Filter>
     </FxCompile>
     <FxCompile Include="Shader\UVScrollVS.hlsl">
-      <Filter>Shader</Filter>
-    </FxCompile>
-    <FxCompile Include="Shader\ShadowMapVS.hlsl">
-      <Filter>Shader</Filter>
-    </FxCompile>
-    <FxCompile Include="Shader\ToonPS.hlsl">
-      <Filter>Shader</Filter>
-    </FxCompile>
-    <FxCompile Include="Shader\ToonVS.hlsl">
-      <Filter>Shader</Filter>
+      <Filter>Shader\2D\UVScroll</Filter>
     </FxCompile>
     <FxCompile Include="Shader\PrimitiveRendererPS.hlsl">
-      <Filter>Shader</Filter>
+      <Filter>Shader\2D\PrimitiveRenderer</Filter>
     </FxCompile>
     <FxCompile Include="Shader\PrimitiveRendererVS.hlsl">
-      <Filter>Shader</Filter>
+      <Filter>Shader\2D\PrimitiveRenderer</Filter>
+    </FxCompile>
+    <FxCompile Include="Shader\SpritePS.hlsl">
+      <Filter>Shader\2D\Sprite</Filter>
+    </FxCompile>
+    <FxCompile Include="Shader\SpriteVS.hlsl">
+      <Filter>Shader\2D\Sprite</Filter>
+    </FxCompile>
+    <FxCompile Include="Shader\ToonPS.hlsl">
+      <Filter>Shader\3D\Toon</Filter>
+    </FxCompile>
+    <FxCompile Include="Shader\ToonVS.hlsl">
+      <Filter>Shader\3D\Toon</Filter>
+    </FxCompile>
+    <FxCompile Include="Shader\ShadowMapVS.hlsl">
+      <Filter>Shader\3D\ShadowMap</Filter>
+    </FxCompile>
+    <FxCompile Include="Shader\WaterSurfacePS.hlsl">
+      <Filter>Shader\3D\WaterSurface</Filter>
+    </FxCompile>
+    <FxCompile Include="Shader\WaterSurfaceVS.hlsl">
+      <Filter>Shader\3D\WaterSurface</Filter>
     </FxCompile>
   </ItemGroup>
 </Project>

@@ -30,7 +30,7 @@ Player::Player()
 	model = std::make_unique<Model>(device, "Data/Model/SD-UnityChan/UnityChan.fbx", 0.02f);
 	//model = std::make_unique<Model>(device, "Data/Model/Enemy/red.fbx", 0.02f);
 
-	position = { 0,5,0 };
+	position = { -7,5,-66 };
 	health = 100;
 	maxHealth = 100;
 
@@ -48,8 +48,14 @@ Player::~Player()
 //更新
 void Player::Update(float elapsedTime, int remine)
 {
+	// 配列ズラし
+	ShiftTrailPositions();
+
 	// ステート毎に中で処理分け
 	UpdateEachState(elapsedTime);
+
+	// 剣の軌跡描画更新処理
+	RenderTrail();
 
 	// 攻撃中じゃなければジャンプ処理
 	if (Atype == AttackType::None) UpdateJump(elapsedTime);
@@ -85,37 +91,90 @@ void Player::Render(const RenderContext& rc, ModelShader* shader)
 #if 1
 
 	//デバッグメニュー描画
-	{
-		ImVec2 pos = ImGui::GetMainViewport()->GetWorkPos();
-		ImGui::SetNextWindowPos(ImVec2(pos.x + 10, pos.y + 10), ImGuiCond_FirstUseEver);
-		ImGui::SetNextWindowSize(ImVec2(300, 300), ImGuiCond_FirstUseEver);
-
-		if (ImGui::Begin("Player", nullptr, ImGuiWindowFlags_None))
-		{
-			if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
-			{
-				//位置
-				ImGui::DragFloat3("Position", &position.x, 0.1f);
-				ImGui::DragFloat3("Offset", &offset.x, 0.1f);
-
-				//回転
-				XMFLOAT3 a;
-				a.x = XMConvertToDegrees(angle.x);
-				a.y = XMConvertToDegrees(angle.y);
-				a.z = XMConvertToDegrees(angle.z);
-				ImGui::DragFloat3("Angle", &a.x, 1.0f);
-				angle.x = XMConvertToRadians(a.x);
-				angle.y = XMConvertToRadians(a.y);
-				angle.z = XMConvertToRadians(a.z);
-
-				//スケール
-				ImGui::DragFloat3("Scale", &scale.x, 0.01f);
-			}
-
-			ImGui::End();
-		}
-	}
+	DebugMenu();
 #endif
+}
+
+// 攻撃の軌跡描画
+void Player::PrimitiveRender(const RenderContext& rc)
+{
+	PrimitiveRenderer* primitiveRenderer = Graphics::Instance().GetPrimitiveRenderer();
+
+	// ポリゴン描画
+	primitiveRenderer->Render(rc.deviceContext, rc.camera->GetView(), rc.camera->GetProjection(), D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+}
+// 攻撃の軌跡描画
+void Player::HPBarRender(const RenderContext& rc, Sprite* gauge)
+{
+	ID3D11DeviceContext* dc = rc.deviceContext;
+
+	//HPゲージの長さ
+	const float guageWidth = 700.0f;
+	const float guageHeight = 15.0f;
+
+	float healthRate = GetHealth() / static_cast<float>(GetMaxHealth());
+	int frameExpansion = 6;
+	Graphics& graphics = Graphics::Instance();
+	float screenWidth = static_cast<float>(graphics.GetScreenWidth());
+
+	//ゲージ描画(下地)
+	gauge->Render(dc,
+		(screenWidth / 2) - (guageWidth / 2),
+		525,
+		0,
+		guageWidth + frameExpansion,
+		guageHeight + frameExpansion,
+		0, 0,
+		static_cast<float>(gauge->GetTextureWidth()),
+		static_cast<float>(gauge->GetTextureHeight()),
+		0.0f,
+		0.3f, 0.3f, 0.3f, 0.8f
+	);
+	//ゲージ描画
+	gauge->Render(dc,
+		(screenWidth / 2) - (guageWidth / 2) + frameExpansion/2,
+		525.0f + frameExpansion/2,
+		0,
+		guageWidth * healthRate,
+		guageHeight,
+		0, 0,
+		static_cast<float>(gauge->GetTextureWidth()),
+		static_cast<float>(gauge->GetTextureHeight()),
+		0.0f,
+		0.2f, 0.8f, 0.2f, 1.0f
+	);
+}
+
+void Player::DebugMenu()
+{
+	ImVec2 pos = ImGui::GetMainViewport()->GetWorkPos();
+	ImGui::SetNextWindowPos(ImVec2(pos.x + 10, pos.y + 10), ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowSize(ImVec2(300, 300), ImGuiCond_FirstUseEver);
+
+	if (ImGui::Begin("Player", nullptr, ImGuiWindowFlags_None))
+	{
+		if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
+		{
+			//位置
+			ImGui::DragFloat3("Position", &position.x, 0.1f);
+			ImGui::DragFloat3("Offset", &offset.x, 0.1f);
+
+			//回転
+			XMFLOAT3 a;
+			a.x = XMConvertToDegrees(angle.x);
+			a.y = XMConvertToDegrees(angle.y);
+			a.z = XMConvertToDegrees(angle.z);
+			ImGui::DragFloat3("Angle", &a.x, 1.0f);
+			angle.x = XMConvertToRadians(a.x);
+			angle.y = XMConvertToRadians(a.y);
+			angle.z = XMConvertToRadians(a.z);
+
+			//スケール
+			ImGui::DragFloat3("Scale", &scale.x, 0.01f);
+		}
+
+		ImGui::End();
+	}
 }
 
 //着地した時に呼ばれる
@@ -503,63 +562,58 @@ void Player::UpdateArmPositions(Model* model, Arms& arm)
 	XMVECTOR P = XMVector3Transform(V, W);
 	XMStoreFloat3(&arm.position, P);
 
-	//for (int i = MAX_POLYGON - 1; i > 0; i--)
-	//{
-	//	// 後ろへずらしていく
-	//	trailPositions[0][i] = trailPositions[0][i - 1];
-	//	trailPositions[1][i] = trailPositions[1][i - 1];
-	//}
-	//// 剣の根本と先端の座標を取得し、頂点バッファに保存
-	//{
-	//	// 剣の原点から根本と先端までのオフセット値
-	//	DirectX::XMVECTOR RootOffset = arm.rootOffset;
-	//	DirectX::XMVECTOR TipOffset = arm.tipOffset;
+	// 剣の根本と先端の座標を取得し、頂点バッファに保存
+	// 剣の原点から根本と先端までのオフセット値
+	DirectX::XMVECTOR RootOffset = arm.rootOffset;
+	DirectX::XMVECTOR TipOffset = arm.tipOffset;
 
-	//	XMVECTOR RootP = XMVector3Transform(RootOffset, W);
-	//	XMVECTOR TipP = XMVector3Transform(TipOffset, W);
-
-	//	XMFLOAT3 RootPosition;
-	//	DirectX::XMStoreFloat3(&RootPosition, RootP);
-	//	XMFLOAT3 TipPosition;
-	//	DirectX::XMStoreFloat3(&TipPosition, TipP);
-
-	//	trailPositions[0][0] = RootPosition;
-	//	trailPositions[1][0] = TipPosition;
-	//}
-
-	//// ポリゴン作成
-	//PrimitiveRenderer* primitiveRenderer = Graphics::Instance().GetPrimitiveRenderer();
-	//{
-	//	int split = 5;
-	//	const float amount = 1.0f / (split + 1);
-	//	for (int i = 0; i < MAX_POLYGON - 1; ++i)
-	//	{
-	//		float ratio = amount;
-
-	//		XMVECTOR RPos1 = i == 0 ? (XMLoadFloat3(&trailPositions[0][1]) + XMLoadFloat3(&trailPositions[0][2])) * 0.5f : XMLoadFloat3(&trailPositions[0][i - 1]);
-	//		XMVECTOR TPos1 = i == 0 ? (XMLoadFloat3(&trailPositions[1][1]) + XMLoadFloat3(&trailPositions[1][2])) * 0.5f : XMLoadFloat3(&trailPositions[1][i - 1]);
-	//		XMVECTOR RPos2 = XMLoadFloat3(&trailPositions[0][i]);
-	//		XMVECTOR TPos2 = XMLoadFloat3(&trailPositions[1][i]);
-	//		XMVECTOR RPos3 = XMLoadFloat3(&trailPositions[0][i + 1]);
-	//		XMVECTOR TPos3 = XMLoadFloat3(&trailPositions[1][i + 1]);
-	//		XMVECTOR RPos4 = i == MAX_POLYGON - 2 ? (RPos1 + RPos3) * 0.5f : XMLoadFloat3(&trailPositions[0][i + 2]);
-	//		XMVECTOR TPos4 = i == MAX_POLYGON - 2 ? (TPos1 + TPos3) * 0.5f : XMLoadFloat3(&trailPositions[1][i + 2]);
-
-	//		for (int j = 0; j < split - 1; ++j)
-	//		{
-	//			XMFLOAT3 Position[2];
-	//			DirectX::XMStoreFloat3(&Position[0], XMVectorCatmullRom(RPos1, RPos2, RPos3, RPos4, ratio));
-	//			DirectX::XMStoreFloat3(&Position[1], XMVectorCatmullRom(TPos1, TPos2, TPos3, TPos4, ratio));
-
-	//			primitiveRenderer->AddVertex(Position[0], color);
-	//			primitiveRenderer->AddVertex(Position[1], color);
-
-	//			ratio += amount;
-	//		}
-	//	}
-	//}
+	XMVECTOR RootP = XMVector3Transform(RootOffset, W);
+	XMVECTOR TipP = XMVector3Transform(TipOffset, W);
+	DirectX::XMStoreFloat3(&trailPositions[0][0], RootP);
+	DirectX::XMStoreFloat3(&trailPositions[1][0], TipP);
 }
 
+void Player::ShiftTrailPositions()
+{
+	for (int i = MAX_POLYGON - 1; i > 0; i--)
+	{
+		// 後ろへずらしていく
+		trailPositions[0][i] = trailPositions[0][i - 1];
+		trailPositions[1][i] = trailPositions[1][i - 1];
+	}
+}
+void Player::RenderTrail()
+{
+	// ポリゴン作成
+	PrimitiveRenderer* primitiveRenderer = Graphics::Instance().GetPrimitiveRenderer();
+	for (int i = 0; i < MAX_POLYGON - 3; ++i)
+	{
+		const int division = 10;
+
+		XMVECTOR RPos1 = XMLoadFloat3(&trailPositions[0][i + 0]);
+		XMVECTOR RPos2 = XMLoadFloat3(&trailPositions[0][i + 1]);
+		XMVECTOR RPos3 = XMLoadFloat3(&trailPositions[0][i + 2]);
+		XMVECTOR RPos4 = XMLoadFloat3(&trailPositions[0][i + 3]);
+		XMVECTOR TPos1 = XMLoadFloat3(&trailPositions[1][i + 0]);
+		XMVECTOR TPos2 = XMLoadFloat3(&trailPositions[1][i + 1]);
+		XMVECTOR TPos3 = XMLoadFloat3(&trailPositions[1][i + 2]);
+		XMVECTOR TPos4 = XMLoadFloat3(&trailPositions[1][i + 3]);
+		for (int j = 1; j < division; ++j)
+		{
+			float t = j / static_cast<float>(division);
+
+			XMFLOAT3 Position[2];
+			DirectX::XMStoreFloat3(&Position[0], XMVectorCatmullRom(RPos1, RPos2, RPos3, RPos4, t));
+			DirectX::XMStoreFloat3(&Position[1], XMVectorCatmullRom(TPos1, TPos2, TPos3, TPos4, t));
+
+			if (isAddVertex)
+			{
+				primitiveRenderer->AddVertex(Position[0], color);
+				primitiveRenderer->AddVertex(Position[1], color);
+			}
+		}
+	}
+}
 
 //垂直速力更新オーバーライド
 void Player::UpdateVerticalVelocity(float elapsedFrame)

@@ -128,6 +128,7 @@
     <ClInclude Include="Source\EffectManager.h" />
     <ClInclude Include="Source\Enemy.h" />
     <ClInclude Include="Source\EnemyManager.h" />
+    <ClInclude Include="Source\EnemyBlue.h" />
     <ClInclude Include="Source\EnemySlime.h" />
     <ClInclude Include="Source\EnemyTurtleShell.h" />
     <ClInclude Include="Source\Framework.h" />
@@ -161,8 +162,10 @@
     <ClInclude Include="Source\Shader\PhongShader.h" />
     <ClInclude Include="Source\Shader\Shader.h" />
     <ClInclude Include="Source\Shader\ShadowMap.h" />
+    <ClInclude Include="Source\Shader\Skybox.h" />
     <ClInclude Include="Source\Shader\ToonShader.h" />
     <ClInclude Include="Source\Shader\UVScrollShader.h" />
+    <ClInclude Include="Source\Shader\WaterSurfaceShader.h" />
     <ClInclude Include="Source\Stage.h" />
     <ClInclude Include="Source\TransformUtils.h" />
   </ItemGroup>
@@ -182,6 +185,7 @@
     <ClCompile Include="Source\EffectManager.cpp" />
     <ClCompile Include="Source\Enemy.cpp" />
     <ClCompile Include="Source\EnemyManager.cpp" />
+    <ClCompile Include="Source\EnemyBlue.cpp" />
     <ClCompile Include="Source\EnemySlime.cpp" />
     <ClCompile Include="Source\EnemyTurtleShell.cpp" />
     <ClCompile Include="Source\Framework.cpp" />
@@ -211,8 +215,10 @@
     <ClCompile Include="Source\SceneTitle.cpp" />
     <ClCompile Include="Source\Shader\PhongShader.cpp" />
     <ClCompile Include="Source\Shader\ShadowMap.cpp" />
+    <ClCompile Include="Source\Shader\Skybox.cpp" />
     <ClCompile Include="Source\Shader\ToonShader.cpp" />
     <ClCompile Include="Source\Shader\UVScrollShader.cpp" />
+    <ClCompile Include="Source\Shader\WaterSurfaceShader.cpp" />
     <ClCompile Include="Source\Stage.cpp" />
     <ClCompile Include="Source\TransformUtils.cpp" />
   </ItemGroup>
@@ -224,9 +230,11 @@
     <None Include="Shader\PostEffect.hlsli" />
     <None Include="Shader\PrimitiveRenderer.hlsli" />
     <None Include="Shader\Skinning.hlsli" />
+    <None Include="Shader\Skybox.hlsli" />
     <None Include="Shader\Sprite.hlsli" />
     <None Include="Shader\Toon.hlsli" />
     <None Include="Shader\UVScroll.hlsli" />
+    <None Include="Shader\WaterSurface.hlsli" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shader\BloomPS.hlsl">
@@ -269,6 +277,14 @@
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
     </FxCompile>
+    <FxCompile Include="Shader\SkyboxPS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+    </FxCompile>
+    <FxCompile Include="Shader\SkyboxVS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+    </FxCompile>
     <FxCompile Include="Shader\SpritePS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
@@ -290,6 +306,14 @@
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
     </FxCompile>
     <FxCompile Include="Shader\UVScrollVS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+    </FxCompile>
+    <FxCompile Include="Shader\WaterSurfacePS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+    </FxCompile>
+    <FxCompile Include="Shader\WaterSurfaceVS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
     </FxCompile>
