@@ -9,7 +9,7 @@ EnemyTurtleShell::EnemyTurtleShell()
 	ID3D11Device* device = Graphics::Instance().GetDevice();
 	model = std::make_unique<Model>(device, "Data/Model/RPG_TurtleShell/TurtleShellPBR.fbx", 0.01f);
 
-	angle.y = -1.5f;
+	//angle.y = -1.5f;
 	//radius = 0.5f;
 	height = 1.0f;
 	//待機ステートへ遷移
@@ -104,9 +104,16 @@ void EnemyTurtleShell::SetRandomTargetPosition()
 //目標地点へ移動
 void EnemyTurtleShell::MoveToTarget(float elapsedTime, float speedRate)
 {
+	//ターゲット方向への進行ベクトルを算出
+	float vx = targetPosition.x - position.x;
+	float vz = targetPosition.z - position.z;
+	float dist = sqrtf(vx * vx + vz * vz);
+	vx /= dist;
+	vz /= dist;
+
 	//移動処理
-	Move(0, 0, moveSpeed * speedRate);
-	Turn(elapsedTime, -1.0f, 0, turnSpeed * speedRate);
+	//Move(vx, vz, moveSpeed * speedRate);
+	Turn(elapsedTime, vx, vz, turnSpeed * speedRate);
 }
 
 //プレイヤー索敵

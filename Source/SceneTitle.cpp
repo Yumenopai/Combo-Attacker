@@ -182,7 +182,7 @@ void SceneTitle::Render()
 	//ModelShader* shader = Graphics::Instance().GetShader(ShaderId::Phong);
 	ModelShader* shader = Graphics::Instance().GetShader(ShaderId::Toon);
 	shader->Begin(rc);
-	stage->Render(rc, shader);
+	stage->TerrainRender(rc, shader);
 	player->Render(rc, shader);
 	EnemyManager::Instance().Render(rc, shader);
 	shader->End(rc);

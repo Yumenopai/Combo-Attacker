@@ -55,7 +55,22 @@ void SceneGame::Initialize()
 	EnemyManager& enemyManager = EnemyManager::Instance();
 	{
 		EnemySlime* slime = new EnemySlime();
-		slime->SetPosition(DirectX::XMFLOAT3(10, 10, 0));
+		slime->SetPosition(DirectX::XMFLOAT3(30, 5, -43));
+		enemyManager.Register(slime);
+	}
+	{
+		EnemySlime* slime = new EnemySlime();
+		slime->SetPosition(DirectX::XMFLOAT3(28, 5, -21));
+		enemyManager.Register(slime);
+	}
+	{
+		EnemySlime* slime = new EnemySlime();
+		slime->SetPosition(DirectX::XMFLOAT3(30, 5, -23));
+		enemyManager.Register(slime);
+	}
+	{
+		EnemySlime* slime = new EnemySlime();
+		slime->SetPosition(DirectX::XMFLOAT3(-28, 5, 4));
 		enemyManager.Register(slime);
 	}
 	//for (int i = 0; i < 8; i++)
@@ -66,20 +81,20 @@ void SceneGame::Initialize()
 	//}
 	{
 		EnemyTurtleShell* turtleShell = new EnemyTurtleShell();
-		turtleShell->SetPosition(DirectX::XMFLOAT3(26, 10, 0));
+		turtleShell->SetPosition(DirectX::XMFLOAT3(-26, 5, 6));
 		enemyManager.Register(turtleShell);
 	}
 	{
 		EnemyTurtleShell* turtleShell = new EnemyTurtleShell();
-		turtleShell->SetPosition(DirectX::XMFLOAT3(28, 10, 0));
+		turtleShell->SetPosition(DirectX::XMFLOAT3(28, 5, 0));
 		enemyManager.Register(turtleShell);
 	}
-	for (int i = 0; i < 4; i++)
-	{
-		EnemyTurtleShell* turtleShell = new EnemyTurtleShell();
-		turtleShell->SetPosition(DirectX::XMFLOAT3(111 + i * 6.0f, 10, 0));
-		enemyManager.Register(turtleShell);
-	}
+	//for (int i = 0; i < 4; i++)
+	//{
+	//	EnemyTurtleShell* turtleShell = new EnemyTurtleShell();
+	//	turtleShell->SetPosition(DirectX::XMFLOAT3(111 + i * 6.0f, 10, 0));
+	//	enemyManager.Register(turtleShell);
+	//}
 
 	//ƒ‰ƒCƒgÝ’è
 	DirectionalLight directionalLight;
@@ -183,13 +198,13 @@ void SceneGame::Render()
 	ModelShader* shader = Graphics::Instance().GetShader(ShaderId::Toon);
 	shader->Begin(rc);
 	player->Render(rc, shader);
-	stage->Render(rc, shader);
+	stage->TerrainRender(rc, shader);
 	EnemyManager::Instance().Render(rc, shader);
 	shader->End(rc);
 
 	ModelShader* waterShader = Graphics::Instance().GetShader(ShaderId::WaterSurface);
 	waterShader->Begin(rc);
-	stage->Render(rc, waterShader);
+	stage->WaterRender(rc, waterShader);
 	waterShader->End(rc);
 
 	player->PrimitiveRender(rc);

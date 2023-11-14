@@ -39,14 +39,33 @@ void Stage::ShadowRender(const RenderContext& rc, ShadowMap* shadowMap)
 	//シャドウマップにモデル描画
 	shadowMap->Draw(rc, model.get());
 }
-void Stage::Render(const RenderContext& rc, ModelShader* shader)
+void Stage::WaterRender(const RenderContext& rc, ModelShader* shader)
 {
-	for (const auto& mat : model->GetMaterials())
+	//つづきここから
+	//meshをわたしてべつべつにDrawする
+
+	for (const auto& mesh : model->GetMeshes())
 	{
-		if (mat.name == "Water" && shader != Graphics::Instance().GetShader(ShaderId::WaterSurface)) continue;
-		if (mat.name != "Water" && shader == Graphics::Instance().GetShader(ShaderId::WaterSurface)) continue;
+		if (mesh.material->name != "Water") continue;
 
 		//シェーダーにモデル描画
-		shader->Draw(rc, model.get());
+		shader->DrawByMesh(rc, model.get(), mesh);
+	}
+	//for (const auto& mat : model->GetMaterials())
+	//{
+	//	if (mat.name != "Water") continue;
+
+	//	//シェーダーにモデル描画
+	//	shader->Draw(rc, model.get(), mat);
+	//}
+}
+void Stage::TerrainRender(const RenderContext& rc, ModelShader* shader)
+{
+	for (const auto& mesh: model->GetMeshes())
+	{
+		if (mesh.material->name == "Water") continue;
+
+		//シェーダーにモデル描画
+		shader->DrawByMesh(rc, model.get(), mesh);
 	}
 }

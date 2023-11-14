@@ -1,3 +1,5 @@
+#include <map>
+
 #include "Player.h"
 #include "Graphics/Graphics.h"
 #include "Graphics/PrimitiveRenderer.h"
@@ -30,6 +32,15 @@ Player::Player()
 	model = std::make_unique<Model>(device, "Data/Model/SD-UnityChan/UnityChan.fbx", 0.02f);
 	//model = std::make_unique<Model>(device, "Data/Model/Enemy/red.fbx", 0.02f);
 
+	//初期化
+	enemySearch.clear();
+	EnemyManager& enemyManager = EnemyManager::Instance();
+	int enemyCount = enemyManager.GetEnemyCount();//全ての敵と総当たりで衝突処理
+	for (int i = 0; i < enemyCount; i++)
+	{
+		enemySearch[enemyManager.GetEnemy(i)] = EnemySearch::None;
+	}
+
 	position = { -7,5,-66 };
 	health = 100;
 	maxHealth = 100;
@@ -48,14 +59,63 @@ Player::~Player()
 //更新
 void Player::Update(float elapsedTime, int remine)
 {
+	EnemyManager& enemyManager = EnemyManager::Instance();
+	int enemyCount = enemyManager.GetEnemyCount();
+
+	nearestEnemy = nullptr;
+	nearestDist = FLT_MAX;
+	nearestVec = {};
+	for (int i = 0; i < enemyCount; i++)
+	{
+		Enemy* enemy = enemyManager.GetEnemy(i);
+		// それぞれのエネミーの距離判定
+		XMVECTOR PosPlayer = XMLoadFloat3(&GetPosition());
+		XMVECTOR PosEnemy = XMLoadFloat3(&enemy->GetPosition());
+		
+		XMVECTOR DistVec = XMVectorSubtract(PosEnemy, PosPlayer);
+		float dist = XMVectorGetX(XMVector3Length(DistVec));
+
+		if (dist < playerVSenemyJudgeDist[(int)EnemySearch::Attack])
+			enemySearch[enemy] = EnemySearch::Attack;
+		else if (dist < playerVSenemyJudgeDist[(int)EnemySearch::Find])
+			enemySearch[enemy] = EnemySearch::Find;
+		else
+		{
+			enemySearch[enemy] = EnemySearch::None;
+			continue;
+		}
+
+		/***********************/
+
+		if (dist < nearestDist) //最近エネミーの登録
+		{
+			nearestEnemy = enemy;
+			nearestDist = dist;
+			XMStoreFloat3(&nearestVec, DistVec);
+		}
+	}
+
+	//for (auto itr = enemySearch.begin(); itr != enemySearch.end(); ++itr) 
+	//{
+	//	if (static_cast<int>(itr->second) <= static_cast<int>(EnemySearch::Find))
+	//	{
+
+
+
+	//	}
+
+
+	//}
+
+
 	// 配列ズラし
-	ShiftTrailPositions();
+	//ShiftTrailPositions();
 
 	// ステート毎に中で処理分け
 	UpdateEachState(elapsedTime);
 
 	// 剣の軌跡描画更新処理
-	RenderTrail();
+	//RenderTrail();
 
 	// 攻撃中じゃなければジャンプ処理
 	if (Atype == AttackType::None) UpdateJump(elapsedTime);
@@ -120,7 +180,7 @@ void Player::HPBarRender(const RenderContext& rc, Sprite* gauge)
 	//ゲージ描画(下地)
 	gauge->Render(dc,
 		(screenWidth / 2) - (guageWidth / 2),
-		525,
+		555.0f,
 		0,
 		guageWidth + frameExpansion,
 		guageHeight + frameExpansion,
@@ -132,8 +192,8 @@ void Player::HPBarRender(const RenderContext& rc, Sprite* gauge)
 	);
 	//ゲージ描画
 	gauge->Render(dc,
-		(screenWidth / 2) - (guageWidth / 2) + frameExpansion/2,
-		525.0f + frameExpansion/2,
+		(screenWidth / 2) - (guageWidth / 2) + frameExpansion / 2,
+		555.0f + frameExpansion / 2,
 		0,
 		guageWidth * healthRate,
 		guageHeight,
@@ -165,6 +225,8 @@ void Player::DebugMenu()
 			a.y = XMConvertToDegrees(angle.y);
 			a.z = XMConvertToDegrees(angle.z);
 			ImGui::DragFloat3("Angle", &a.x, 1.0f);
+			if (a.y > 360) a.y = 0;
+			if (a.y < 0) a.y = 360;
 			angle.x = XMConvertToRadians(a.x);
 			angle.y = XMConvertToRadians(a.y);
 			angle.z = XMConvertToRadians(a.z);
@@ -212,7 +274,7 @@ void Player::UpdateEachState(float elapsedTime)
 		// ジャンプ入力処理
 		if (InputJumpButton()) TransitionJumpStartState();
 		// 攻撃処理
-		InputAttackFromNoneAttack();
+		InputAttackFromNoneAttack(elapsedTime);
 		break;
 
 	case State::IdleToRun:
@@ -227,7 +289,7 @@ void Player::UpdateEachState(float elapsedTime)
 		// ジャンプ入力処理
 		if (InputJumpButton()) TransitionJumpStartState();
 		// 攻撃処理
-		InputAttackFromNoneAttack();
+		InputAttackFromNoneAttack(elapsedTime);
 		break;
 
 	// 現在未使用
@@ -315,8 +377,7 @@ void Player::UpdateEachState(float elapsedTime)
 
 		if (isMoveAttack)
 		{
-			velocity.x = sinf(angle.y) * 800 * elapsedTime;
-			velocity.z = cosf(angle.y) * 800 * elapsedTime;
+			HorizontalVelocityByAttack(false, 800, elapsedTime);
 		}
 		if (!model->IsPlayAnimation())
 		{
@@ -336,11 +397,11 @@ void Player::UpdateEachState(float elapsedTime)
 			// 足を踏ん張る際の前進をここで行う 既に何か進んでいる時はこの処理をしない
 			if (animationTime < 0.25f && !InputMove(elapsedTime))
 			{	
-				velocity.x += sinf(angle.y) * 40 * elapsedTime;
-				velocity.z += cosf(angle.y) * 40 * elapsedTime;
+				HorizontalVelocityByAttack(true, 40, elapsedTime);
 			}
 			else if (Spear.flag1 && InputSpearButton())
 			{
+				attackCount++;
 				TransitionAttackSpear2State();
 			}
 		}
@@ -358,13 +419,14 @@ void Player::UpdateEachState(float elapsedTime)
 			if (animationTime >= 0.30f && animationTime <= 0.45f)
 			{
 				// 足を踏ん張る際の前進
-				velocity.x += sinf(angle.y) * 60 * elapsedTime;
-				velocity.z += cosf(angle.y) * 60 * elapsedTime;
+				HorizontalVelocityByAttack(true, 60, elapsedTime);
 			}
 			// 武器出現アニメーション再生区間
 			if (animationTime >= 0.37f && animationTime <= 0.6f && InputSpearButton())
 			{
-				TransitionAttackSpear3State();
+				attackCount++;
+				if (attackCount >= 4) TransitionAttackSpear3State();
+				else TransitionAttackSpear1State();
 			}
 		}
 		else TransitionIdleState();
@@ -381,8 +443,7 @@ void Player::UpdateEachState(float elapsedTime)
 			// 足を踏ん張る際の前進をここで行う
 			if (animationTime < 0.43f)
 			{
-				velocity.x += sinf(angle.y) * 39 * elapsedTime;
-				velocity.z += cosf(angle.y) * 39 * elapsedTime;
+				HorizontalVelocityByAttack(true, 39, elapsedTime);
 			}
 		}
 		else TransitionIdleState();
@@ -396,10 +457,9 @@ void Player::UpdateEachState(float elapsedTime)
 
 			float animationTime = model->GetCurrentAnimationSeconds();
 			// 回転しながら前下方向に突き刺していくアニメーション
-			if (animationTime >= 0.15f && animationTime <= 0.24f)
+			if (animationTime >= 0.15f && animationTime <= 0.5f)
 			{
-				velocity.x += sinf(angle.y) * 300 * elapsedTime;
-				velocity.z += cosf(angle.y) * 300 * elapsedTime;
+				HorizontalVelocityByAttack(false, 800, elapsedTime);
 			}
 		}
 		else TransitionIdleState();
@@ -415,12 +475,12 @@ void Player::UpdateEachState(float elapsedTime)
 			// 足を踏ん張る際の前進をここで行う 既に何か進んでいる時はこの処理をしない
 			if (animationTime < 0.2f && !InputMove(elapsedTime))
 			{
-				velocity.x += sinf(angle.y) * 43 * elapsedTime;
-				velocity.z += cosf(angle.y) * 43 * elapsedTime;
+				HorizontalVelocityByAttack(true, 43, elapsedTime);
 			}
 			// 任意のアニメーション再生区間でのみ次の攻撃技を出すようにする
 			else if (InputSwordButton() && animationTime >= 0.2f && animationTime <= 0.6f)
 			{
+				attackCount++;
 				TransitionAttackSword2State();
 			}
 			// 足元の動きに合わせた前進 違和感あるので一旦コメント
@@ -444,13 +504,14 @@ void Player::UpdateEachState(float elapsedTime)
 			// 足を踏ん張る際の前進をここで行う
 			if (animationTime < 0.25f)
 			{
-				velocity.x += sinf(angle.y) * 45 * elapsedTime;
-				velocity.z += cosf(angle.y) * 45 * elapsedTime;
+				HorizontalVelocityByAttack(true, 45, elapsedTime);
 			}
 			// 任意のアニメーション再生区間でのみ次の攻撃技を出すようにする
 			else if (InputSwordButton() && animationTime >= 0.25f && animationTime <= 0.5f)
 			{
-				TransitionAttackSword3State();
+				attackCount++;
+				if (attackCount >= 4) TransitionAttackSword3State();
+				else TransitionAttackSword1State();
 			}
 		}
 		else TransitionIdleState();
@@ -467,8 +528,7 @@ void Player::UpdateEachState(float elapsedTime)
 			// 足を踏ん張る際の前進をここで行う
 			if (animationTime >= 0.25f && animationTime <= 0.5f)
 			{
-				velocity.x += sinf(angle.y) * 48 * elapsedTime;
-				velocity.z += cosf(angle.y) * 48 * elapsedTime;
+				HorizontalVelocityByAttack(true, 48, elapsedTime);
 				if (animationTime <= 0.4f)
 					velocity.y += 150 * elapsedTime;
 			}
@@ -485,8 +545,7 @@ void Player::UpdateEachState(float elapsedTime)
 
 		if (isMoveAttack)
 		{
-			velocity.x = sinf(angle.y) * 800 * elapsedTime;
-			velocity.z = cosf(angle.y) * 800 * elapsedTime;
+			HorizontalVelocityByAttack(false, 800, elapsedTime);
 		}
 		if (!model->IsPlayAnimation())
 		{
@@ -513,7 +572,7 @@ void Player::UpdateJump(float elapsedTime)
 		// 押している間の処理
 		if (gamePad.GetButton() & GamePad::BTN_A)
 		{
-			velocity.y += 300 * elapsedTime;
+			velocity.y += 150 * elapsedTime;
 			// 指定加速度まであがったら
 			if (velocity.y > jumpSpeed)	jumpTrg = CanDoubleJump;
 		}
@@ -528,7 +587,7 @@ void Player::UpdateJump(float elapsedTime)
 		// 2段目ジャンプは高さ調節不可
 		if (gamePad.GetButtonDown() & GamePad::BTN_A)
 		{
-			velocity.y += 20.0f;
+			velocity.y += 15.0f;
 			jumpTrg = CannotJump;
 		}
 		// 一段目ジャンプ中の攻撃ボタン
@@ -571,6 +630,22 @@ void Player::UpdateArmPositions(Model* model, Arms& arm)
 	XMVECTOR TipP = XMVector3Transform(TipOffset, W);
 	DirectX::XMStoreFloat3(&trailPositions[0][0], RootP);
 	DirectX::XMStoreFloat3(&trailPositions[1][0], TipP);
+}
+
+void Player::HorizontalVelocityByAttack(bool plus, int velo, float elapsedTime)
+{
+	if (enemySearch[nearestEnemy] == EnemySearch::Attack) return;
+
+	if (plus)
+	{
+		velocity.x += sinf(angle.y) * velo * elapsedTime;
+		velocity.z += cosf(angle.y) * velo * elapsedTime;
+	}
+	else
+	{
+		velocity.x = sinf(angle.y) * velo * elapsedTime;
+		velocity.z = cosf(angle.y) * velo * elapsedTime;
+	}
 }
 
 void Player::ShiftTrailPositions()
@@ -637,8 +712,16 @@ void Player::UpdateVerticalVelocity(float elapsedFrame)
 //移動入力処理
 bool Player::InputMove(float elapsedTime)
 {
-	//進行ベクトルを取得
 	XMFLOAT3 moveVec = GetMoveVec();
+	XMVECTOR MoveVec = XMLoadFloat3(&moveVec); //進行ベクトルを取得
+
+	if (XMVectorGetX(XMVector3Length(MoveVec)) != 0 && nearestDist < FLT_MAX)
+	{
+		float dot = XMVectorGetX(XMVector3Dot(MoveVec, XMLoadFloat3(&nearestVec)));
+
+		// 最近エネミーに向かう
+		if (dot > 0) moveVec = nearestVec;
+	}						
 
 	//移動処理
 	Move(moveVec.x, moveVec.z, moveSpeed);
@@ -656,12 +739,18 @@ bool Player::InputJumpButton()
 	return gamePad.GetButtonDown() & GamePad::BTN_A;
 }
 // 攻撃入力処理
-bool Player::InputAttackFromNoneAttack()
+bool Player::InputAttackFromNoneAttack(float elapsedTime)
 {
 	if (InputHammerButton())	 TransitionAttackHummer1State();
 	else if (InputSwordButton()) TransitionAttackSword1State();
 	else if (InputSpearButton()) TransitionAttackSpear1State();
 	else return false;
+
+	if (enemySearch[nearestEnemy] > EnemySearch::None)
+	{
+		//旋回処理
+		Turn(elapsedTime, nearestVec.x, nearestVec.z, 1000);
+	}
 
 	return true;
 }
@@ -826,6 +915,7 @@ void Player::DrawDebugPrimitive()
 void Player::TransitionIdleState()
 {
 	state = State::Idle;
+	attackCount = 0;
 	// 攻撃後は必ず待機に戻る為ここで攻撃タイプ リセットを行う
 	Atype = AttackType::None;
 	model->PlayAnimation(Anim_Idle, true);

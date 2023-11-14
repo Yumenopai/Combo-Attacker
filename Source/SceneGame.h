@@ -54,7 +54,7 @@ private:
 	float timer = 0.0f;
 	float grav = 20.0f;
 
-	int waterTimer = 0.0f;
+	float waterTimer = 0.0f;
 
 	Model::Node* selectionNode = nullptr;
 	FreeCameraController freeCameraController;

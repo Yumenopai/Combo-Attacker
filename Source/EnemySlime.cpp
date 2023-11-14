@@ -103,9 +103,16 @@ void EnemySlime::SetRandomTargetPosition()
 //目標地点へ移動
 void EnemySlime::MoveToTarget(float elapsedTime, float speedRate)
 {
+	//ターゲット方向への進行ベクトルを算出
+	float vx = targetPosition.x - position.x;
+	float vz = targetPosition.z - position.z;
+	float dist = sqrtf(vx * vx + vz * vz);
+	vx /= dist;
+	vz /= dist;
+
 	//移動処理
-	Move(0, 0, moveSpeed * speedRate);
-	Turn(elapsedTime, -1.0f, 0, turnSpeed * speedRate);
+	//Move(vx, vz, moveSpeed * speedRate);
+	Turn(elapsedTime, vx, vz, turnSpeed * speedRate);
 }
 
 //プレイヤー索敵

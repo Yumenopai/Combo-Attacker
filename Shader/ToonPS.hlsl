@@ -49,7 +49,7 @@ float4 main(VS_OUT pin) : SV_TARGET
 
     // Toon処理
   	//ハーフランバート拡散照明によるライティング計算
-    float p = saturate(dot(N, L) * 0.7f + 0.3f);
+    float p = saturate(dot(N, L) * 0.3f + 0.7f);
 	
     //計算結果よりトゥーンシェーダー用のテクスチャから色をフェッチする
     float4 c = toonTex.Sample(linearSampler, float2(p, 0.1f));

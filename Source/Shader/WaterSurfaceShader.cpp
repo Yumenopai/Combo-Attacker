@@ -117,56 +117,63 @@ void WaterSurfaceShader::Draw(const RenderContext& rc, const Model* model)
 
 	for (const Model::Mesh& mesh : model->GetMeshes())
 	{
-		//頂点バッファ設定
-		UINT stride = sizeof(Model::Vertex);
-		UINT offset = 0;
-		dc->IASetVertexBuffers(0, 1, mesh.vertexBuffer.GetAddressOf(), &stride, &offset);
-		dc->IASetIndexBuffer(mesh.indexBuffer.Get(), DXGI_FORMAT_R32_UINT, 0);
-		dc->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-		//メッシュ用定数バッファ更新
-		CbMesh cbMesh{};
-		cbMesh.materialColor = mesh.material->color;
-		cbMesh.wave1 = mesh.material->waterSurface.waveScroll1;
-		cbMesh.wave2 = mesh.material->waterSurface.waveScroll2;
-		cbMesh.wave1.x *= rc.timer;
-		cbMesh.wave1.y *= rc.timer;
-		cbMesh.wave2.x *= rc.timer;
-		cbMesh.wave2.y *= rc.timer;
-
-		dc->UpdateSubresource(meshConstantBuffer.Get(), 0, 0, &cbMesh, 0, 0);
-
-		//スケルトン用定数バッファ更新
-		CbSkeleton cbSkeleton{};
-		if (mesh.bones.size() > 0)
-		{
-			for (size_t i = 0; i < mesh.bones.size(); ++i)
-			{
-				const Model::Bone& bone = mesh.bones.at(i);
-				XMMATRIX WorldTransform = XMLoadFloat4x4(&bone.node->worldTransform);
-				XMMATRIX OffsetTransform = XMLoadFloat4x4(&bone.offsetTransform);
-				XMMATRIX BoneTransform = OffsetTransform * WorldTransform;
-				XMStoreFloat4x4(&cbSkeleton.boneTransforms[i], BoneTransform);
-			}
-		}
-		else
-		{
-			cbSkeleton.boneTransforms[0] = mesh.node->worldTransform;
-		}
-		dc->UpdateSubresource(skeletonConstantBuffer.Get(), 0, 0, &cbSkeleton, 0, 0);
-
-		//シェーダーリソースビュー設定
-		ID3D11ShaderResourceView* srvs[] =
-		{
-			mesh.material->diffuseMap.Get(),
-			mesh.material->normalMap.Get(),
-			rc.shadowMap->GetShaderResourceView(),
-		};
-		dc->PSSetShaderResources(0, _countof(srvs), srvs);
-
-		//描画
-		dc->DrawIndexed(static_cast<UINT>(mesh.indices.size()), 0, 0);
+		DrawByMesh(rc, model, mesh);
 	}
+}
+
+void WaterSurfaceShader::DrawByMesh(const RenderContext& rc, const Model* model, const Model::Mesh& mesh)
+{
+	ID3D11DeviceContext* dc = rc.deviceContext;
+
+	//頂点バッファ設定
+	UINT stride = sizeof(Model::Vertex);
+	UINT offset = 0;
+	dc->IASetVertexBuffers(0, 1, mesh.vertexBuffer.GetAddressOf(), &stride, &offset);
+	dc->IASetIndexBuffer(mesh.indexBuffer.Get(), DXGI_FORMAT_R32_UINT, 0);
+	dc->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	//メッシュ用定数バッファ更新
+	CbMesh cbMesh{};
+	cbMesh.materialColor = mesh.material->color;
+	cbMesh.wave1 = mesh.material->waterSurface.waveScroll1;
+	cbMesh.wave2 = mesh.material->waterSurface.waveScroll2;
+	cbMesh.wave1.x *= rc.timer;
+	cbMesh.wave1.y *= rc.timer;
+	cbMesh.wave2.x *= rc.timer;
+	cbMesh.wave2.y *= rc.timer;
+
+	dc->UpdateSubresource(meshConstantBuffer.Get(), 0, 0, &cbMesh, 0, 0);
+
+	//スケルトン用定数バッファ更新
+	CbSkeleton cbSkeleton{};
+	if (mesh.bones.size() > 0)
+	{
+		for (size_t i = 0; i < mesh.bones.size(); ++i)
+		{
+			const Model::Bone& bone = mesh.bones.at(i);
+			XMMATRIX WorldTransform = XMLoadFloat4x4(&bone.node->worldTransform);
+			XMMATRIX OffsetTransform = XMLoadFloat4x4(&bone.offsetTransform);
+			XMMATRIX BoneTransform = OffsetTransform * WorldTransform;
+			XMStoreFloat4x4(&cbSkeleton.boneTransforms[i], BoneTransform);
+		}
+	}
+	else
+	{
+		cbSkeleton.boneTransforms[0] = mesh.node->worldTransform;
+	}
+	dc->UpdateSubresource(skeletonConstantBuffer.Get(), 0, 0, &cbSkeleton, 0, 0);
+
+	//シェーダーリソースビュー設定
+	ID3D11ShaderResourceView* srvs[] =
+	{
+		mesh.material->diffuseMap.Get(),
+		mesh.material->normalMap.Get(),
+		rc.shadowMap->GetShaderResourceView(),
+	};
+	dc->PSSetShaderResources(0, _countof(srvs), srvs);
+
+	//描画
+	dc->DrawIndexed(static_cast<UINT>(mesh.indices.size()), 0, 0);
 }
 
 //描画終了

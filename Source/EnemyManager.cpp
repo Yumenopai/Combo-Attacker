@@ -8,9 +8,9 @@ void EnemyManager::Update(float elapsedTime)
 {
 	for (Enemy* enemy : enemies)
 	{
-		//プレイヤー座標+-25以内の場所のみ更新する
-		if (enemy->GetPosition().x <= Player::Instance().GetPosition().x + 25
-			&& enemy->GetPosition().x >= Player::Instance().GetPosition().x -25)
+		////プレイヤー座標+-25以内の場所のみ更新する
+		//if (enemy->GetPosition().x <= Player::Instance().GetPosition().x + 25
+		//	&& enemy->GetPosition().x >= Player::Instance().GetPosition().x -25)
 			
 		enemy->Update(elapsedTime);
 	}

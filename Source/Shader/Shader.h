@@ -14,6 +14,7 @@ public:
 
 	// ï`âÊ
 	virtual void Draw(const RenderContext& rc, const Model* model) = 0;
+	virtual void DrawByMesh(const RenderContext& rc, const Model* model, const Model::Mesh& mesh) = 0;
 
 	// ï`âÊèIóπ
 	virtual void End(const RenderContext& rc) = 0;

@@ -20,8 +20,9 @@ public:
 	void Update(float elapsedTime);
 	//•`‰æ
 	void ShadowRender(const RenderContext& rc, ShadowMap* shadowMap);
+	void WaterRender(const RenderContext& rc, ModelShader* shader);
 	//•`‰æ
-	void Render(const RenderContext& rc, ModelShader* shader);
+	void TerrainRender(const RenderContext& rc, ModelShader* shader);
 
 private:
 	XMFLOAT3	position = { 0,0,0 };

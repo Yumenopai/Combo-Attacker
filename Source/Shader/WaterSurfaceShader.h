@@ -13,6 +13,7 @@ public:
 
 	//ƒ‚ƒfƒ‹•`‰æ
 	void Draw(const RenderContext& rc, const Model* model) override;
+	void DrawByMesh(const RenderContext& rc, const Model* model, const Model::Mesh& mesh) override;
 
 	//•`‰æI—¹
 	void End(const RenderContext& rc) override;
