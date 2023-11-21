@@ -39,7 +39,7 @@ void SceneTitle::Initialize()
 
 	//ƒ‚ƒfƒ‹ì¬
 	stage = std::make_unique<Stage>();
-	player = std::make_unique<Player>();
+	player = std::make_unique<Player1P>();
 	sprites[0] = std::make_unique<Sprite>(device, "Data/Sprite/view.jpg");
 	//sprites[1] = std::make_unique<Sprite>(device, "Data/Sprite/1.png");
 	//sprites[2] = std::make_unique<Sprite>(device, "Data/Sprite/2.png");

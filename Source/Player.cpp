@@ -13,20 +13,9 @@
 #include "Stage.h"
 #include "imgui.h"
 
-static Player* instance = nullptr;
-
-//インスタンス取得
-Player& Player::Instance()
-{
-	return *instance;
-}
-
 //コンストラクタ
 Player::Player()
 {
-	//インスタンスポインタ設定
-	instance = this;
-
 	ID3D11Device* device = Graphics::Instance().GetDevice();
 	//プレイヤーモデル読み込み
 	model = std::make_unique<Model>(device, "Data/Model/SD-UnityChan/UnityChan.fbx", 0.02f);
@@ -56,86 +45,6 @@ Player::~Player()
 {
 }
 
-//更新
-void Player::Update(float elapsedTime, int remine)
-{
-	EnemyManager& enemyManager = EnemyManager::Instance();
-	int enemyCount = enemyManager.GetEnemyCount();
-
-	nearestEnemy = nullptr;
-	nearestDist = FLT_MAX;
-	nearestVec = {};
-	for (int i = 0; i < enemyCount; i++)
-	{
-		Enemy* enemy = enemyManager.GetEnemy(i);
-		// それぞれのエネミーの距離判定
-		XMVECTOR PosPlayer = XMLoadFloat3(&GetPosition());
-		XMVECTOR PosEnemy = XMLoadFloat3(&enemy->GetPosition());
-		
-		XMVECTOR DistVec = XMVectorSubtract(PosEnemy, PosPlayer);
-		float dist = XMVectorGetX(XMVector3Length(DistVec));
-
-		if (dist < playerVSenemyJudgeDist[(int)EnemySearch::Attack])
-			enemySearch[enemy] = EnemySearch::Attack;
-		else if (dist < playerVSenemyJudgeDist[(int)EnemySearch::Find])
-			enemySearch[enemy] = EnemySearch::Find;
-		else
-		{
-			enemySearch[enemy] = EnemySearch::None;
-			continue;
-		}
-
-		/***********************/
-
-		if (dist < nearestDist) //最近エネミーの登録
-		{
-			nearestEnemy = enemy;
-			nearestDist = dist;
-			XMStoreFloat3(&nearestVec, DistVec);
-		}
-	}
-
-	//for (auto itr = enemySearch.begin(); itr != enemySearch.end(); ++itr) 
-	//{
-	//	if (static_cast<int>(itr->second) <= static_cast<int>(EnemySearch::Find))
-	//	{
-
-
-
-	//	}
-
-
-	//}
-
-
-	// 配列ズラし
-	//ShiftTrailPositions();
-
-	// ステート毎に中で処理分け
-	UpdateEachState(elapsedTime);
-
-	// 剣の軌跡描画更新処理
-	//RenderTrail();
-
-	// 攻撃中じゃなければジャンプ処理
-	if (Atype == AttackType::None) UpdateJump(elapsedTime);
-
-	//プレイヤーとエネミーとの衝突処理
-	CollisionPlayerVsEnemies();
-
-	//速力処理更新
-	UpdateVelocity(elapsedTime);
-
-	//オブジェクト行列更新
-	UpdateTransform();
-
-	//モデルアニメーション更新処理
-	model->UpdateAnimation(elapsedTime);
-
-	//モデル行列更新
-	model->UpdateTransform(transform);
-}
-
 //描画
 void Player::ShadowRender(const RenderContext& rc, ShadowMap* shadowMap)
 {
@@ -145,11 +54,8 @@ void Player::ShadowRender(const RenderContext& rc, ShadowMap* shadowMap)
 void Player::Render(const RenderContext& rc, ModelShader* shader)
 {
 	shader->Draw(rc, model.get());
-	
-	//rc.deviceContext->OMSetBlendState(renderState->GetBlendState(BlendState::Transparency), blendFactor, sampleMask);
-	
-#if 1
 
+#if 0
 	//デバッグメニュー描画
 	DebugMenu();
 #endif
@@ -272,7 +178,7 @@ void Player::UpdateEachState(float elapsedTime)
 		// 移動入力処理
 		if (InputMove(elapsedTime)) TransitionIdleToRunState();
 		// ジャンプ入力処理
-		if (InputJumpButton()) TransitionJumpStartState();
+		if (InputJumpButtonDown()) TransitionJumpStartState();
 		// 攻撃処理
 		InputAttackFromNoneAttack(elapsedTime);
 		break;
@@ -287,7 +193,7 @@ void Player::UpdateEachState(float elapsedTime)
 		// 移動入力処理
 		if (!InputMove(elapsedTime)) TransitionIdleState();
 		// ジャンプ入力処理
-		if (InputJumpButton()) TransitionJumpStartState();
+		if (InputJumpButtonDown()) TransitionJumpStartState();
 		// 攻撃処理
 		InputAttackFromNoneAttack(elapsedTime);
 		break;
@@ -301,7 +207,7 @@ void Player::UpdateEachState(float elapsedTime)
 	case State::JumpStart:
 		InputMove(elapsedTime);
 		// さらにジャンプ入力時の処理
-		if (InputJumpButton()) TransitionJumpAirState();
+		if (InputJumpButtonDown()) TransitionJumpAirState();
 		// アニメーション終了後
 		if (!model->IsPlayAnimation()) TransitionJumpLoopState();
 		break;
@@ -309,7 +215,7 @@ void Player::UpdateEachState(float elapsedTime)
 	case State::JumpLoop:
 		InputMove(elapsedTime);
 		// さらにジャンプ入力時の処理
-		if (InputJumpButton()) TransitionJumpAirState();
+		if (InputJumpButtonDown()) TransitionJumpAirState();
 		// ジャンプ中の攻撃処理はUpdateJumpにて行う
 		
 		// 着地(JumpEnd)ステートへの遷移は着地時にしか行わない
@@ -326,7 +232,7 @@ void Player::UpdateEachState(float elapsedTime)
 	case State::JumpEnd:
 		// InputMove時などOnLandingでここを通らない可能性あり
 		// アニメーション終了後
-		if (InputJumpButton()) TransitionJumpStartState();
+		if (InputJumpButtonDown()) TransitionJumpStartState();
 		if (!model->IsPlayAnimation()) TransitionIdleState();
 		break;
 
@@ -478,7 +384,7 @@ void Player::UpdateEachState(float elapsedTime)
 				HorizontalVelocityByAttack(true, 43, elapsedTime);
 			}
 			// 任意のアニメーション再生区間でのみ次の攻撃技を出すようにする
-			else if (InputSwordButton() && animationTime >= 0.2f && animationTime <= 0.6f)
+			else if (InputSwordButton() && animationTime >= 0.3f && animationTime <= 0.7f)
 			{
 				attackCount++;
 				TransitionAttackSword2State();
@@ -507,7 +413,7 @@ void Player::UpdateEachState(float elapsedTime)
 				HorizontalVelocityByAttack(true, 45, elapsedTime);
 			}
 			// 任意のアニメーション再生区間でのみ次の攻撃技を出すようにする
-			else if (InputSwordButton() && animationTime >= 0.25f && animationTime <= 0.5f)
+			else if (InputSwordButton() && animationTime >= 0.35f && animationTime <= 0.6f)
 			{
 				attackCount++;
 				if (attackCount >= 4) TransitionAttackSword3State();
@@ -522,9 +428,10 @@ void Player::UpdateEachState(float elapsedTime)
 		if (Sword.flag3)
 		{
 			UpdateArmPositions(model.get(), Sword);
-			CollisionArmsVsEnemies(Sword);
-
 			float animationTime = model->GetCurrentAnimationSeconds();
+			if (animationTime <= 0.6f)
+				CollisionArmsVsEnemies(Sword);
+
 			// 足を踏ん張る際の前進をここで行う
 			if (animationTime >= 0.25f && animationTime <= 0.5f)
 			{
@@ -556,59 +463,6 @@ void Player::UpdateEachState(float elapsedTime)
 	case State::CliffGrab:
 		// アニメーション終了後Idleにとりあえず移行
 		if (!model->IsPlayAnimation()) TransitionIdleState();
-		break;
-	}
-}
-
-//ジャンプ処理
-void Player::UpdateJump(float elapsedTime)
-{
-	//ボタン入力でジャンプ
-	GamePad& gamePad = Input::Instance().GetGamePad();
-
-	switch (jumpTrg)
-	{
-	case CanJump:
-		// 押している間の処理
-		if (gamePad.GetButton() & GamePad::BTN_A)
-		{
-			velocity.y += 150 * elapsedTime;
-			// 指定加速度まであがったら
-			if (velocity.y > jumpSpeed)	jumpTrg = CanDoubleJump;
-		}
-		// 一回離した時
-		else if (gamePad.GetButtonUp() & GamePad::BTN_A)
-		{
-			jumpTrg = CanDoubleJump;
-		}
-		break;
-
-	case CanDoubleJump:
-		// 2段目ジャンプは高さ調節不可
-		if (gamePad.GetButtonDown() & GamePad::BTN_A)
-		{
-			velocity.y += 15.0f;
-			jumpTrg = CannotJump;
-		}
-		// 一段目ジャンプ中の攻撃ボタン
-		else if (InputAttackFromJump(elapsedTime))
-		{
-			jumpTrg = CannotJump;
-		}
-
-		//break;
-		// fall through
-	case CannotJump:
-
-		// ジャンプ可能状態の時のみ通らない
-		// 着地時(地面に立っている時は常時処理)
-		if (isGround)
-		{
-			// 着地時に押しっぱの場合は処理されないようにする
-			if (gamePad.GetButton() & GamePad::BTN_A) jumpTrg = CannotJump;
-			// 押されていない時は地面にいるのでジャンプ可能状態にする
-			else jumpTrg = CanJump;
-		}
 		break;
 	}
 }
@@ -712,13 +566,14 @@ void Player::UpdateVerticalVelocity(float elapsedFrame)
 //移動入力処理
 bool Player::InputMove(float elapsedTime)
 {
-	XMFLOAT3 moveVec = GetMoveVec();
+	XMFLOAT3 moveVec = {}; //GetMoveVec();
 	XMVECTOR MoveVec = XMLoadFloat3(&moveVec); //進行ベクトルを取得
 
+	// 動いていて且つ最近距離が登録されている
 	if (XMVectorGetX(XMVector3Length(MoveVec)) != 0 && nearestDist < FLT_MAX)
 	{
+		// 向かっているのがエネミーベクトルと鋭角関係なら
 		float dot = XMVectorGetX(XMVector3Dot(MoveVec, XMLoadFloat3(&nearestVec)));
-
 		// 最近エネミーに向かう
 		if (dot > 0) moveVec = nearestVec;
 	}						
@@ -732,12 +587,6 @@ bool Player::InputMove(float elapsedTime)
 	return moveVec.x != 0 || moveVec.y != 0 || moveVec.z != 0;
 }
 
-// ジャンプボタンBTN_Aが押されたか
-bool Player::InputJumpButton()
-{
-	GamePad& gamePad = Input::Instance().GetGamePad();
-	return gamePad.GetButtonDown() & GamePad::BTN_A;
-}
 // 攻撃入力処理
 bool Player::InputAttackFromNoneAttack(float elapsedTime)
 {
@@ -762,25 +611,6 @@ bool Player::InputAttackFromJump(float elapsedTime)
 	else return false;
 
 	return true;
-}
-
-// ハンマー攻撃ボタンBTN_Bが押されたか
-bool Player::InputHammerButton()
-{
-	GamePad& gamePad = Input::Instance().GetGamePad();
-	return gamePad.GetButtonDown() & GamePad::BTN_B;
-}
-// ソード攻撃ボタンBTN_Xが押されたか
-bool Player::InputSwordButton()
-{
-	GamePad& gamePad = Input::Instance().GetGamePad();
-	return gamePad.GetButtonDown() & GamePad::BTN_X;
-}
-// ソード攻撃ボタンBTN_Yが押されたか
-bool Player::InputSpearButton()
-{
-	GamePad& gamePad = Input::Instance().GetGamePad();
-	return gamePad.GetButtonDown() & GamePad::BTN_Y;
 }
 
 //プレイヤーとエネミーとの衝突処理
@@ -830,13 +660,14 @@ void Player::CollisionArmsVsEnemies(Arms arm)
 			if (enemy->ApplyDamage(1, 0.5f))
 			{
 				//吹き飛ばす
+				if (attackCount >= 4)
 				{
-					const float power = 1.5f; //仮の水平の力
+					const float power = 13.0f; //仮の水平の力
 					const XMFLOAT3& ep = enemy->GetPosition();
 
 					//ノックバック方向の算出
-					float vx = ep.x - arm.position.x;
-					float vz = ep.z - arm.position.z;
+					float vx = ep.x - Player1P::Instance().position.x;
+					float vz = ep.z - Player1P::Instance().position.z;
 					float lengthXZ = sqrtf(vx * vx + vz * vz);
 					vx /= lengthXZ;
 					vz /= lengthXZ;
@@ -846,7 +677,7 @@ void Player::CollisionArmsVsEnemies(Arms arm)
 					impluse.x = vx * power;
 					impluse.z = vz * power;
 
-					impluse.y = power * 0.5f;	//上方向にも打ち上げる
+					impluse.y = power * 0.8f;	//上方向にも打ち上げる
 
 					enemy->AddImpulse(impluse);
 				}
@@ -1040,53 +871,4 @@ void Player::TransitionCliffGrabState()
 {
 	state = State::CliffGrab;
 	model->PlayAnimation(Anim_CliffGrab, false);
-}
-
-//スティック入力値から移動ベクトルを取得
-XMFLOAT3 Player::GetMoveVec() const
-{
-	//入力情報を取得
-	GamePad& gamePad = Input::Instance().GetGamePad();
-	float ax = gamePad.GetAxisLX();
-	float ay = gamePad.GetAxisLY();
-
-	//カメラ方向とスティックの入力値によって進行方向を計算する
-	Camera& camera = Camera::Instance();
-	const DirectX::XMFLOAT3& cameraRight = camera.GetRight();
-	const DirectX::XMFLOAT3& cameraFront = camera.GetFront();
-
-	//移動ベクトルはXZ平面に水平なベクトルになるようにする
-
-	//カメラ右方向ベクトルをXZ単位ベクトルに変換
-	float cameraRightX = cameraRight.x;
-	float cameraRightZ = cameraRight.z;
-	float cameraRightLength = sqrtf(cameraRightX * cameraRightX + cameraRightZ * cameraRightZ);
-	if (cameraRightLength > 0.0f)
-	{
-		//単位ベクトル化
-		cameraRightX /= cameraRightLength;
-		cameraRightZ /= cameraRightLength;
-	}
-
-	//カメラ前方向ベクトルをXZ単位ベクトルに変換
-	float cameraFrontX = cameraFront.x;
-	float cameraFrontZ = cameraFront.z;
-	float cameraFrontLength = sqrtf(cameraFrontX * cameraFrontX + cameraFrontZ * cameraFrontZ);
-	if (cameraFrontLength > 0.0f)
-	{
-		//単位ベクトル化
-		cameraFrontX /= cameraFrontLength;
-		cameraFrontZ /= cameraFrontLength;
-	}
-
-	//スティックの水平入力値をカメラ右方向に反映し、
-	//スティックの垂直入力値をカメラ前方向に反映し、進行ベクトルを計算する
-	XMFLOAT3 vec;
-	vec.x = cameraFrontX * ay + cameraRightX * ax;
-	vec.z = cameraFrontZ * ay + cameraRightZ * ax;
-
-	//Y軸方向には移動しない
-	vec.y = 0.0f;
-
-	return vec;
 }

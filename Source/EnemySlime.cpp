@@ -1,6 +1,6 @@
 #include "EnemySlime.h"
 #include "Graphics/Graphics.h"
-#include "Player.h"
+#include "Player1P.h"
 #include "Collision.h"
 
 //コンストラクタ
@@ -119,7 +119,7 @@ void EnemySlime::MoveToTarget(float elapsedTime, float speedRate)
 bool EnemySlime::SearchPlayer()
 {
 	//プレイヤーとの高低差を考慮して3Dでの距離判定をする
-	const DirectX::XMFLOAT3& playerPosition = Player::Instance().GetPosition();
+	const DirectX::XMFLOAT3& playerPosition = Player1P::Instance().GetPosition();
 	float vx = playerPosition.x - position.x;
 	float vy = playerPosition.y - position.y;
 	float vz = playerPosition.z - position.z;
@@ -158,7 +158,7 @@ void EnemySlime::CollisionNodeVsPlayer(const char* nodeName, float nodeRadius)
 		nodePosition.z = node->worldTransform._43;
 
 		//衝突処理
-		Player& player = Player::Instance();
+		Player& player = Player1P::Instance();
 		XMFLOAT3 outPosition;
 		if (Collision::IntersectSphereVsCylinder(
 			nodePosition, nodeRadius,
@@ -253,7 +253,7 @@ void EnemySlime::TransitionPursuitState()
 void EnemySlime::UpdatePursuitState(float elapsedTime)
 {
 	//目標地点をプレイヤー位置に設定
-	targetPosition = Player::Instance().GetPosition();
+	targetPosition = Player1P::Instance().GetPosition();
 
 	//目標地点へ移動
 	MoveToTarget(elapsedTime,1.0f);
@@ -314,7 +314,7 @@ void EnemySlime::TransitionIdleBattleState()
 void EnemySlime::UpdateIdleBattleState(float elapsedTime)
 {
 	//目標地点をプレイヤー位置に設定
-	targetPosition = Player::Instance().GetPosition();
+	targetPosition = Player1P::Instance().GetPosition();
 
 	//プレイヤーが攻撃範囲にいた場合は攻撃ステートへ遷移
 	float vx = targetPosition.x - position.x;

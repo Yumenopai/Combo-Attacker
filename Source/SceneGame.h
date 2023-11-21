@@ -1,6 +1,7 @@
 #include "Graphics/FontSprite.h"
 #include "Stage.h"
-#include "Player.h"
+#include "Player1P.h"
+#include "playerAI.h"
 #include "Shader/Skybox.h"
 
 //ÉQÅ[ÉÄÉVÅ[Éì
@@ -38,7 +39,8 @@ private:
 	std::unique_ptr<SkyBox> skyBox;
 
 	std::unique_ptr<Stage> stage;
-	std::unique_ptr<Player> player;
+	std::unique_ptr<Player1P> player1P;
+	std::unique_ptr<PlayerAI> playerAI;
 	std::unique_ptr<FontSprite> font;
 
 	std::unique_ptr<Sprite> gauge;

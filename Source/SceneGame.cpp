@@ -39,7 +39,8 @@ void SceneGame::Initialize()
 
 	//モデル作成
 	stage = std::make_unique<Stage>();
-	player = std::make_unique<Player>();
+	player1P = std::make_unique<Player1P>();
+	playerAI = std::make_unique<PlayerAI>();
 
 	//スカイボックス
 	skyBox = std::make_unique<SkyBox>("Data/Texture/incskies_002_8k.png");
@@ -113,19 +114,21 @@ void SceneGame::Finalize()
 void SceneGame::Update(float elapsedTime)
 {
 	//カメラコントローラー更新処理
-	XMFLOAT3 target = player->GetPosition();
-	ViewPosition.x = -(target.x + 20.0f); //背景スライド
+	XMFLOAT3 target = player1P->GetPosition();
 	target.y += 0.5f;
 	cameraController->SetTarget(target);
 	cameraController->Update(elapsedTime);
 
-	player->Update(elapsedTime,1);
+	player1P->Update(elapsedTime,1);
+	playerAI->Update(elapsedTime,1);
 
 	//エネミー更新
 	EnemyManager::Instance().Update(elapsedTime);
 	stage->Update(elapsedTime);
 	//エフェクト更新処理
 	EffectManager::Instance().Update(elapsedTime);
+
+	GamePad& gamePad = Input::Instance().GetGamePad();
 }
 
 void SceneGame::Render()
@@ -151,7 +154,8 @@ void SceneGame::Render()
 	//シャドウマップ描画
 	shadowMap->Begin(rc, camera.GetFocus());
 	stage->ShadowRender(rc, shadowMap);
-	player->ShadowRender(rc, shadowMap);
+	player1P->ShadowRender(rc, shadowMap);
+	playerAI->ShadowRender(rc, shadowMap);
 	EnemyManager::Instance().ShadowRender(rc, shadowMap);
 	shadowMap->End(rc);
 
@@ -194,21 +198,28 @@ void SceneGame::Render()
 	skyBox->Render(rc);
 
 	//sprites[0]->Render(rc.deviceContext, 0, 0, 0, textureWidth, textureHeight, 0, 0, textureWidth, textureHeight, 0, 1, 1, 1, 1);
-
 	ModelShader* shader = Graphics::Instance().GetShader(ShaderId::Toon);
 	shader->Begin(rc);
-	player->Render(rc, shader);
+	player1P->Render(rc, shader);
 	stage->TerrainRender(rc, shader);
 	EnemyManager::Instance().Render(rc, shader);
 	shader->End(rc);
+
+	RenderContext AIrc = rc;
+	AIrc.shadowColor = { 0.7f,0.1f,0.1f };
+	shader->Begin(AIrc);
+	playerAI->Render(AIrc, shader);
+	shader->End(AIrc);
 
 	ModelShader* waterShader = Graphics::Instance().GetShader(ShaderId::WaterSurface);
 	waterShader->Begin(rc);
 	stage->WaterRender(rc, waterShader);
 	waterShader->End(rc);
 
-	player->PrimitiveRender(rc);
-	player->HPBarRender(rc, gauge.get());
+	player1P->PrimitiveRender(rc);
+	playerAI->PrimitiveRender(rc);
+	player1P->HPBarRender(rc, gauge.get());
+	playerAI->HPBarRender(rc, gauge.get());
 
 	//3Dエフェクト描画
 	EffectManager::Instance().Render(rc.view, rc.projection);
@@ -235,10 +246,26 @@ void SceneGame::Render()
 
 	font->Textout(rc, "Player", 16, 0, 1.0f, { -10, 10, 0 }, 12, 16, 32, 32, 16, 16, 0, 1, 1, 1, 1);
 	//font->Textout(rc, "Time:" + std::to_string((int)gameTimer), 16, 0, 1.0f, { 910, 10, 0 }, 32, 32, 32, 32, 16, 16, 0, 1, 1, 1, 1);
+	
+	//なんでかしらんけど影映らんくなったのでここで一旦処理書く
+	Gizmos* gizmos = Graphics::Instance().GetGizmos();
+	rc.camera = &camera;
+	rc.deviceContext = Graphics::Instance().GetDeviceContext();
+	rc.renderState = Graphics::Instance().GetRenderState();
+	//描画実行
+	gizmos->Render(rc);
+
+	//Loadingの為ここでブレンドステート変更
+	FLOAT blendFactor[4] = { 1.0f,1.0f,1.0f,1.0f };
+	UINT sampleMask = 0xFFFFFFFF;
+	dc->OMSetBlendState(renderState->GetBlendState(BlendState::Transparency), blendFactor, sampleMask);
+
+#if 0
 	// 3Dデバッグ描画
 	{
 		//プレイヤーデバッグプリミティブ描画
-		player->DrawDebugPrimitive();
+		player1P->DrawDebugPrimitive();
+		playerAI->DrawDebugPrimitive();
 		//エネミーデバッグプリミティブ描画
 		EnemyManager::Instance().DrawDebugPrimitive();
 	}
@@ -247,7 +274,6 @@ void SceneGame::Render()
 	//DrawSceneGUI();
 	//DrawPropertyGUI();
 	camera.DebugImGui();
-#if 0
 	// shadowMap
 	{
 		ShadowMap* shadowMap = Graphics::Instance().GetShadowMap();
@@ -462,4 +488,3 @@ void SceneGame::DrawPropertyGUI()
 
 	ImGui::End();
 }
-

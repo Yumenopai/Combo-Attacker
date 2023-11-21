@@ -31,7 +31,7 @@ public:
 
 		Max,
 	};
-	EnemySearch GetEnemySearch() const { return ESearch; }
+	EnemySearch GetESState() const { return ESState; }
 	
 	//ステート/下記で実装
 	enum class State;
@@ -49,11 +49,11 @@ public:
 		bool flagJump;
 	};
 
-private:
+protected:
 	std::unique_ptr<Model> model;
 	State state = State::Idle;
 	AttackType	Atype = AttackType::None;
-	EnemySearch ESearch = EnemySearch::None;
+	EnemySearch ESState = EnemySearch::None;
 
 	// VS-Enemy-Search
 	std::map<Enemy*, EnemySearch> enemySearch;
@@ -87,15 +87,15 @@ private:
 
 	DirectX::XMFLOAT3 offset;
 
+	std::unique_ptr<Effect> hitEffect;
+
 public:
 	Player();
 	~Player() override;
 
-	//インスタンス取得
-	static Player& Instance();
-
 	//更新
-	void Update(float elapsedTime, int playCount);
+	virtual void Update(float elapsedTime, int playCount) = 0;
+	virtual void UpdateJump(float elapsedTime) = 0;
 
 	//描画
 	void ShadowRender(const RenderContext& rc, ShadowMap* shadowMap);
@@ -104,15 +104,17 @@ public:
 	void PrimitiveRender(const RenderContext& rc);
 	void HPBarRender(const RenderContext& rc, Sprite* gauge);
 
-	//ジャンプ入力処理
-	bool InputJumpButton();
-	void UpdateJump(float elapsedTime);
 	// 攻撃処理
 	bool InputAttackFromNoneAttack(float elapsedTime);
 	bool InputAttackFromJump(float elapsedTime);
-	bool InputHammerButton();
-	bool InputSwordButton();
-	bool InputSpearButton();
+	
+	// 入力処理
+	virtual bool InputJumpButtonDown() = 0;
+	virtual bool InputJumpButton() = 0;
+	virtual bool InputJumpButtonUp() = 0;
+	virtual bool InputHammerButton() = 0;
+	virtual bool InputSwordButton() = 0;
+	virtual bool InputSpearButton() = 0;
 
 	//デバッグプリミティブ描画
 	void DrawDebugPrimitive();
@@ -132,11 +134,8 @@ protected:
 	//垂直速力更新 オーバーライド
 	void UpdateVerticalVelocity(float elapsedFrame);
 
-private:
-	// スティック入力値から移動ベクトルを取得
-	XMFLOAT3 GetMoveVec() const;
 	// 移動入力処理
-	bool InputMove(float elapsedTime);
+	virtual bool InputMove(float elapsedTime);
 
 	// Update
 	void UpdateArmPositions(Model* model, Arms& arm);
@@ -189,7 +188,7 @@ private:
 	// 各ステージごとの更新処理
 	void UpdateEachState(float elapsedTime);
 
-private:
+protected:
 	enum JumpState
 	{
 		CanJump,
@@ -236,9 +235,6 @@ private:
 		false,
 		false,
 	};
-
-	std::unique_ptr<Effect> hitEffect;
-
 public:
 	//ステート
 	enum class State

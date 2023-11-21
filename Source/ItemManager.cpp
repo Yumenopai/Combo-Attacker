@@ -1,15 +1,15 @@
 #include "ItemManager.h"
 #include "Graphics/Graphics.h"
 #include "Collision.h"
-#include "Player.h"
+#include "Player1P.h"
 
 //XVˆ—
 void ItemManager::Update(float elapsedTime)
 {
 	for (Enemy* enemy : enemies)
 	{
-		if (enemy->GetPosition().x <= Player::Instance().GetPosition().x + 25
-			&& enemy->GetPosition().x >= Player::Instance().GetPosition().x -25)
+		if (enemy->GetPosition().x <= Player1P::Instance().GetPosition().x + 25
+			&& enemy->GetPosition().x >= Player1P::Instance().GetPosition().x -25)
 			
 		enemy->Update(elapsedTime);
 	}

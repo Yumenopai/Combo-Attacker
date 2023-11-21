@@ -1,6 +1,6 @@
 #include "Graphics/FontSprite.h"
 #include "Stage.h"
-#include "Player.h"
+#include "Player1P.h"
 
 //ÉQÅ[ÉÄÉVÅ[Éì
 class SceneTitle : public Scene
@@ -29,7 +29,7 @@ private:
 	std::unique_ptr<Sprite> sprites[8];
 
 	std::unique_ptr<Stage> stage;
-	std::unique_ptr<Player> player;
+	std::unique_ptr<Player1P> player;
 	std::unique_ptr<FontSprite> font;
 
 	XMFLOAT3	position = { 0,0,0 };

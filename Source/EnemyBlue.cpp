@@ -1,6 +1,6 @@
 #include "EnemyBlue.h"
 #include "Graphics/Graphics.h"
-#include "Player.h"
+#include "Player1P.h"
 #include "Collision.h"
 
 //コンストラクタ
@@ -112,7 +112,7 @@ void EnemyBlue::MoveToTarget(float elapsedTime, float speedRate)
 bool EnemyBlue::SearchPlayer()
 {
 	//プレイヤーとの高低差を考慮して3Dでの距離判定をする
-	const DirectX::XMFLOAT3& playerPosition = Player::Instance().GetPosition();
+	const DirectX::XMFLOAT3& playerPosition = Player1P::Instance().GetPosition();
 	float vx = playerPosition.x - position.x;
 	float vy = playerPosition.y - position.y;
 	float vz = playerPosition.z - position.z;
@@ -196,7 +196,7 @@ void EnemyBlue::TransitionPursuitState()
 void EnemyBlue::UpdatePursuitState(float elapsedTime)
 {
 	//目標地点をプレイヤー位置に設定
-	targetPosition = Player::Instance().GetPosition();
+	targetPosition = Player1P::Instance().GetPosition();
 
 	//目標地点へ移動
 	MoveToTarget(elapsedTime, 1.0f);
@@ -255,7 +255,7 @@ void EnemyBlue::TransitionIdleBattleState()
 void EnemyBlue::UpdateIdleBattleState(float elapsedTime)
 {
 	//目標地点をプレイヤー位置に設定
-	targetPosition = Player::Instance().GetPosition();
+	targetPosition = Player1P::Instance().GetPosition();
 
 	//プレイヤーが攻撃範囲にいた場合は攻撃ステートへ遷移
 	float vx = targetPosition.x - position.x;
