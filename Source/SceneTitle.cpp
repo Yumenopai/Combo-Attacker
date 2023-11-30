@@ -71,7 +71,7 @@ void SceneTitle::Finalize()
 
 void SceneTitle::Update(float elapsedTime)
 {
-	player->Update(elapsedTime, playCount);
+	player->Update(elapsedTime);
 
 	//if (player->GetPosition().y < -8.0f)
 	//{
@@ -219,7 +219,7 @@ void SceneTitle::Render()
 	DrawSceneGUI();
 	//DrawPropertyGUI();
 	//デバッグメニュー描画
-#if 0
+#ifdef _DEBUG
 	{
 		ImVec2 pos = ImGui::GetMainViewport()->GetWorkPos();
 		ImGui::SetNextWindowPos(ImVec2(pos.x + 10, pos.y + 10), ImGuiCond_FirstUseEver);

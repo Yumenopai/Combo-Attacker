@@ -29,6 +29,12 @@ private:
 		const DirectX::XMFLOAT4X4& view,
 		const DirectX::XMFLOAT4X4& projection
 	);
+	//キャラクター名前描画
+	void RenderCharacterName(
+		const RenderContext& rc,
+		const DirectX::XMFLOAT4X4& view,
+		const DirectX::XMFLOAT4X4& projection
+	);
 
 	//シーンGUI描画
 	void DrawSceneGUI();

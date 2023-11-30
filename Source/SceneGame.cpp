@@ -4,6 +4,7 @@
 #include "SceneManager.h"
 #include "SceneLoading.h"
 #include "SceneGame.h"
+#include "PlayerManager.h"
 #include "EnemyManager.h"
 #include "EnemySlime.h"
 #include "EnemyTurtleShell.h"
@@ -41,6 +42,9 @@ void SceneGame::Initialize()
 	stage = std::make_unique<Stage>();
 	player1P = std::make_unique<Player1P>();
 	playerAI = std::make_unique<PlayerAI>();
+	PlayerManager& playerManager = PlayerManager::Instance();
+	playerManager.Register(player1P.get());
+	playerManager.Register(playerAI.get());
 
 	//スカイボックス
 	skyBox = std::make_unique<SkyBox>("Data/Texture/incskies_002_8k.png");
@@ -119,10 +123,8 @@ void SceneGame::Update(float elapsedTime)
 	cameraController->SetTarget(target);
 	cameraController->Update(elapsedTime);
 
-	player1P->Update(elapsedTime,1);
-	playerAI->Update(elapsedTime,1);
-
-	//エネミー更新
+	// マネージャーによる更新
+	PlayerManager::Instance().Update(elapsedTime);
 	EnemyManager::Instance().Update(elapsedTime);
 	stage->Update(elapsedTime);
 	//エフェクト更新処理
@@ -154,8 +156,7 @@ void SceneGame::Render()
 	//シャドウマップ描画
 	shadowMap->Begin(rc, camera.GetFocus());
 	stage->ShadowRender(rc, shadowMap);
-	player1P->ShadowRender(rc, shadowMap);
-	playerAI->ShadowRender(rc, shadowMap);
+	PlayerManager::Instance().ShadowRender(rc, shadowMap);
 	EnemyManager::Instance().ShadowRender(rc, shadowMap);
 	shadowMap->End(rc);
 
@@ -216,11 +217,6 @@ void SceneGame::Render()
 	stage->WaterRender(rc, waterShader);
 	waterShader->End(rc);
 
-	player1P->PrimitiveRender(rc);
-	playerAI->PrimitiveRender(rc);
-	player1P->HPBarRender(rc, gauge.get());
-	playerAI->HPBarRender(rc, gauge.get());
-
 	//3Dエフェクト描画
 	EffectManager::Instance().Render(rc.view, rc.projection);
 
@@ -240,6 +236,9 @@ void SceneGame::Render()
 	//}
 	// 2Dスプライト描画
 	{
+		PlayerManager::Instance().Render2d(rc, gauge.get());
+		RenderCharacterName(rc, rc.view, rc.projection);
+
 		RenderEnemyGauge(dc, rc.view, rc.projection);
 	}
 
@@ -260,7 +259,7 @@ void SceneGame::Render()
 	UINT sampleMask = 0xFFFFFFFF;
 	dc->OMSetBlendState(renderState->GetBlendState(BlendState::Transparency), blendFactor, sampleMask);
 
-#if 0
+#ifdef _DEBUG
 	// 3Dデバッグ描画
 	{
 		//プレイヤーデバッグプリミティブ描画
@@ -274,6 +273,8 @@ void SceneGame::Render()
 	//DrawSceneGUI();
 	//DrawPropertyGUI();
 	camera.DebugImGui();
+
+#if 0
 	// shadowMap
 	{
 		ShadowMap* shadowMap = Graphics::Instance().GetShadowMap();
@@ -289,6 +290,7 @@ void SceneGame::Render()
 		ImGui::End();
 	}
 
+#endif
 #endif
 }
 
@@ -371,6 +373,113 @@ void SceneGame::RenderEnemyGauge(ID3D11DeviceContext* dc, const DirectX::XMFLOAT
 			1.0f, 0.0f, 0.0f, 1.0f
 		);
 	}
+}
+
+// キャラクター名前描画
+void SceneGame::RenderCharacterName(const RenderContext& rc, const DirectX::XMFLOAT4X4& view, const DirectX::XMFLOAT4X4& projection)
+{
+	ID3D11DeviceContext* dc = rc.deviceContext;
+
+	//ビューポート
+	D3D11_VIEWPORT viewport;
+	UINT numViewports = 1;
+	dc->RSGetViewports(&numViewports, &viewport);
+
+	//変換行列
+	XMMATRIX View = XMLoadFloat4x4(&view);
+	XMMATRIX Projection = XMLoadFloat4x4(&projection);
+	XMMATRIX World = XMMatrixIdentity();
+
+	{
+		Player1P& player = Player1P::Instance();
+
+		//Player頭上のワールド座標
+		XMFLOAT3 worldPosition = player.GetPosition();
+		worldPosition.y += player.GetHeight() + 0.4f;
+		XMVECTOR WorldPosition = XMLoadFloat3(&worldPosition);
+
+		//ワールドからスクリーンへの変換
+		XMVECTOR ScreenPosition = XMVector3Project(
+			WorldPosition,
+			viewport.TopLeftX,
+			viewport.TopLeftY,
+			viewport.Width,
+			viewport.Height,
+			viewport.MinDepth,
+			viewport.MaxDepth,
+			Projection,
+			View,
+			World
+		);
+
+		XMFLOAT3 screenPosition;
+		XMStoreFloat3(&screenPosition, ScreenPosition);
+		//HPゲージの長さ
+		const float guageWidth = 60.0f;
+		const float guageHeight = 8.0f;
+		float screenWidth = Graphics::Instance().GetScreenWidth();
+		float screenHeight = Graphics::Instance().GetScreenHeight();
+
+
+		//カメラの背後にいるか、明らかに離れているなら描画しない
+		if (screenPosition.z > 0.0f && screenPosition.z < 1.0f)
+		{
+			font->Textout(rc, "PLAYER",
+				0,
+				screenPosition.y,
+				0,
+				{ screenPosition.x - 12 * 5, 0, 0 },
+				12, 16,
+				32, 32, 16, 16, 0, 0.1f, 0.65f, 0.9f, 1);
+		}
+	}
+	{
+		PlayerAI& player = PlayerAI::Instance();
+
+		//Player頭上のワールド座標
+		XMFLOAT3 worldPosition = player.GetPosition();
+		worldPosition.y += player.GetHeight() + 0.4f;
+		XMVECTOR WorldPosition = XMLoadFloat3(&worldPosition);
+
+		//ワールドからスクリーンへの変換
+		XMVECTOR ScreenPosition = XMVector3Project(
+			WorldPosition,
+			viewport.TopLeftX,
+			viewport.TopLeftY,
+			viewport.Width,
+			viewport.Height,
+			viewport.MinDepth,
+			viewport.MaxDepth,
+			Projection,
+			View,
+			World
+		);
+
+		XMFLOAT3 screenPosition;
+		XMStoreFloat3(&screenPosition, ScreenPosition);
+		//HPゲージの長さ
+		const float guageWidth = 60.0f;
+		const float guageHeight = 8.0f;
+		float screenWidth = Graphics::Instance().GetScreenWidth();
+		float screenHeight = Graphics::Instance().GetScreenHeight();
+
+		//カメラの背後にいるか、明らかに離れているなら描画しない
+		if (screenPosition.z > 0.0f && screenPosition.z < 1.0f)
+		{
+			font->Textout(rc, "COM",
+				0,
+				screenPosition.y,
+				0,
+				{ screenPosition.x - 12 * 3, 0, 0 },
+				12, 16,
+				32, 32, 16, 16, 0, 1, 1, 1, 1);
+		}
+	}
+
+
+
+
+
 }
 
 //シーンGUI描画

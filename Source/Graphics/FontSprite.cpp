@@ -264,7 +264,7 @@ void FontSprite::Textout(const RenderContext& rc, std::string str,
 		{
 			int x = c % 16;
 			int y = c / 16;
-			Render(dc, i * sx, dy, dz, offset, dw, dh, x * sx, y * sy, textureWidth / sw, textureHeight / sh, angle, r, g, b, a);
+			Render(dc, i * dw, dy, dz, offset, dw, dh, x * sx, y * sy, textureWidth / sw, textureHeight / sh, angle, r, g, b, a);
 			++i;
 		}
 		End(dc);

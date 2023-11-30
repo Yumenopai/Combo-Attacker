@@ -20,5 +20,5 @@ private:
 	float rollSpeed = DirectX::XMConvertToRadians(90);
 	float range = 11.0f;
 	float maxAngleX = DirectX::XMConvertToRadians(45);
-	float minAngleX = DirectX::XMConvertToRadians(-45);
+	float minAngleX = DirectX::XMConvertToRadians(0);
 };

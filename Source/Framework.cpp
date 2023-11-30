@@ -78,16 +78,20 @@ void Framework::Render(float elapsedTime)
 	// シーン描画処理
 	SceneManager::Instance().Render();
 
-	//ImGui::Checkbox("slow", &isSlow);
-
 #if 0
 
 	//IMGUIデモウィンドウ(機能テスト用)
 	ImGui::ShowDemoWindow();
-#endif
-	//IMGUI描画
-	//ImGuiRenderer::Render(dc);
 
+#endif
+#ifdef _DEBUG 
+
+	ImGui::Checkbox("slow", &isSlow);
+	
+	//IMGUI描画
+	ImGuiRenderer::Render(dc);
+
+#endif
 	//画面表示
 	Graphics::Instance().Present(syncInterval);
 }

@@ -58,7 +58,7 @@ Player1P::~Player1P()
 }
 
 //更新
-void Player1P::Update(float elapsedTime, int remine)
+void Player1P::Update(float elapsedTime)
 {
 	EnemyManager& enemyManager = EnemyManager::Instance();
 	int enemyCount = enemyManager.GetEnemyCount();
@@ -78,9 +78,13 @@ void Player1P::Update(float elapsedTime, int remine)
 		float dist = XMVectorGetX(XMVector3Length(DistVec));
 
 		if (dist < playerVSenemyJudgeDist[(int)EnemySearch::Attack])
+		{
 			enemySearch[enemy] = EnemySearch::Attack;
+		}
 		else if (dist < playerVSenemyJudgeDist[(int)EnemySearch::Find])
+		{
 			enemySearch[enemy] = EnemySearch::Find;
+		}
 		else
 		{
 			enemySearch[enemy] = EnemySearch::None;
@@ -151,10 +155,7 @@ void Player1P::Render(const RenderContext& rc, ModelShader* shader)
 {
 	shader->Draw(rc, model.get());
 	
-	//rc.deviceContext->OMSetBlendState(renderState->GetBlendState(BlendState::Transparency), blendFactor, sampleMask);
-	
-#if 0
-
+#ifdef _DEBUG
 	//デバッグメニュー描画
 	DebugMenu();
 #endif
@@ -283,7 +284,8 @@ void Player1P::UpdateJump(float elapsedTime)
 		// 2段目ジャンプは高さ調節不可
 		if (gamePad.GetButtonDown() & GamePad::BTN_A)
 		{
-			velocity.y += 15.0f;
+			if (velocity.y > 0) velocity.y += 15.0f;
+			else				velocity.y = 15.0f;
 			jumpTrg = CannotJump;
 		}
 		// 一段目ジャンプ中の攻撃ボタン

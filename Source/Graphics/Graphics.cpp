@@ -7,6 +7,26 @@
 //初期化
 void Graphics::Initialize(HWND hWnd)
 {
+	// ADAPTER
+	IDXGIFactory* factory;
+	CreateDXGIFactory(IID_PPV_ARGS(&factory));
+	IDXGIAdapter* adapter;
+	for (UINT adapter_index = 0; S_OK == factory->EnumAdapters(adapter_index, &adapter); ++adapter_index) {
+		DXGI_ADAPTER_DESC adapter_desc;
+		adapter->GetDesc(&adapter_desc);
+		if (adapter_desc.VendorId == 0x1002/*AMD*/ || adapter_desc.VendorId == 0x10DE/*NVIDIA*/)
+		{
+			break;
+		}
+		adapter->Release();
+	}
+	if (adapter == nullptr)
+	{
+		factory->EnumAdapters(0, &adapter);
+		DXGI_ADAPTER_DESC adapter_desc;
+		adapter->GetDesc(&adapter_desc);
+	}
+
 	//画面サイズ取得
 	RECT rc;
 	GetClientRect(hWnd, &rc);
@@ -58,8 +78,8 @@ void Graphics::Initialize(HWND hWnd)
 
 		//デバイス＆スワップチェーン生成
 		hr = D3D11CreateDeviceAndSwapChain(
-			nullptr,
-			D3D_DRIVER_TYPE_HARDWARE,
+			adapter/*ADAPTER*/,
+			D3D_DRIVER_TYPE_UNKNOWN/*ADAPTER*/,
 			nullptr,
 			createDeviceFlags,
 			featureLevels,
@@ -73,6 +93,9 @@ void Graphics::Initialize(HWND hWnd)
 		);
 		_ASSERT_EXPR(SUCCEEDED(hr), HRTrace(hr));
 	}
+
+	adapter->Release();
+
 	// レンダーターゲットビューの生成
 	{
 		// スワップチェーンからバックバッファテクスチャを取得する。

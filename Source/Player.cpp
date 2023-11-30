@@ -45,22 +45,6 @@ Player::~Player()
 {
 }
 
-//ï`âÊ
-void Player::ShadowRender(const RenderContext& rc, ShadowMap* shadowMap)
-{
-	shadowMap->Draw(rc, model.get());
-}
-//ï`âÊ
-void Player::Render(const RenderContext& rc, ModelShader* shader)
-{
-	shader->Draw(rc, model.get());
-
-#if 0
-	//ÉfÉoÉbÉOÉÅÉjÉÖÅ[ï`âÊ
-	DebugMenu();
-#endif
-}
-
 // çUåÇÇÃãOê’ï`âÊ
 void Player::PrimitiveRender(const RenderContext& rc)
 {
@@ -68,47 +52,6 @@ void Player::PrimitiveRender(const RenderContext& rc)
 
 	// É|ÉäÉSÉìï`âÊ
 	primitiveRenderer->Render(rc.deviceContext, rc.camera->GetView(), rc.camera->GetProjection(), D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
-}
-// çUåÇÇÃãOê’ï`âÊ
-void Player::HPBarRender(const RenderContext& rc, Sprite* gauge)
-{
-	ID3D11DeviceContext* dc = rc.deviceContext;
-
-	//HPÉQÅ[ÉWÇÃí∑Ç≥
-	const float guageWidth = 700.0f;
-	const float guageHeight = 15.0f;
-
-	float healthRate = GetHealth() / static_cast<float>(GetMaxHealth());
-	int frameExpansion = 6;
-	Graphics& graphics = Graphics::Instance();
-	float screenWidth = static_cast<float>(graphics.GetScreenWidth());
-
-	//ÉQÅ[ÉWï`âÊ(â∫ín)
-	gauge->Render(dc,
-		(screenWidth / 2) - (guageWidth / 2),
-		555.0f,
-		0,
-		guageWidth + frameExpansion,
-		guageHeight + frameExpansion,
-		0, 0,
-		static_cast<float>(gauge->GetTextureWidth()),
-		static_cast<float>(gauge->GetTextureHeight()),
-		0.0f,
-		0.3f, 0.3f, 0.3f, 0.8f
-	);
-	//ÉQÅ[ÉWï`âÊ
-	gauge->Render(dc,
-		(screenWidth / 2) - (guageWidth / 2) + frameExpansion / 2,
-		555.0f + frameExpansion / 2,
-		0,
-		guageWidth * healthRate,
-		guageHeight,
-		0, 0,
-		static_cast<float>(gauge->GetTextureWidth()),
-		static_cast<float>(gauge->GetTextureHeight()),
-		0.0f,
-		0.2f, 0.8f, 0.2f, 1.0f
-	);
 }
 
 void Player::DebugMenu()

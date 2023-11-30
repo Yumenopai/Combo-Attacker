@@ -21,4 +21,12 @@ public:
 
 	//デバッグプリミティブ描画
 	virtual void DrawDebugPrimitive();
+
+
+
+	//Setter
+	void SetTargetPosition(DirectX::XMFLOAT3& pos) { targetPosition = pos; }
+
+protected:
+	DirectX::XMFLOAT3 targetPosition = { 0,0,0 };
 };

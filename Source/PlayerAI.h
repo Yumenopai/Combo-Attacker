@@ -35,7 +35,7 @@ public:
 	static PlayerAI& Instance();
 
 	//XV
-	void Update(float elapsedTime, int playCount);
+	void Update(float elapsedTime);
 
 	//•`‰æ
 	void ShadowRender(const RenderContext& rc, ShadowMap* shadowMap);

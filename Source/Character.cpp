@@ -20,8 +20,8 @@ void Character::UpdateTransform()
 
 bool Character::ApplyDamage(int damage, float invincibleTime)
 {
-	if (damage == 0)		return false;
-	if (invincibleTime <= 0) return false;
+	if (damage == 0 || invincibleTime < 0) return false; //設定項目が無効
+	if (invincibleTimer > 0) return false; //タイマー進行中ならfalse
 
 	//ダメージ処理
 	invincibleTimer = invincibleTime;

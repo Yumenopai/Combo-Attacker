@@ -90,7 +90,7 @@ protected:
 	float	height = 2.0f;
 	int		health = 40;
 	int		maxHealth = 40;
-	float	invincibleTimer = 1.0f;
+	float	invincibleTimer = 0.0f;
 
 	float	friction = 0.5f;
 

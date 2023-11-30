@@ -65,7 +65,7 @@ protected:
 	//ƒWƒƒƒ“ƒvUŒ‚‚Ég—p
 	bool isMoveAttack = false;
 	int attackCount = 0;
-	const float playerVSenemyJudgeDist[(int)EnemySearch::Max] = { 5.0f, 2.0f, };
+	const float playerVSenemyJudgeDist[(int)EnemySearch::Max] = { 6.5f, 2.0f, };
 
 	// SwordAttack
 	static const int MAX_POLYGON = 32;
@@ -94,15 +94,15 @@ public:
 	~Player() override;
 
 	//XV
-	virtual void Update(float elapsedTime, int playCount) = 0;
+	virtual void Update(float elapsedTime) = 0;
 	virtual void UpdateJump(float elapsedTime) = 0;
 
 	//•`‰æ
-	void ShadowRender(const RenderContext& rc, ShadowMap* shadowMap);
+	virtual void ShadowRender(const RenderContext& rc, ShadowMap* shadowMap) = 0;
 	//•`‰æ
-	void Render(const RenderContext& rc, ModelShader* shader);
+	virtual void Render(const RenderContext& rc, ModelShader* shader) = 0;
 	void PrimitiveRender(const RenderContext& rc);
-	void HPBarRender(const RenderContext& rc, Sprite* gauge);
+	virtual void HPBarRender(const RenderContext& rc, Sprite* gauge) = 0;
 
 	// UŒ‚ˆ—
 	bool InputAttackFromNoneAttack(float elapsedTime);

@@ -52,9 +52,6 @@
     <Filter Include="Shader\3D">
       <UniqueIdentifier>{a4220758-1c31-4e54-add8-bbeb759ef886}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Shader\2D\FullScreenQuad">
-      <UniqueIdentifier>{58002e0b-023b-45d3-83de-ccf2c2efc409}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Shader\2D\Skybox">
       <UniqueIdentifier>{e60585f1-875f-4f34-ae01-466b97e1a34b}</UniqueIdentifier>
     </Filter>
@@ -87,6 +84,9 @@
     </Filter>
     <Filter Include="Source\Object\Character\Enemy">
       <UniqueIdentifier>{4b91f531-a73c-4c7a-b184-5e118f804e6e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shader\2D\PostEffect">
+      <UniqueIdentifier>{58002e0b-023b-45d3-83de-ccf2c2efc409}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -261,6 +261,18 @@
     <ClInclude Include="Source\Shader\ShadowMap.h">
       <Filter>Source\Shader</Filter>
     </ClInclude>
+    <ClInclude Include="Source\Player1P.h">
+      <Filter>Source\Object\Character\Player</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\PlayerAI.h">
+      <Filter>Source\Object\Character\Player</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\PlayerManager.h">
+      <Filter>Source\Object\Character\Player</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\MathScript.h">
+      <Filter>Source\system</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\Framework.cpp">
@@ -416,11 +428,20 @@
     <ClCompile Include="Source\Shader\ShadowMap.cpp">
       <Filter>Source\Shader</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Player1P.cpp">
+      <Filter>Source\Object\Character\Player</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\PlayerAI.cpp">
+      <Filter>Source\Object\Character\Player</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\PlayerManager.cpp">
+      <Filter>Source\Object\Character\Player</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
     <None Include="Shader\FullScreenQuad.hlsli">
-      <Filter>Shader\2D\FullScreenQuad</Filter>
+      <Filter>Shader\2D\PostEffect</Filter>
     </None>
     <None Include="Shader\Gizmos.hlsli">
       <Filter>Shader\3D\Gizmos</Filter>
@@ -435,7 +456,7 @@
       <Filter>Shader\2D\UVScroll</Filter>
     </None>
     <None Include="Shader\PostEffect.hlsli">
-      <Filter>Shader\2D\FullScreenQuad</Filter>
+      <Filter>Shader\2D\PostEffect</Filter>
     </None>
     <None Include="Shader\PrimitiveRenderer.hlsli">
       <Filter>Shader\2D\PrimitiveRenderer</Filter>
@@ -455,7 +476,7 @@
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shader\FullScreenQuadVS.hlsl">
-      <Filter>Shader\2D\FullScreenQuad</Filter>
+      <Filter>Shader\2D\PostEffect</Filter>
     </FxCompile>
     <FxCompile Include="Shader\GizmosPS.hlsl">
       <Filter>Shader\3D\Gizmos</Filter>
@@ -464,10 +485,10 @@
       <Filter>Shader\3D\Gizmos</Filter>
     </FxCompile>
     <FxCompile Include="Shader\LuminanceExtractionPS.hlsl">
-      <Filter>Shader\2D\FullScreenQuad</Filter>
+      <Filter>Shader\2D\PostEffect</Filter>
     </FxCompile>
     <FxCompile Include="Shader\BloomPS.hlsl">
-      <Filter>Shader\2D\FullScreenQuad</Filter>
+      <Filter>Shader\2D\PostEffect</Filter>
     </FxCompile>
     <FxCompile Include="Shader\PhongPS.hlsl">
       <Filter>Shader\3D\Phong</Filter>

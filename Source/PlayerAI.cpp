@@ -60,7 +60,7 @@ PlayerAI::~PlayerAI()
 }
 
 //更新
-void PlayerAI::Update(float elapsedTime, int remine)
+void PlayerAI::Update(float elapsedTime)
 {
 	EnemyManager& enemyManager = EnemyManager::Instance();
 	int enemyCount = enemyManager.GetEnemyCount();
@@ -105,7 +105,9 @@ void PlayerAI::Update(float elapsedTime, int remine)
 		}
 	}
 
-	if (ESState == EnemySearch::Attack && nowInput != InputState::Sword) nextInput = InputState::Sword;
+	if (ESState == EnemySearch::Attack && nowInput != InputState::Sword) //長押しでないので今がソードの場合を除く
+		nextInput = InputState::Sword;
+
 	// 配列ズラし
 	//ShiftTrailPositions();
 
@@ -187,11 +189,8 @@ void PlayerAI::ShadowRender(const RenderContext& rc, ShadowMap* shadowMap)
 void PlayerAI::Render(const RenderContext& rc, ModelShader* shader)
 {
 	shader->Draw(rc, model.get());
-	
-	//rc.deviceContext->OMSetBlendState(renderState->GetBlendState(BlendState::Transparency), blendFactor, sampleMask);
-	
-#if 0
 
+#ifdef _DEBUG
 	//デバッグメニュー描画
 	DebugMenu();
 #endif
@@ -309,12 +308,12 @@ bool PlayerAI::InputMove(float elapsedTime)
 	// 常にプレイヤーの斜め後ろ辺りに付かせる
 	playerPos.x -= sinf(playerAng.y-45) * 2;
 	playerPos.z -= cosf(playerAng.y-45) * 2;
+	playerPos.y = position.y; //Y方向は自身の高さで良い
 
 	XMVECTOR AIto1P = XMVectorSubtract(XMLoadFloat3(&playerPos), XMLoadFloat3(&position));
 	if (XMVectorGetX(XMVector3Length(AIto1P)) > 0.2f)
 		XMStoreFloat3(&moveVec, AIto1P);
 
-	//if (XMVectorGetX(XMVector3Length(XMLoadFloat3(&GetMoveVec()))) != 0/* && nowInput != InputState::None*/)
 	if (Player1P::Instance().GetESState() > EnemySearch::None)
 	{
 		if (nearestDist < 10.0f) moveVec = nearestVec;
