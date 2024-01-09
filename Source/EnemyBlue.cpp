@@ -1,17 +1,22 @@
 #include "EnemyBlue.h"
 #include "Graphics/Graphics.h"
-#include "Player1P.h"
+#include "PlayerManager.h"
 #include "Collision.h"
+#include "imgui.h"
 
 //コンストラクタ
 EnemyBlue::EnemyBlue()
 {
 	ID3D11Device* device = Graphics::Instance().GetDevice();
-	model = std::make_unique<Model>(device, "Data/Model/Enemy/Blue.fbx", 0.001f);
+	model = std::make_unique<Model>(device, "Data/Model/Enemy/Blue.fbx", 0.008f);
 
-	height = 1.0f;
+	height = 3.6f;
+	radius = 1.8f;
+	health = maxHealth = 100;
+	isHalfHP = false;
+
 	//待機ステートへ遷移
-	TransitionWanderState();
+	TransitionIdleState();
 }
 
 //デストラクタ
@@ -22,6 +27,8 @@ EnemyBlue::~EnemyBlue()
 //更新処理
 void EnemyBlue::Update(float elapsedTime)
 {
+	UpdateTargetPosition();
+
 	//ステート毎の更新処理
 	switch (state)
 	{
@@ -39,6 +46,15 @@ void EnemyBlue::Update(float elapsedTime)
 		break;
 	case State::IdleBattle:
 		UpdateIdleBattleState(elapsedTime);
+		break;
+	case State::GetHit:
+		UpdateGetHitState(elapsedTime);
+		break;
+	case State::Scream:
+		UpdateScreamState(elapsedTime);
+		break;
+	case State::AttackClaw:
+		UpdateAttackClawState(elapsedTime);
 		break;
 	}
 
@@ -75,11 +91,56 @@ void EnemyBlue::SetTerritory(const DirectX::XMFLOAT3& origin, float range)
 	territoryRange = range;
 }
 
+//ダメージ時に呼ばれる
+void EnemyBlue::OnDamaged()
+{
+	if (health <= 50 && !isHalfHP)
+	{
+		//ダメージステートへ遷移
+		TransitionGetHitState();
+		isHalfHP = true;
+	}
+}
 //死亡した時に呼ばれる
 void EnemyBlue::OnDead()
 {
-	//自身を破棄
-	Destroy();
+	if (!isDead)
+	{
+		//死亡ステートへ遷移
+		TransitionDieState();
+		isDead = true;
+	}
+}
+
+Player::EnemySearch EnemyBlue::GetNearestPlayerES()
+{
+	Player::EnemySearch es = Player::EnemySearch::None;
+	//es = Player1P::Instance().GetEachEnemySearchState(this);
+
+	for (Player* player : PlayerManager::Instance().players)
+	{
+		if (static_cast<int>(es) < static_cast<int>(player->GetEachEnemySearchState(this)))
+			es = player->GetEachEnemySearchState(this);
+	}
+	return es;
+}
+
+//ターゲット位置を設定
+void EnemyBlue::UpdateTargetPosition()
+{
+	//プレイヤーとの高低差を考慮して3Dでの距離判定をする
+	minLen = FLT_MAX;
+	for (Player* player : PlayerManager::Instance().players)
+	{
+		nowLen = player->GetEachEnemyDist(this);
+		if (nowLen < minLen)
+		{
+			minLen = nowLen;
+			targetPosition = player->GetPosition();
+		}
+	}
+
+	//targetPosition = Player1P::Instance().GetPosition();
 }
 
 //ターゲット位置をランダム設定
@@ -111,28 +172,10 @@ void EnemyBlue::MoveToTarget(float elapsedTime, float speedRate)
 //プレイヤー索敵
 bool EnemyBlue::SearchPlayer()
 {
-	//プレイヤーとの高低差を考慮して3Dでの距離判定をする
-	const DirectX::XMFLOAT3& playerPosition = Player1P::Instance().GetPosition();
-	float vx = playerPosition.x - position.x;
-	float vy = playerPosition.y - position.y;
-	float vz = playerPosition.z - position.z;
-	float dist = sqrtf(vx * vx + vy * vy + vz * vz);
-
-	if (dist < searchRange)
+	Player::EnemySearch es = GetNearestPlayerES();
+	if (es >= Player::EnemySearch::Find)
 	{
-		float distXZ = sqrtf(vx * vx + vz * vz);
-		//単位ベクトル化
-		vx /= distXZ;
-		vz /= distXZ;
-		//前方ベクトル
-		float frontX = sinf(angle.y);
-		float frontZ = cosf(angle.y);
-		//2つのベクトル内積値で前後判定
-		float dot = (frontX * vx) + (frontZ * vz);
-		if (dot > 0.0f)
-		{
-			return true;
-		}
+		return true;
 	}
 	return false;
 }
@@ -146,7 +189,7 @@ void EnemyBlue::TransitionWanderState()
 	SetRandomTargetPosition();
 
 	//歩きアニメーション再生
-	//model->PlayAnimation(Anim_WalkFWD, true);
+	model->PlayAnimation(Anim_Walk, true);
 }
 
 //徘徊ステート更新処理
@@ -169,7 +212,7 @@ void EnemyBlue::TransitionIdleState()
 	state = State::Idle;
 
 	//待機アニメーション再生
-	//model->PlayAnimation(Anim_IdleNormal, true);
+	model->PlayAnimation(Anim_Idle1, true);
 }
 
 //待機ステート更新処理
@@ -189,31 +232,26 @@ void EnemyBlue::TransitionPursuitState()
 	state = State::Pursuit;
 
 	//歩きアニメーション再生
-	//model->PlayAnimation(Anim_RunFWD, true);
+	model->PlayAnimation(Anim_Run, true);
 }
 
 //追跡ステート更新処理
 void EnemyBlue::UpdatePursuitState(float elapsedTime)
 {
-	//目標地点をプレイヤー位置に設定
-	targetPosition = Player1P::Instance().GetPosition();
-
 	//目標地点へ移動
 	MoveToTarget(elapsedTime, 1.0f);
 
-	//プレイヤーの近づくと攻撃ステートへ遷移
-	float vx = targetPosition.x - position.x;
-	float vy = targetPosition.y - position.y;
-	float vz = targetPosition.z - position.z;
-	float dist = sqrtf(vx * vx + vy * vy + vz * vz);
-	if (dist < attackRange)
+	//プレイヤーが近づくと攻撃ステートへ遷移
+	Player::EnemySearch es = GetNearestPlayerES();
+
+	if (es >= Player::EnemySearch::Attack)
 	{
 		//攻撃ステートへ遷移
-		TransitionAttackState();
+		isHalfHP ? TransitionAttackClawState() : TransitionAttackState();
 	}
 	else if (!SearchPlayer())
 	{
-		TransitionWanderState();
+		TransitionIdleState();
 	}
 }
 
@@ -223,7 +261,7 @@ void EnemyBlue::TransitionAttackState()
 	state = State::Attack;
 
 	//攻撃アニメーション再生
-	//model->PlayAnimation(Anim_Attack1, false);
+	model->PlayAnimation(Anim_Attack01, false);
 }
 
 //攻撃ステート更新処理
@@ -231,9 +269,12 @@ void EnemyBlue::UpdateAttackState(float elapsedTime)
 {
 	//任意のアニメーション再生区間でのみ衝突判定処理をする
 	float animationTime = model->GetCurrentAnimationSeconds();
-	if (animationTime >= 0.1f && animationTime <= 0.35f)
+	if (animationTime >= 0.35f && animationTime <= 0.6f)
 	{
-	}
+		//頭ノードとプレイヤーの衝突処理
+		CollisionNodeVsPlayer("Jaw3", 0.2f);
+
+	}	
 
 	//攻撃アニメーションが終わったら戦闘待機ステートへ遷移
 	if (!model->IsPlayAnimation())
@@ -248,30 +289,229 @@ void EnemyBlue::TransitionIdleBattleState()
 	state = State::IdleBattle;
 
 	//戦闘待機アニメーション再生
-	//model->PlayAnimation(Anim_IdleBattle, true);
+	model->PlayAnimation(Anim_Idle02, true);
 }
 
 //戦闘待機ステート更新処理
 void EnemyBlue::UpdateIdleBattleState(float elapsedTime)
 {
-	//目標地点をプレイヤー位置に設定
-	targetPosition = Player1P::Instance().GetPosition();
-
 	//プレイヤーが攻撃範囲にいた場合は攻撃ステートへ遷移
-	float vx = targetPosition.x - position.x;
-	float vy = targetPosition.y - position.y;
-	float vz = targetPosition.z - position.z;
-	float dist = sqrtf(vx * vx + vy * vy + vz * vz);
-	if (dist < attackRange)
+	Player::EnemySearch es = GetNearestPlayerES();
+
+	if (es >= Player::EnemySearch::Attack)
 	{
 		//攻撃ステートへ遷移
-		TransitionAttackState();
+		isHalfHP ? TransitionAttackClawState() : TransitionAttackState();
 	}
 	else
 	{
-		//徘徊ステートへ遷移
-		TransitionWanderState();
+		//待機ステートへ遷移
+		TransitionIdleState();
 	}
 
 	MoveToTarget(elapsedTime, 0.0f);
+}
+
+//咆哮ステートへ遷移
+void EnemyBlue::TransitionScreamState()
+{
+	state = State::Scream;
+
+	//咆哮アニメーション再生
+	model->PlayAnimation(Anim_Scream, false);
+}
+
+//咆哮ステート更新処理
+void EnemyBlue::UpdateScreamState(float elapsedTime)
+{
+	if (model->IsPlayAnimation()) return;
+	
+	//アニメーション終了後
+	{
+		//攻撃ステートへ遷移
+		TransitionIdleBattleState();
+	}
+}
+
+//翼攻撃ステートへ遷移
+void EnemyBlue::TransitionAttackClawState()
+{
+	state = State::AttackClaw;
+
+	//翼攻撃アニメーション再生
+	model->PlayAnimation(Anim_AttackClaw, false);
+}
+
+//翼攻撃ステート更新処理
+void EnemyBlue::UpdateAttackClawState(float elapsedTime)
+{
+	//任意のアニメーション再生区間でのみ衝突判定処理をする
+	float animationTime = model->GetCurrentAnimationSeconds();
+	if (animationTime >= 0.4f && animationTime <= 1.05f)
+	{
+		//爪ノードとプレイヤーの衝突処理
+		CollisionNodeVsPlayer("WingClaw2_L", 1);
+		CollisionNodeVsPlayer("WingClaw2_L_1", 1);
+	}
+
+	//攻撃アニメーションが終わったら戦闘待機ステートへ遷移
+	if (!model->IsPlayAnimation())
+	{
+		TransitionIdleBattleState();
+	}
+}
+
+//戦闘待機ステートへ遷移
+void EnemyBlue::TransitionGetHitState()
+{
+	state = State::GetHit;
+
+	//戦闘待機アニメーション再生
+	model->PlayAnimation(Anim_GetDamage, false);
+}
+
+//戦闘待機ステート更新処理
+void EnemyBlue::UpdateGetHitState(float elapsedTime)
+{
+	if (model->IsPlayAnimation()) return;
+	
+	//アニメーション終了後
+	{
+		//咆哮ステートへ遷移
+		TransitionScreamState();
+	}
+}
+//死亡ステートへ遷移
+void EnemyBlue::TransitionDieState()
+{
+	state = State::Die;
+
+	//戦闘待機アニメーション再生
+	model->PlayAnimation(Anim_Die, false);
+}
+//死亡ステート更新処理
+void EnemyBlue::UpdateDieState(float elapsedTime)
+{
+	if (model->IsPlayAnimation()) return;
+	
+	//アニメーション終了後
+	{
+		Destroy();
+	}
+}
+
+//ノードとプレイヤーの衝突処理
+void EnemyBlue::CollisionNodeVsPlayer(const char* nodeName, float nodeRadius)
+{
+	//ノード取得
+	Model::Node* node = model->FindNode(nodeName);
+	if (node == nullptr) return;
+
+	//ノード位置取得
+	XMFLOAT3 nodePosition;
+	nodePosition.x = node->worldTransform._41;
+	nodePosition.y = node->worldTransform._42;
+	nodePosition.z = node->worldTransform._43;
+
+	//衝突処理
+	for (Player* player : PlayerManager::Instance().players)
+	{
+		XMFLOAT3 outPosition;
+		if (Collision::IntersectSphereVsCylinder(
+			nodePosition, nodeRadius,
+			player->GetPosition(), player->GetRadius(), player->GetHeight(),
+			outPosition
+		))
+		{
+			//ダメージを与える
+			if (player->ApplyDamage(2, 0))
+			{
+				//敵を吹っ飛ばすベクトルを算出
+				XMFLOAT3 vec;
+				vec.x = outPosition.x - nodePosition.x;
+				vec.z = outPosition.z - nodePosition.z;
+				float length = sqrtf(vec.x * vec.x + vec.z * vec.z);
+				vec.x /= length;
+				vec.z /= length;
+
+				//XZ平面に吹っ飛ばす力をかける
+				float power = 10.0f;
+				vec.x *= power;
+				vec.z *= power;
+				//Y方向にも力をかける
+				vec.y = 5.0f;
+
+				//吹っ飛ばす
+				player->AddImpulse(vec);
+			}
+		}
+	}
+}
+
+void EnemyBlue::DebugMenu()
+{
+	ImVec2 pos = ImGui::GetMainViewport()->GetWorkPos();
+	ImGui::SetNextWindowPos(ImVec2(pos.x + 10, pos.y + 10), ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowSize(ImVec2(300, 300), ImGuiCond_FirstUseEver);
+
+
+	// デバッグ文字列表示の変更
+	std::string str = "";
+	// 現在のステート番号に合わせてデバッグ文字列をstrに格納
+	switch (state)
+	{
+	case EnemyBlue::State::Wander:
+		str = "Wander";
+		break;
+	case EnemyBlue::State::Idle:
+		str = "Idle";
+		break;
+	case EnemyBlue::State::Pursuit:
+		str = "Pursuit";
+		break;
+	case EnemyBlue::State::Attack:
+		str = "Attack";
+		break;
+	case EnemyBlue::State::IdleBattle:
+		str = "IdleBattle";
+		break;
+	case EnemyBlue::State::GetHit:
+		str = "GetHit";
+		break;
+	default:
+		break;
+	}
+
+	if (ImGui::Begin("Dragon", nullptr, ImGuiWindowFlags_None))
+	{
+		if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
+		{
+			//位置
+			ImGui::DragFloat3("Position", &position.x, 0.1f);
+
+			//回転
+			XMFLOAT3 a;
+			a.x = XMConvertToDegrees(angle.x);
+			a.y = XMConvertToDegrees(angle.y);
+			a.z = XMConvertToDegrees(angle.z);
+			ImGui::DragFloat3("Angle", &a.x, 1.0f);
+			if (a.y > 360) a.y = 0;
+			if (a.y < 0) a.y = 360;
+			angle.x = XMConvertToRadians(a.x);
+			angle.y = XMConvertToRadians(a.y);
+			angle.z = XMConvertToRadians(a.z);
+
+			//スケール
+			ImGui::DragFloat3("Scale", &scale.x, 0.01f);
+
+			ImGui::Text(u8"State　%s", str.c_str());
+			ImGui::Text(u8"nearestPlayer　%s", nearestPlayerStr.c_str());
+			ImGui::Text(u8"minLen　%f", minLen);
+			ImGui::Text(u8"nowLen　%f", nowLen);
+
+
+		}
+
+		ImGui::End();
+	}
 }

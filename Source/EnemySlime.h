@@ -3,10 +3,11 @@
 #include <memory>
 #include "Graphics/Model.h"
 #include "Enemy.h"
+#include "Player.h"
 
 class EnemySlime :public Enemy
 {
-protected:
+private:
 	//アニメーション
 	enum Animation
 	{
@@ -27,15 +28,19 @@ protected:
 		Anim_Dizzy,
 		Anim_Die
 	};
+
+public:
 	//ステート
 	enum class State
 	{
-		Idle = Animation::Anim_IdleNormal,
-		Wander = Animation::Anim_WalkFWD,
-		Pursuit = Animation::Anim_RunFWD,
-		Attack = Animation::Anim_Attack1,
-		IdleBattle = Animation::Anim_IdleBattle,
+		Idle,
+		Wander,
+		Pursuit,
+		Attack,
+		IdleBattle,
+		HitDamage
 	};
+
 
 protected:
 	std::unique_ptr<Model> model;
@@ -62,6 +67,8 @@ public:
 	void SetTerritory(const DirectX::XMFLOAT3& origin, float range);
 
 protected:
+	//ダメージ時に呼ばれる
+	void OnDamaged() override;
 	//死亡した時に呼ばれる
 	void OnDead() override;
 
@@ -70,6 +77,8 @@ protected:
 
 	//ターゲット位置を設定
 	void UpdateTargetPosition();
+
+	Player::EnemySearch GetNearestPlayerES();
 
 	//目標地点へ移動
 	void MoveToTarget(float elapsedTime, float speedRate);
@@ -93,18 +102,13 @@ protected:
 	void UpdateAttackState(float elapsedTime);
 	//戦闘待機ステート更新処理
 	void UpdateIdleBattleState(float elapsedTime);
+	//ダメージステート更新処理
+	void UpdateHitDamageState(float elapsedTime);
 
-	//徘徊ステートへ遷移
+	// 各ステージごとの更新処理
+	virtual void UpdateEachState(float elapsedTime);
+
+	//ステート遷移
 	void TransitionState(State nowState);
-
-	//徘徊ステートへ遷移
-	void TransitionWanderState();
-	//待機ステートへ遷移
-	void TransitionIdleState();
-	//追跡ステートへ遷移
-	void TransitionPursuitState();
-	//攻撃ステートへ遷移
-	void TransitionAttackState();
-	//戦闘待機ステートへ遷移
-	void TransitionIdleBattleState();
+	virtual void TransitionPlayAnimation(State nowState);
 };

@@ -39,6 +39,7 @@ public:
 	bool InputHammerButton();
 	bool InputSwordButton();
 	bool InputSpearButton();
+
 protected:
 	//着地した時に呼ばれる
 	void OnLanding(float elapsedTime) override;
@@ -48,7 +49,4 @@ private:
 	XMFLOAT3 GetMoveVec() const;
 	// 移動入力処理
 	bool InputMove(float elapsedTime);
-
-	//デバッグ
-	void DebugMenu();
 };

@@ -57,15 +57,19 @@ protected:
 
 	// VS-Enemy-Search
 	std::map<Enemy*, EnemySearch> enemySearch;
+	std::map<Enemy*, float> enemyDist;
 
 	Enemy* nearestEnemy = nullptr;
 	float nearestDist = FLT_MAX;
 	XMFLOAT3 nearestVec = {};
 
+	bool isAttackjudge = true;
+	int attackingEnemyNumber = -1;
+
 	//ジャンプ攻撃時に使用
 	bool isMoveAttack = false;
 	int attackCount = 0;
-	const float playerVSenemyJudgeDist[(int)EnemySearch::Max] = { 6.5f, 2.0f, };
+	const float playerVSenemyJudgeDist[(int)EnemySearch::Max] = { 6.5f, 2.5f, };
 
 	// SwordAttack
 	static const int MAX_POLYGON = 32;
@@ -77,6 +81,7 @@ protected:
 	float turnSpeed = XMConvertToRadians(720);
 
 	bool isDamaged = false;
+	bool isDead = false;
 	float stateTimer = 0.0f;
 	float DamageFlash = 0.1f;
 	int flashCount = 0;
@@ -121,7 +126,13 @@ public:
 
 
 	Model* GetModel() const { return model.get(); }
-	int GetFlashCount() const { return flashCount; }
+	
+	Enemy* GetNearestEnemy() { return nearestEnemy; }
+	EnemySearch GetEachEnemySearchState(Enemy* enemy) { return enemySearch[enemy]; }
+	float GetEachEnemyDist(Enemy* enemy) { return enemyDist[enemy]; }
+
+	//デバッグ
+	void DebugMenu();
 
 	//死亡した時に呼ばれる
 	void OnDead();
@@ -181,9 +192,6 @@ protected:
 	void TransitionAttackSword3State();
 	void TransitionAttackSwordJumpState(float elapsedTime);
 	void TransitionCliffGrabState();
-
-	//デバッグ
-	void DebugMenu();
 
 	// 各ステージごとの更新処理
 	void UpdateEachState(float elapsedTime);

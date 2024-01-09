@@ -34,11 +34,13 @@ Player1P::Player1P()
 
 	//初期化
 	enemySearch.clear();
+	enemyDist.clear();
 	EnemyManager& enemyManager = EnemyManager::Instance();
 	int enemyCount = enemyManager.GetEnemyCount();//全ての敵と総当たりで衝突処理
 	for (int i = 0; i < enemyCount; i++)
 	{
 		enemySearch[enemyManager.GetEnemy(i)] = EnemySearch::None;
+		enemyDist[enemyManager.GetEnemy(i)] = FLT_MAX;
 	}
 	ESState = EnemySearch::None;
 
@@ -77,6 +79,7 @@ void Player1P::Update(float elapsedTime)
 		XMVECTOR DistVec = XMVectorSubtract(PosEnemy, PosPlayer);
 		float dist = XMVectorGetX(XMVector3Length(DistVec));
 
+		enemyDist[enemy] = dist; //各エネミーとの距離等を更新毎に記録する
 		if (dist < playerVSenemyJudgeDist[(int)EnemySearch::Attack])
 		{
 			enemySearch[enemy] = EnemySearch::Attack;
@@ -154,11 +157,6 @@ void Player1P::ShadowRender(const RenderContext& rc, ShadowMap* shadowMap)
 void Player1P::Render(const RenderContext& rc, ModelShader* shader)
 {
 	shader->Draw(rc, model.get());
-	
-#ifdef _DEBUG
-	//デバッグメニュー描画
-	DebugMenu();
-#endif
 }
 
 // 攻撃の軌跡描画
@@ -209,40 +207,6 @@ void Player1P::HPBarRender(const RenderContext& rc, Sprite* gauge)
 		0.0f,
 		0.2f, 0.8f, 0.2f, 1.0f
 	);
-}
-
-void Player1P::DebugMenu()
-{
-	ImVec2 pos = ImGui::GetMainViewport()->GetWorkPos();
-	ImGui::SetNextWindowPos(ImVec2(pos.x + 10, pos.y + 10), ImGuiCond_FirstUseEver);
-	ImGui::SetNextWindowSize(ImVec2(300, 300), ImGuiCond_FirstUseEver);
-
-	if (ImGui::Begin("Player", nullptr, ImGuiWindowFlags_None))
-	{
-		if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
-		{
-			//位置
-			ImGui::DragFloat3("Position", &position.x, 0.1f);
-			ImGui::DragFloat3("Offset", &offset.x, 0.1f);
-
-			//回転
-			XMFLOAT3 a;
-			a.x = XMConvertToDegrees(angle.x);
-			a.y = XMConvertToDegrees(angle.y);
-			a.z = XMConvertToDegrees(angle.z);
-			ImGui::DragFloat3("Angle", &a.x, 1.0f);
-			if (a.y > 360) a.y = 0;
-			if (a.y < 0) a.y = 360;
-			angle.x = XMConvertToRadians(a.x);
-			angle.y = XMConvertToRadians(a.y);
-			angle.z = XMConvertToRadians(a.z);
-
-			//スケール
-			ImGui::DragFloat3("Scale", &scale.x, 0.01f);
-		}
-
-		ImGui::End();
-	}
 }
 
 //着地した時に呼ばれる

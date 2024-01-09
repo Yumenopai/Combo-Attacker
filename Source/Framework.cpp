@@ -30,7 +30,8 @@ Framework::Framework(HWND hWnd)
 	ImGuiRenderer::Initialize(hWnd, Graphics::Instance().GetDevice(), Graphics::Instance().GetDeviceContext());
 
 	//ÉVÅ[Éìèâä˙âª
-	SceneManager::Instance().ChangeScene(new SceneGame(1));
+	SceneManager::Instance().ChangeScene(new SceneTitle());
+	//SceneManager::Instance().ChangeScene(new SceneGame(1));
 	//SceneManager::Instance().ChangeScene(new ShadowTestScene);
 }
 
@@ -84,7 +85,7 @@ void Framework::Render(float elapsedTime)
 	ImGui::ShowDemoWindow();
 
 #endif
-#ifdef _DEBUG 
+#if showDebug//def _DEBUG 
 
 	ImGui::Checkbox("slow", &isSlow);
 	

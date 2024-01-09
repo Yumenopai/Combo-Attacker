@@ -2,13 +2,16 @@
 #include "Stage.h"
 #include "Player1P.h"
 #include "playerAI.h"
+#include "EnemySlime.h"
+#include "EnemyTurtleShell.h"
+#include "EnemyBlue.h"
 #include "Shader/Skybox.h"
 
 //ゲームシーン
 class SceneGame : public Scene
 {
 public:
-	SceneGame(int remain){}
+	SceneGame(){}
 	~SceneGame() override {}
 
 	// 初期化
@@ -41,12 +44,20 @@ private:
 	//プロパティGUI描画
 	void DrawPropertyGUI();
 
+
+private:
+	static const int enemySlimeCount = 4;
+	static const int enemyTurtleShellCount = 2;
+
 	std::unique_ptr<Sprite> sprites[8];
 	std::unique_ptr<SkyBox> skyBox;
 
 	std::unique_ptr<Stage> stage;
 	std::unique_ptr<Player1P> player1P;
 	std::unique_ptr<PlayerAI> playerAI;
+	std::unique_ptr<EnemySlime> enemySlime[enemySlimeCount];
+	std::unique_ptr<EnemyTurtleShell> enemyTurtleShell[enemyTurtleShellCount];
+	std::unique_ptr<EnemyBlue> enemyBlue;
 	std::unique_ptr<FontSprite> font;
 
 	std::unique_ptr<Sprite> gauge;

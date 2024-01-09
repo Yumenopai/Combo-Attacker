@@ -41,9 +41,7 @@ void Stage::ShadowRender(const RenderContext& rc, ShadowMap* shadowMap)
 }
 void Stage::WaterRender(const RenderContext& rc, ModelShader* shader)
 {
-	//つづきここから
 	//meshをわたしてべつべつにDrawする
-
 	for (const auto& mesh : model->GetMeshes())
 	{
 		if (mesh.material->name != "Water") continue;
@@ -51,13 +49,6 @@ void Stage::WaterRender(const RenderContext& rc, ModelShader* shader)
 		//シェーダーにモデル描画
 		shader->DrawByMesh(rc, model.get(), mesh);
 	}
-	//for (const auto& mat : model->GetMaterials())
-	//{
-	//	if (mat.name != "Water") continue;
-
-	//	//シェーダーにモデル描画
-	//	shader->Draw(rc, model.get(), mat);
-	//}
 }
 void Stage::TerrainRender(const RenderContext& rc, ModelShader* shader)
 {

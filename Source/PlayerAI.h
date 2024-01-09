@@ -25,8 +25,6 @@ private:
 	InputState nowInput = InputState::None;
 	InputState oldInput, nextInput;
 
-	XMFLOAT3 targetPosition = { 0,0,0 };
-
 public:
 	PlayerAI();
 	~PlayerAI() override;
@@ -72,17 +70,11 @@ public:
 		return false;
 	}
 
-
 protected:
 	//着地した時に呼ばれる
 	void OnLanding(float elapsedTime) override;
 
 private:
-	// スティック入力値から移動ベクトルを取得
-	XMFLOAT3 GetMoveVec() const;
 	// 移動入力処理
 	bool InputMove(float elapsedTime);
-
-	//デバッグ
-	void DebugMenu();
 };

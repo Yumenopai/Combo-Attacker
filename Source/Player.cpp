@@ -23,11 +23,13 @@ Player::Player()
 
 	//初期化
 	enemySearch.clear();
+	enemyDist.clear();
 	EnemyManager& enemyManager = EnemyManager::Instance();
 	int enemyCount = enemyManager.GetEnemyCount();//全ての敵と総当たりで衝突処理
 	for (int i = 0; i < enemyCount; i++)
 	{
 		enemySearch[enemyManager.GetEnemy(i)] = EnemySearch::None;
+		enemyDist[enemyManager.GetEnemy(i)] = FLT_MAX;
 	}
 
 	position = { -7,5,-66 };
@@ -83,6 +85,8 @@ void Player::DebugMenu()
 			//スケール
 			ImGui::DragFloat3("Scale", &scale.x, 0.01f);
 		}
+			
+		ImGui::Checkbox("attacking", &isAttackjudge);
 
 		ImGui::End();
 	}
@@ -103,12 +107,16 @@ void Player::OnLanding(float elapsedTime)
 void Player::OnDamaged()
 {
 	isDamaged = true;
+	TransitionDamageState();
 }
 
 void Player::OnDead()
 {
-	//if(Player::GetState() != Player::State::Dead)
-	//	TransitionDamageState();
+	if(!isDead)
+	{
+		TransitionDeadState();
+		isDead = true;
+	}
 }
 
 // 各ステージごとの更新処理
@@ -195,10 +203,10 @@ void Player::UpdateEachState(float elapsedTime)
 		if (Hammer.flag1)
 		{
 			UpdateArmPositions(model.get(), Hammer);
-			CollisionArmsVsEnemies(Hammer);
-
 			//任意のアニメーション再生区間でのみ次の攻撃技を出すようにする
 			float animationTime = model->GetCurrentAnimationSeconds();
+			if (animationTime >= 0.4f) CollisionArmsVsEnemies(Hammer);
+			
 			if (InputHammerButton() && animationTime >= 0.5f && animationTime <= 0.8f)
 			{
 				TransitionAttackHummer2State();
@@ -262,9 +270,10 @@ void Player::UpdateEachState(float elapsedTime)
 		if (Spear.flag2)
 		{
 			UpdateArmPositions(model.get(), Spear);
-			CollisionArmsVsEnemies(Spear);
 
 			float animationTime = model->GetCurrentAnimationSeconds();
+			if (animationTime >= 0.30f) CollisionArmsVsEnemies(Spear);
+
 			if (animationTime >= 0.30f && animationTime <= 0.45f)
 			{
 				// 足を踏ん張る際の前進
@@ -286,9 +295,9 @@ void Player::UpdateEachState(float elapsedTime)
 		if (Spear.flag3)
 		{
 			UpdateArmPositions(model.get(), Spear);
-			CollisionArmsVsEnemies(Spear);
-
 			float animationTime = model->GetCurrentAnimationSeconds();
+			if (animationTime >= 0.30f) CollisionArmsVsEnemies(Spear);
+
 			// 足を踏ん張る際の前進をここで行う
 			if (animationTime < 0.43f)
 			{
@@ -372,7 +381,7 @@ void Player::UpdateEachState(float elapsedTime)
 		{
 			UpdateArmPositions(model.get(), Sword);
 			float animationTime = model->GetCurrentAnimationSeconds();
-			if (animationTime <= 0.6f)
+			if (animationTime >= 0.25f && animationTime <= 0.6f)
 				CollisionArmsVsEnemies(Sword);
 
 			// 足を踏ん張る際の前進をここで行う
@@ -538,7 +547,7 @@ bool Player::InputAttackFromNoneAttack(float elapsedTime)
 	else if (InputSpearButton()) TransitionAttackSpear1State();
 	else return false;
 
-	if (enemySearch[nearestEnemy] > EnemySearch::None)
+	if (enemySearch[nearestEnemy] >= EnemySearch::Find)
 	{
 		//旋回処理
 		Turn(elapsedTime, nearestVec.x, nearestVec.z, 1000);
@@ -599,8 +608,10 @@ void Player::CollisionArmsVsEnemies(Arms arm)
 			outPosition
 		))
 		{
+			if (attackingEnemyNumber == i && !isAttackjudge) return; //攻撃判定しない場合は処理しない
+
 			//ダメージを与える
-			if (enemy->ApplyDamage(1, 0.5f))
+			if (enemy->ApplyDamage(1, 0))
 			{
 				//吹き飛ばす
 				if (attackCount >= 4)
@@ -630,7 +641,13 @@ void Player::CollisionArmsVsEnemies(Arms arm)
 					e.y += enemy->GetHeight() * 0.5f;
 					hitEffect->Play(e);
 				}
+				attackingEnemyNumber = i;
+				isAttackjudge = false;
 			}
+		}
+		else if(attackingEnemyNumber == i)//攻撃中のエネミーと一旦攻撃が外れた時、次回当たった時に判定を行う
+		{
+			isAttackjudge = true;
 		}
 	}
 }
@@ -751,17 +768,20 @@ void Player::TransitionAttackHummer1State()
 {
 	state = State::AttackHammer1;
 	Atype = AttackType::Hammer;
+	isAttackjudge = true;
 	model->PlayAnimation(Anim_AttackHammer1, false);
 }
 void Player::TransitionAttackHummer2State()
 {
 	state = State::AttackHammer2;
+	isAttackjudge = true;
 	model->PlayAnimation(Anim_AttackHammer2, false);
 }
 void Player::TransitionAttackHummerJumpState(float elapsedTime)
 {
 	state = State::AttackHammerJump;
 	Atype = AttackType::Hammer;
+	isAttackjudge = true;
 	if (InputMove(elapsedTime)) isMoveAttack = true;
 	model->PlayAnimation(Anim_AttackHammerJump, false);
 }
@@ -769,44 +789,52 @@ void Player::TransitionAttackSpear1State()
 {
 	state = State::AttackSpear1;
 	Atype = AttackType::Spear;
+	isAttackjudge = true;
 	model->PlayAnimation(Anim_AttackSpear1, false);
 }
 void Player::TransitionAttackSpear2State()
 {
 	state = State::AttackSpear2;
+	isAttackjudge = true;
 	model->PlayAnimation(Anim_AttackSpear2, false);
 }
 void Player::TransitionAttackSpear3State()
 {
 	state = State::AttackSpear3;
+	isAttackjudge = true;
 	model->PlayAnimation(Anim_AttackSpear3, false);
 }
 void Player::TransitionAttackSpearJumpState()
 {
 	state = State::AttackSpearJump;
 	Atype = AttackType::Spear;
+	isAttackjudge = true;
 	model->PlayAnimation(Anim_AttackSpearJump, false);
 }
 void Player::TransitionAttackSword1State()
 {
 	state = State::AttackSword1;
 	Atype = AttackType::Sword;
+	isAttackjudge = true;
 	model->PlayAnimation(Anim_AttackSword1, false);
 }
 void Player::TransitionAttackSword2State()
 {
 	state = State::AttackSword2;
+	isAttackjudge = true;
 	model->PlayAnimation(Anim_AttackSword2, false);
 }
 void Player::TransitionAttackSword3State()
 {
 	state = State::AttackSword3;
+	isAttackjudge = true;
 	model->PlayAnimation(Anim_AttackSword3, false);
 }
 void Player::TransitionAttackSwordJumpState(float elapsedTime)
 {
 	state = State::AttackSwordJump;
 	Atype = AttackType::Sword;
+	isAttackjudge = true;
 	if (InputMove(elapsedTime)) isMoveAttack = true;
 	model->PlayAnimation(Anim_AttackSwordJump, false);
 }

@@ -29,7 +29,28 @@ void EnemySlime::Update(float elapsedTime)
 	//最近Playerを設定
 	UpdateTargetPosition();
 
-	//ステート毎の更新処理
+	// 各ステージごとの更新処理
+	UpdateEachState(elapsedTime);
+
+	//速力処理更新
+	UpdateVelocity(elapsedTime);
+
+	//無敵時間更新
+	UpdateInvincibleTimer(elapsedTime);
+
+	//オブジェクト行列を更新
+	UpdateTransform();
+
+	//モデルアニメーション更新
+	model->UpdateAnimation(elapsedTime);
+
+	//モデル行列更新
+	model->UpdateTransform(transform);
+}
+
+// 各ステージごとの更新処理
+void EnemySlime::UpdateEachState(float elapsedTime)
+{
 	switch (state)
 	{
 	case State::Wander:
@@ -47,22 +68,10 @@ void EnemySlime::Update(float elapsedTime)
 	case State::IdleBattle:
 		UpdateIdleBattleState(elapsedTime);
 		break;
+	case State::HitDamage:
+		UpdateHitDamageState(elapsedTime);
+		break;
 	}
-
-	//速力処理更新
-	UpdateVelocity(elapsedTime);
-
-	//無敵時間更新
-	UpdateInvincibleTimer(elapsedTime);
-
-	//オブジェクト行列を更新
-	UpdateTransform();
-
-	//モデルアニメーション更新
-	model->UpdateAnimation(elapsedTime);
-
-	//モデル行列更新
-	model->UpdateTransform(transform);
 }
 
 //描画処理
@@ -82,11 +91,30 @@ void EnemySlime::SetTerritory(const DirectX::XMFLOAT3& origin, float range)
 	territoryRange = range;
 }
 
+//ダメージ時に呼ばれる
+void EnemySlime::OnDamaged()
+{
+	//ダメージステートへ遷移
+	TransitionState(State::HitDamage);
+}
 //死亡した時に呼ばれる
 void EnemySlime::OnDead()
 {
 	//自身を破棄
 	Destroy();
+}
+
+Player::EnemySearch EnemySlime::GetNearestPlayerES()
+{
+	Player::EnemySearch es = Player::EnemySearch::None;
+	//es = Player1P::Instance().GetEachEnemySearchState(this);
+
+	for (Player* player : PlayerManager::Instance().players)
+	{
+		if (static_cast<int>(es) < static_cast<int>(player->GetEachEnemySearchState(this)))
+			es = player->GetEachEnemySearchState(this);
+	}
+	return es;
 }
 
 //ターゲット位置をランダム設定
@@ -104,18 +132,17 @@ void EnemySlime::SetRandomTargetPosition()
 void EnemySlime::UpdateTargetPosition()
 {
 	//プレイヤーとの高低差を考慮して3Dでの距離判定をする
-	XMFLOAT3 playerPosition = { FLT_MAX,FLT_MAX,FLT_MAX };
-
+	float minLen = FLT_MAX;
 	for (Player* player : PlayerManager::Instance().players)
 	{
-		XMFLOAT3 pPos = player->GetPosition();
-		float nowLen = XMVectorGetX(XMVector3LengthSq(XMLoadFloat3(&pPos)));
-		float minLen = XMVectorGetX(XMVector3LengthSq(XMLoadFloat3(&playerPosition)));
-
+		float nowLen = player->GetEachEnemyDist(this);
 		if (nowLen < minLen)
-			playerPosition = pPos;
+		{
+			minLen = nowLen;
+			targetPosition = player->GetPosition();
+		}
 	}
-	targetPosition = playerPosition;
+	//targetPosition = Player1P::Instance().GetPosition();
 }
 
 //目標地点へ移動
@@ -139,7 +166,10 @@ void EnemySlime::TurnToTarget(float elapsedTime, float speedRate)
 	//ターゲット方向への進行ベクトルを算出
 	float vx = targetPosition.x - position.x;
 	float vz = targetPosition.z - position.z;
-	float dist = sqrtf(vx * vx + vz * vz);
+	float dist = XMVectorGetX(XMVector3Length(XMVectorSubtract(
+		XMLoadFloat3(&targetPosition), XMLoadFloat3(&position)
+	)));
+
 	vx /= dist;
 	vz /= dist;
 
@@ -263,12 +293,10 @@ void EnemySlime::UpdatePursuitState(float elapsedTime)
 	//目標へ回転
 	TurnToTarget(elapsedTime, 1.0f);
 
-	//プレイヤーが近づくと攻撃ステートへ遷移
-	float vx = targetPosition.x - position.x;
-	float vy = targetPosition.y - position.y;
-	float vz = targetPosition.z - position.z;
-	float dist = vx * vx + vy * vy + vz * vz;
-	if (dist < attackRange * attackRange)
+	//プレイヤーが攻撃範囲にいた場合は攻撃ステートへ遷移
+	Player::EnemySearch es = GetNearestPlayerES();
+
+	if (es >= Player::EnemySearch::Attack)
 	{
 		//攻撃ステートへ遷移
 		TransitionState(State::Attack);
@@ -304,11 +332,9 @@ void EnemySlime::UpdateAttackState(float elapsedTime)
 void EnemySlime::UpdateIdleBattleState(float elapsedTime)
 {
 	//プレイヤーが攻撃範囲にいた場合は攻撃ステートへ遷移
-	float vx = targetPosition.x - position.x;
-	float vy = targetPosition.y - position.y;
-	float vz = targetPosition.z - position.z;
-	float dist = vx * vx + vy * vy + vz * vz;
-	if (dist < attackRange * attackRange)
+	Player::EnemySearch es = GetNearestPlayerES();
+
+	if (es >= Player::EnemySearch::Attack)
 	{
 		//攻撃ステートへ遷移
 		TransitionState(State::Attack);
@@ -322,28 +348,81 @@ void EnemySlime::UpdateIdleBattleState(float elapsedTime)
 	TurnToTarget(elapsedTime, 0.0f);
 }
 
+//ダメージステート更新処理
+void EnemySlime::UpdateHitDamageState(float elapsedTime)
+{
+	if (model->IsPlayAnimation()) return;
+
+	//プレイヤーが攻撃範囲にいた場合は攻撃ステートへ遷移
+	Player::EnemySearch es = GetNearestPlayerES();
+
+	if (es >= Player::EnemySearch::Attack)
+	{
+		//攻撃ステートへ遷移
+		TransitionState(State::IdleBattle);
+	}
+	else
+	{
+		//待機ステートへ遷移
+		TransitionState(State::Idle);
+	}
+}
+
 //ステート遷移
 void EnemySlime::TransitionState(State nowState)
 {
 	state = nowState; //ステート設定
 
-	bool animeLoop = true;
 	switch (nowState)
 	{
-	//case EnemySlime::State::Idle:
+	//case State::Idle:
 	//	break;
-	case EnemySlime::State::Wander:
+	//case State::Wander:
 		//目標地点設定
 		//SetRandomTargetPosition();
-		break;
-	//case EnemySlime::State::Pursuit:
+		//break;
+	//case State::Pursuit:
 	//	break;
-	case EnemySlime::State::Attack:
-		animeLoop = false;
-		break;
-	//case EnemySlime::State::IdleBattle:
+	//case State::Attack:
+	//	break;
+	//case State::IdleBattle:
+	//	break;
+	//case State::HitDamage:
 	//	break;
 	}
 
-	model->PlayAnimation(static_cast<int>(nowState), animeLoop); //アニメーション再生
+	TransitionPlayAnimation(nowState);
+}
+
+//遷移時アニメーション再生
+void EnemySlime::TransitionPlayAnimation(State nowState)
+{
+	Animation anime = Anim_IdleNormal; //アニメーション設定
+	bool animeLoop = true;
+
+	switch (nowState)
+	{
+	case State::Idle:
+		anime = Anim_IdleNormal;
+		break;
+	case State::Wander:
+		anime = Anim_WalkFWD;
+		break;
+	case State::Pursuit:
+		anime = Anim_RunFWD;
+		break;
+	case State::Attack:
+		anime = Anim_Attack1;
+		animeLoop = false;
+		break;
+	case State::IdleBattle:
+		anime = Anim_IdleBattle;
+		break;
+	case State::HitDamage:
+		anime = Anim_GetHit;
+		animeLoop = false;
+		break;
+	}
+
+	model->PlayAnimation(static_cast<int>(anime), animeLoop); //アニメーション再生
 }

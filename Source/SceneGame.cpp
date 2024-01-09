@@ -8,6 +8,7 @@
 #include "EnemyManager.h"
 #include "EnemySlime.h"
 #include "EnemyTurtleShell.h"
+#include "EnemyBlue.h"
 #include "TransformUtils.h"
 #include "EffectManager.h"
 #include "Input/Input.h"
@@ -42,64 +43,55 @@ void SceneGame::Initialize()
 	stage = std::make_unique<Stage>();
 	player1P = std::make_unique<Player1P>();
 	playerAI = std::make_unique<PlayerAI>();
+
+	for (int i = 0; i < enemySlimeCount; i++)
+	{
+		enemySlime[i] = std::make_unique<EnemySlime>();
+	}
+	for (int i = 0; i < enemyTurtleShellCount; i++)
+	{
+		enemyTurtleShell[i] = std::make_unique<EnemyTurtleShell>();
+	}
+	enemyBlue = std::make_unique<EnemyBlue>();
+
 	PlayerManager& playerManager = PlayerManager::Instance();
 	playerManager.Register(player1P.get());
 	playerManager.Register(playerAI.get());
 
 	//スカイボックス
 	skyBox = std::make_unique<SkyBox>("Data/Texture/incskies_002_8k.png");
-	
+
 	//sprites[1] = std::make_unique<Sprite>(device);
-	//sprites[2] = std::make_unique<Sprite>(device, "Data/Sprite/3.png");
-	//sprites[3] = std::make_unique<Sprite>(device, "Data/Sprite/4.png");
+	sprites[0] = std::make_unique<Sprite>(device, "Data/Sprite/button.png");
+	sprites[1] = std::make_unique<Sprite>(device, "Data/Sprite/item.png");
+	sprites[2] = std::make_unique<Sprite>(device, "Data/Sprite/item2.png");
+	sprites[3] = std::make_unique<Sprite>(device, "Data/Sprite/weapon.png");
 	font = std::make_unique<FontSprite>(device, "Data/Font/font6.png", 256);
 	//ゲージスプライト
 	gauge = std::make_unique<Sprite>(device);
 
 	//エネミー初期化
+	enemySlime[0]->SetPosition(DirectX::XMFLOAT3(30, 5, -43));
+	enemySlime[1]->SetPosition(DirectX::XMFLOAT3(28, 5, -21));
+	enemySlime[2]->SetPosition(DirectX::XMFLOAT3(30, 5, -23));
+	enemySlime[3]->SetPosition(DirectX::XMFLOAT3(-28, 5, 4));
+
+	enemyTurtleShell[0]->SetPosition(DirectX::XMFLOAT3(-26, 5, 6));
+	enemyTurtleShell[1]->SetPosition(DirectX::XMFLOAT3(28, 5, 0));
+
+	enemyBlue->SetPosition(DirectX::XMFLOAT3(-28, 5, -12));
+
 	EnemyManager& enemyManager = EnemyManager::Instance();
+	for (int i = 0; i < enemySlimeCount; i++)
 	{
-		EnemySlime* slime = new EnemySlime();
-		slime->SetPosition(DirectX::XMFLOAT3(30, 5, -43));
-		enemyManager.Register(slime);
+		enemyManager.Register(enemySlime[i].get());
 	}
+	for (int i = 0; i < enemyTurtleShellCount; i++)
 	{
-		EnemySlime* slime = new EnemySlime();
-		slime->SetPosition(DirectX::XMFLOAT3(28, 5, -21));
-		enemyManager.Register(slime);
+		enemyManager.Register(enemyTurtleShell[i].get());
 	}
-	{
-		EnemySlime* slime = new EnemySlime();
-		slime->SetPosition(DirectX::XMFLOAT3(30, 5, -23));
-		enemyManager.Register(slime);
-	}
-	{
-		EnemySlime* slime = new EnemySlime();
-		slime->SetPosition(DirectX::XMFLOAT3(-28, 5, 4));
-		enemyManager.Register(slime);
-	}
-	//for (int i = 0; i < 8; i++)
-	//{
-	//	EnemySlime* slime = new EnemySlime();
-	//	slime->SetPosition(DirectX::XMFLOAT3(20 + i * 3.0f, 1, 0));
-	//	enemyManager.Register(slime);
-	//}
-	{
-		EnemyTurtleShell* turtleShell = new EnemyTurtleShell();
-		turtleShell->SetPosition(DirectX::XMFLOAT3(-26, 5, 6));
-		enemyManager.Register(turtleShell);
-	}
-	{
-		EnemyTurtleShell* turtleShell = new EnemyTurtleShell();
-		turtleShell->SetPosition(DirectX::XMFLOAT3(28, 5, 0));
-		enemyManager.Register(turtleShell);
-	}
-	//for (int i = 0; i < 4; i++)
-	//{
-	//	EnemyTurtleShell* turtleShell = new EnemyTurtleShell();
-	//	turtleShell->SetPosition(DirectX::XMFLOAT3(111 + i * 6.0f, 10, 0));
-	//	enemyManager.Register(turtleShell);
-	//}
+
+	enemyManager.Register(enemyBlue.get());
 
 	//ライト設定
 	DirectionalLight directionalLight;
@@ -185,8 +177,6 @@ void SceneGame::Render()
 
 	float screenWidth = static_cast<float>(graphics.GetScreenWidth());
 	float screenHeight = static_cast<float>(graphics.GetScreenHeight());
-	//float textureWidth = static_cast<float>(sprites[0]->GetTextureWidth());
-	//float textureHeight = static_cast<float>(sprites[0]->GetTextureHeight());
 	// ビューポートの設定
 	D3D11_VIEWPORT vp = {};
 	vp.Width = graphics.GetScreenWidth();
@@ -198,7 +188,6 @@ void SceneGame::Render()
 	// スカイボックスの描画
 	skyBox->Render(rc);
 
-	//sprites[0]->Render(rc.deviceContext, 0, 0, 0, textureWidth, textureHeight, 0, 0, textureWidth, textureHeight, 0, 1, 1, 1, 1);
 	ModelShader* shader = Graphics::Instance().GetShader(ShaderId::Toon);
 	shader->Begin(rc);
 	player1P->Render(rc, shader);
@@ -220,20 +209,6 @@ void SceneGame::Render()
 	//3Dエフェクト描画
 	EffectManager::Instance().Render(rc.view, rc.projection);
 
-	////2DSprite
-	//{
-	//	float screenWidth = static_cast<float>(graphics.GetScreenWidth());
-	//	float screenHeight = static_cast<float>(graphics.GetScreenHeight());
-	//	float textureWidth = static_cast<float>(sprite[0]->GetTextureWidth());
-	//	float textureHeight = static_cast<float>(sprite[0]->GetTextureHeight());
-
-	//	FLOAT blendFactor[4] = { 1.0f,1.0f,1.0f,1.0f };
-	//	UINT sampleMask = 0xFFFFFFFF;
-
-	//	//titleSprite
-	//	dc->OMSetBlendState(renderState->GetBlendState(BlendState::Transparency), blendFactor, sampleMask);
-	//	sprite[0]->Render(dc, 0.0f, 0.0f, 0.0f, screenWidth, screenHeight, 0, 0, textureWidth, textureHeight, 0, 1, 1, 1, 1);
-	//}
 	// 2Dスプライト描画
 	{
 		PlayerManager::Instance().Render2d(rc, gauge.get());
@@ -241,12 +216,37 @@ void SceneGame::Render()
 
 		RenderEnemyGauge(dc, rc.view, rc.projection);
 	}
+	//2DSprite
+	{
+		float screenWidth = static_cast<float>(graphics.GetScreenWidth());
+		float screenHeight = static_cast<float>(graphics.GetScreenHeight());
+		float textureWidth = static_cast<float>(sprites[0]->GetTextureWidth());
+		float textureHeight = static_cast<float>(sprites[0]->GetTextureHeight());
+
+		FLOAT blendFactor[4] = { 1.0f,1.0f,1.0f,1.0f };
+		UINT sampleMask = 0xFFFFFFFF;
+
+		//titleSprite
+		dc->OMSetBlendState(renderState->GetBlendState(BlendState::Transparency), blendFactor, sampleMask);
+		for (int i = 0; i < 6; i++)
+		{
+			sprites[2]->Render(dc, 300.0f + 115*i, 610.0f, 0.0f, 100, 100, 0, 0, textureWidth, textureWidth, 0, 1, 1, 1, 1);
+		}
+		sprites[0]->Render(dc, 1150.0f, 250.0f, 0.0f, 80, 80, 0, 0, textureWidth, textureWidth, 0, 1, 1, 1, 1);
+		sprites[0]->Render(dc, 1100.0f, 300.0f, 0.0f, 80, 80, 0, 0, textureWidth, textureWidth, 0, 1, 1, 1, 1);
+		sprites[0]->Render(dc, 1200.0f, 300.0f, 0.0f, 80, 80, 0, 0, textureWidth, textureWidth, 0, 1, 1, 1, 1);
+		sprites[1]->Render(dc, 1150.0f, 350.0f, 0.0f, 80, 80, 0, 0, textureWidth, textureWidth, 0, 1, 1, 1, 1);
+		sprites[3]->Render(dc, 1150.0f+15.0f, 250.0f+10.0f, 0.0f, 50, 50, 900, 0, textureWidth, textureWidth, 0, 1, 1, 1, 1);
+		sprites[3]->Render(dc, 1100.0f+15.0f, 300.0f+10.0f, 0.0f, 50, 50, 300, 0, textureWidth, textureWidth, 0, 1, 1, 1, 1);
+		sprites[3]->Render(dc, 1200.0f+15.0f, 300.0f+10.0f, 0.0f, 50, 50, 600, 0, textureWidth, textureWidth, 0, 1, 1, 1, 1);
+		sprites[3]->Render(dc, 1150.0f+15.0f, 350.0f+10.0f, 0.0f, 50, 50, 0, 0, textureWidth, textureWidth, 0, 1, 1, 1, 1);
+	}
 
 
 	font->Textout(rc, "Player", 16, 0, 1.0f, { -10, 10, 0 }, 12, 16, 32, 32, 16, 16, 0, 1, 1, 1, 1);
 	//font->Textout(rc, "Time:" + std::to_string((int)gameTimer), 16, 0, 1.0f, { 910, 10, 0 }, 32, 32, 32, 32, 16, 16, 0, 1, 1, 1, 1);
 	
-	//なんでかしらんけど影映らんくなったのでここで一旦処理書く
+	//gizmos
 	Gizmos* gizmos = Graphics::Instance().GetGizmos();
 	rc.camera = &camera;
 	rc.deviceContext = Graphics::Instance().GetDeviceContext();
@@ -259,7 +259,7 @@ void SceneGame::Render()
 	UINT sampleMask = 0xFFFFFFFF;
 	dc->OMSetBlendState(renderState->GetBlendState(BlendState::Transparency), blendFactor, sampleMask);
 
-#ifdef _DEBUG
+#if showDebug//def _DEBUG
 	// 3Dデバッグ描画
 	{
 		//プレイヤーデバッグプリミティブ描画
@@ -273,6 +273,9 @@ void SceneGame::Render()
 	//DrawSceneGUI();
 	//DrawPropertyGUI();
 	camera.DebugImGui();
+	player1P->DebugMenu();
+	playerAI->DebugMenu();
+	enemyBlue->DebugMenu();
 
 #if 0
 	// shadowMap
@@ -475,11 +478,6 @@ void SceneGame::RenderCharacterName(const RenderContext& rc, const DirectX::XMFL
 				32, 32, 16, 16, 0, 1, 1, 1, 1);
 		}
 	}
-
-
-
-
-
 }
 
 //シーンGUI描画

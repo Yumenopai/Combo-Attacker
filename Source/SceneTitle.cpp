@@ -1,23 +1,22 @@
-#include <functional>
 #include "Graphics/Graphics.h"
-#include "Graphics/FontSprite.h"
+
 #include "SceneManager.h"
 #include "SceneTitle.h"
-#include "SceneLoading.h"
 #include "SceneGame.h"
-#include "EnemyManager.h"
-#include "EnemySlime.h"
-#include "EnemyTurtleShell.h"
-#include "TransformUtils.h"
-#include "EffectManager.h"
+#include "SceneLoading.h"
+
+
 #include "Input/Input.h"
 
-#include "imgui.h"
-
-// 初期化
 void SceneTitle::Initialize()
 {
 	ID3D11Device* device = Graphics::Instance().GetDevice();
+	sprite = std::make_unique<Sprite>(device, "Data/Sprite/Logo.png");
+	model[0] = std::make_unique<Model>(device, "Data/Model/SD-UnityChan/UnityChan.fbx", 0.2f);
+	model[0]->PlayAnimation(Player::Anim_Idle, true);
+
+	stage = std::make_unique<Stage>();
+
 	float screenWidth = Graphics::Instance().GetScreenWidth();
 	float screenHeight = Graphics::Instance().GetScreenHeight();
 
@@ -27,107 +26,68 @@ void SceneTitle::Initialize()
 		XMConvertToRadians(45),		//画角
 		screenWidth / screenHeight,	//画面アスペクト比
 		0.1f,
-		1000.0f
+		100.0f
 	);
 	camera.SetLookAt(
-		XMFLOAT3(0, 10, 10),	//視点
-		XMFLOAT3(0, 0, 0),		//注視点
+		XMFLOAT3(0, 30, -80),	//視点
+		XMFLOAT3(0, -38, 0),		//注視点
 		XMFLOAT3(0, 1, 0)		//上ベクトル
 	);
 
-	cameraController = std::make_unique<CameraController>();
-
-	//モデル作成
-	stage = std::make_unique<Stage>();
-	player = std::make_unique<Player1P>();
-	sprites[0] = std::make_unique<Sprite>(device, "Data/Sprite/view.jpg");
-	//sprites[1] = std::make_unique<Sprite>(device, "Data/Sprite/1.png");
-	//sprites[2] = std::make_unique<Sprite>(device, "Data/Sprite/2.png");
-	//sprites[3] = std::make_unique<Sprite>(device, "Data/Sprite/3.png");
-	//sprites[4] = std::make_unique<Sprite>(device, "Data/Sprite/6.png");
-	//sprites[5] = std::make_unique<Sprite>(device, "Data/Sprite/7.png");
-	font = std::make_unique<FontSprite>(device, "Data/Font/font6.png", 256);
-
-	//エネミー初期化
-	EnemyManager& enemyManager = EnemyManager::Instance();
-	EnemySlime* slime = new EnemySlime();
-	slime->SetPosition(XMFLOAT3(60, 10, 0));
-	enemyManager.Register(slime);
-
 	//ライト設定
 	DirectionalLight directionalLight;
-	directionalLight.direction = { 2, -4, 3 };
+	directionalLight.direction = { 2, -2, 2 };
 	directionalLight.color = { 1,1,1 };
 	lightManager.SetDirectionalLight(directionalLight);
 }
 
-// 終了化
 void SceneTitle::Finalize()
 {
-	//エネミー終了化
-	EnemyManager::Instance().Clear();
-
 }
 
 void SceneTitle::Update(float elapsedTime)
 {
-	player->Update(elapsedTime);
+	GamePad& gamePad = Input::Instance().GetGamePad();
 
-	//if (player->GetPosition().y < -8.0f)
-	//{
-	//	SceneManager::Instance().ChangeScene(new SceneTitle());
-	//}
-	//if (player->GetState() == Player::State::Finish || isBlack)
-	//{
-	//	timer += elapsedTime;
-	//	blackPosition.x += timer * 8.0f;
-	//	if(blackPosition.x >= 0)
-	//		SceneManager::Instance().ChangeScene(new SceneLoading(new SceneGame(3), 3));
-	//}
-
-	if (player->GetState() == Player::State::Damage || player->GetState() == Player::State::Dead) return;
-	//エネミー更新
-	EnemyManager::Instance().Update(elapsedTime);
-	stage->Update(elapsedTime);
-	//エフェクト更新処理
-	EffectManager::Instance().Update(elapsedTime);
-
-	//カメラコントローラー更新処理
-	XMFLOAT3 target = player->GetPosition();
-	ViewPosition.x = -(target.x + 10.0f); //背景スライド
-	target.y += 0.5f;
-	if (player->GetPosition().y > -8.0f)
+	const GamePadButton anyButton = GamePad::BTN_A | GamePad::BTN_B | GamePad::BTN_X | GamePad::BTN_Y | GamePad::BTN_START;
+	if (gamePad.GetButtonDown() & anyButton)
 	{
-		cameraController->SetTarget(target);
+		SceneManager::Instance().ChangeScene(new SceneLoading(new SceneGame(), -255));
 	}
-	//else
-	//{
-	//	XMFLOAT3 playerPotision = player->GetPosition();
-	//	XMVECTOR vectorPlayerP = XMLoadFloat3(&playerPotision);
-	//	if (!isInit)
-	//	{
-	//		XMFLOAT3 flagPotision = flag->GetPosition();
-	//		
-	//		XMVECTOR vectorFlagP = XMLoadFloat3(&flagPotision);
-	//		playerToTarget = vectorPlayerP;
 
-	//		zoomRateCalculation = XMVectorScale(XMVectorSubtract(vectorPlayerP, vectorFlagP), zoomRate);
-	//	}
-	//	playerToTarget = XMVectorAdd(playerToTarget, zoomRateCalculation);
+	//if (isScaleDown) scaleTimer -= 0.03f;
+	//else scaleTimer += 0.03f;
+	//scale.x = scale.y = scale.z = sinf(scaleTimer);
+	{
+		//ワールド行列計算
+		XMMATRIX S = XMMatrixScaling(scale.x, scale.y, scale.z);
+		XMMATRIX R = XMMatrixRotationRollPitchYaw(angle.x, angle.y, angle.z);
+		XMMATRIX T = XMMatrixTranslation(-20, 0.0f, -50);
+		XMFLOAT4X4 worldTramsform;
+		XMStoreFloat4x4(&worldTramsform, S * R * T);
 
-	//	XMFLOAT3 move;
-	//	XMStoreFloat3(&move, playerToTarget);
-	//	cameraController->SetTarget(move);
-	//}
-	cameraController->Update(elapsedTime);
+		//モデルアニメーション更新処理
+		model[0]->UpdateAnimation(elapsedTime);
+
+		//モデル行列更新
+		model[0]->UpdateTransform(worldTramsform);
+	}
+	stage->Update(elapsedTime);
+
+	timer += elapsedTime;
+	if (timer >= 2.0f) timer = 0.0f;
 }
 
 void SceneTitle::Render()
 {
+	Graphics& graphics = Graphics::Instance();
+	ID3D11DeviceContext* dc = graphics.GetDeviceContext();
 	Camera& camera = Camera::Instance();
+	RenderContext rc;
 	ShadowMap* shadowMap = Graphics::Instance().GetShadowMap();
 
-	RenderContext rc;
+	rc.timer = ++waterTimer;
+
 	//カメラ更新処理
 	rc.view = camera.GetView();
 	rc.projection = camera.GetProjection();
@@ -140,18 +100,24 @@ void SceneTitle::Render()
 	rc.shadowMap = shadowMap;
 	rc.shadowColor = { 0.5f,0.5f,0.5f };
 
-	Graphics& graphics = Graphics::Instance();
-	ID3D11DeviceContext* dc = rc.deviceContext;
+	//シャドウマップ描画
+	shadowMap->Begin(rc, camera.GetFocus());
+	//シャドウマップにモデル描画
+	stage->ShadowRender(rc, shadowMap);
+	shadowMap->Draw(rc, model[0].get());
+	shadowMap->End(rc);
+
 	RenderState* renderState = Graphics::Instance().GetRenderState();
 
 	ID3D11SamplerState* samplers[] =
 	{
-		renderState->GetSamplerState(SamplerState::LinearClamp)
+		renderState->GetSamplerState(SamplerState::PointClamp)
 	};
 	dc->PSSetSamplers(0, _countof(samplers), samplers);
 
 	// 深度テストなし＆深度書き込みなし
 	dc->OMSetDepthStencilState(renderState->GetDepthStencilState(DepthState::NoTestNoWrite), 0);
+
 
 	ID3D11RenderTargetView* rtv = graphics.GetRenderTargetView();
 	ID3D11DepthStencilView* dsv = graphics.GetDepthStencilView();
@@ -162,198 +128,33 @@ void SceneTitle::Render()
 	dc->ClearDepthStencilView(dsv, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 	dc->OMSetRenderTargets(1, &rtv, dsv);
 
-	float screenWidth = static_cast<float>(graphics.GetScreenWidth());
-	float screenHeight = static_cast<float>(graphics.GetScreenHeight());
-	//2d背景
+	//3DModel
 	{
-		float textureWidth = static_cast<float>(sprites[0]->GetTextureWidth());
-		float textureHeight = static_cast<float>(sprites[0]->GetTextureHeight());
+		ModelShader* shader = Graphics::Instance().GetShader(ShaderId::Toon);
+		shader->Begin(rc);
+		//シェーダーにモデル描画
+		stage->TerrainRender(rc, shader);
+		shader->Draw(rc, model[0].get());
+		shader->End(rc);
 
-		sprites[0]->Render(dc, ViewPosition.x, ViewPosition.y, ViewPosition.z, textureWidth, textureHeight, 0, 0, textureWidth, textureHeight, 0, 1, 1, 1, 1);
+		ModelShader* waterShader = Graphics::Instance().GetShader(ShaderId::WaterSurface);
+		waterShader->Begin(rc);
+		stage->WaterRender(rc, waterShader);
+		waterShader->End(rc);
 	}
-
-	//シャドウマップ描画
-	shadowMap->Begin(rc, camera.GetFocus());
-	stage->ShadowRender(rc, shadowMap);
-	player->ShadowRender(rc, shadowMap);
-	EnemyManager::Instance().ShadowRender(rc, shadowMap);
-	shadowMap->End(rc);
-
-	//ModelShader* shader = Graphics::Instance().GetShader(ShaderId::Phong);
-	ModelShader* shader = Graphics::Instance().GetShader(ShaderId::Toon);
-	shader->Begin(rc);
-	stage->TerrainRender(rc, shader);
-	player->Render(rc, shader);
-	EnemyManager::Instance().Render(rc, shader);
-	shader->End(rc);
-
-	//3Dエフェクト描画
-	EffectManager::Instance().Render(rc.view, rc.projection);
-	//プレイヤーデバッグプリミティブ描画
-	player->DrawDebugPrimitive();
-
 	//2DSprite
 	{
-		//float textureWidth = static_cast<float>(sprites[1]->GetTextureWidth());
-		//float textureHeight = static_cast<float>(sprites[1]->GetTextureHeight());
+		float screenWidth = static_cast<float>(graphics.GetScreenWidth());
+		float screenHeight = static_cast<float>(graphics.GetScreenHeight());
 
-		//FLOAT blendFactor[4] = { 1.0f,1.0f,1.0f,1.0f };
-		//UINT sampleMask = 0xFFFFFFFF;
+		FLOAT blendFactor[4] = { 1.0f,1.0f,1.0f,1.0f };
+		UINT sampleMask = 0xFFFFFFFF;
 
-		//dc->OMSetBlendState(renderState->GetBlendState(BlendState::Transparency), blendFactor, sampleMask);
-		//sprites[1]->Render(dc, (ViewPosition.x + 20.0f) * 30.0f, ViewPosition.y, ViewPosition.z, screenWidth, screenHeight, 0, 0, textureWidth, textureHeight, 0, 1, 1, 1, 1);
-		//if (ViewPosition.x + 20.0f > -10.0f)
-		//{
-		//	sprites[2]->Render(dc, 0, 0, 0, screenWidth, screenHeight, 0, 0, textureWidth, textureHeight, 0, 1, 1, 1, 1);
-		//	sprites[4]->Render(dc, 0, 0, 0, screenWidth, screenHeight, 0, 0, textureWidth, textureHeight, 0, 1, 1, 1, 1);
-		//}
-		//if (ViewPosition.x + 20.0f < -30.0f && ViewPosition.x + 20.0f > -50.0f)
-		//{
-		//	sprites[3]->Render(dc, 0, (player->GetPosition().y * 30.0f) + 75.0f, 0, screenWidth, screenHeight, 0, 0, textureWidth, textureHeight, 0, 1, 1, 1, 1);
-		//}
-		//sprites[5]->Render(dc, blackPosition.x, blackPosition.y, blackPosition.z, screenWidth, screenHeight, 0, 0, textureWidth, textureHeight, 0, 1, 1, 1, 1);
-
+		//titleSprite
+		dc->OMSetBlendState(renderState->GetBlendState(BlendState::Transparency), blendFactor, sampleMask);
+		sprite->Render(dc, 0.0f, 60.0f, 0.0f, screenWidth, 120,     0, 0,   screenWidth, 120, 0, 1, 1, 1, 1);
+		if (timer <= 1.6f)
+			sprite->Render(dc, 0.0f, 480.0f, 0.0f, screenWidth, 120, 0, 120, screenWidth, 120, 0, 1, 1, 1, 1);
 	}
 
-	//デバッグメニュー描画
-	DrawSceneGUI();
-	//DrawPropertyGUI();
-	//デバッグメニュー描画
-#ifdef _DEBUG
-	{
-		ImVec2 pos = ImGui::GetMainViewport()->GetWorkPos();
-		ImGui::SetNextWindowPos(ImVec2(pos.x + 10, pos.y + 10), ImGuiCond_FirstUseEver);
-		ImGui::SetNextWindowSize(ImVec2(300, 300), ImGuiCond_FirstUseEver);
-
-		if (ImGui::Begin("Player", nullptr, ImGuiWindowFlags_None))
-		{
-			if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
-			{
-				//スケール
-				ImGui::DragInt("playCount", &playCount, 1);
-			}
-
-			ImGui::End();
-		}
-	}
-#endif
 }
-
-//シーンGUI描画
-void SceneTitle::DrawSceneGUI()
-{
-	ImVec2 pos = ImGui::GetMainViewport()->GetWorkPos();
-	ImGui::SetNextWindowPos(ImVec2(pos.x + 10, pos.y + 10), ImGuiCond_FirstUseEver);
-	ImGui::SetNextWindowSize(ImVec2(300, 300), ImGuiCond_FirstUseEver);
-
-	if (ImGui::Begin("Scene", nullptr, ImGuiWindowFlags_None))
-	{
-		if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
-		{
-			//位置
-			XMFLOAT3 move;
-			XMStoreFloat3(&move, playerToTarget);
-			ImGui::DragFloat3("move", &move.x, 0.1f);
-
-			//回転
-			XMFLOAT3 a;
-			a.x = XMConvertToDegrees(angle.x);
-			a.y = XMConvertToDegrees(angle.y);
-			a.z = XMConvertToDegrees(angle.z);
-			ImGui::DragFloat3("Angle", &a.x, 1.0f);
-			angle.x = XMConvertToRadians(a.x);
-			angle.y = XMConvertToRadians(a.y);
-			angle.z = XMConvertToRadians(a.z);
-
-			//スケール
-			ImGui::DragFloat3("Scale", &scale.x, 0.01f);
-		}
-
-		if (ImGui::CollapsingHeader("Hierarchy", ImGuiTreeNodeFlags_DefaultOpen))
-		{
-			//ノードツリーを再帰的に描画する関数
-			std::function<void(Model::Node*)> drawNodeTree = [&](Model::Node* node)
-			{
-				//矢印をクリック、またはノードをダブルクリックで階層を開く
-				ImGuiTreeNodeFlags nodeFlags = ImGuiTreeNodeFlags_OpenOnArrow
-					| ImGuiTreeNodeFlags_OpenOnDoubleClick;
-
-				//子がいない場合は矢印を付けない
-				size_t childCount = node->children.size();
-				if (childCount == 0)
-				{
-					nodeFlags |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
-				}
-
-				//選択フラグ
-				if (selectionNode == node)
-				{
-					nodeFlags |= ImGuiTreeNodeFlags_Selected;
-				}
-
-				//ツリーノードを表示
-				bool opened = ImGui::TreeNodeEx(node, nodeFlags, node->name.c_str());
-
-				//フォーカスされたノードを選択
-				if (ImGui::IsItemFocused())
-				{
-					selectionNode = node;
-				}
-
-				//開かれている場合、子階層も同じ処理を行う
-				if (opened && childCount > 0)
-				{
-					for (Model::Node* child : node->children)
-					{
-						drawNodeTree(child);
-					}
-					ImGui::TreePop();
-				}
-			};
-			//再帰的にノードを描画
-			//drawNodeTree(model->GetRootNode());
-		}
-
-		ImGui::End();
-	}
-}
-
-//プロパティGUI描画
-void SceneTitle::DrawPropertyGUI()
-{
-	ImVec2 pos = ImGui::GetMainViewport()->GetWorkPos();
-	ImGui::SetNextWindowPos(ImVec2(pos.x + 970, pos.y + 10), ImGuiCond_FirstUseEver);
-	ImGui::SetNextWindowSize(ImVec2(300, 300), ImGuiCond_FirstUseEver);
-
-	ImGui::Begin("Property", nullptr, ImGuiWindowFlags_None);
-
-	if (selectionNode != nullptr)
-	{
-		if (ImGui::CollapsingHeader("Node", ImGuiTreeNodeFlags_DefaultOpen))
-		{
-			//位置
-			ImGui::DragFloat3("Position", &selectionNode->position.x, 0.1f);
-
-			//回転
-			XMFLOAT3 angle;
-			TransformUtils::QuaternionToRollPitchYaw(selectionNode->rotation, angle.x, angle.y, angle.z);
-			angle.x = XMConvertToDegrees(angle.x);
-			angle.y = XMConvertToDegrees(angle.y);
-			angle.z = XMConvertToDegrees(angle.z);
-			if (ImGui::DragFloat3("Rotation", &angle.x, 1.0f))
-			{
-				angle.x = XMConvertToRadians(angle.x);
-				angle.y = XMConvertToRadians(angle.y);
-				angle.z = XMConvertToRadians(angle.z);
-				XMVECTOR Rotation = XMQuaternionRotationRollPitchYaw(angle.x, angle.y, angle.z);
-
-				XMStoreFloat4(&selectionNode->rotation, Rotation);
-			}
-			//スケール
-			ImGui::DragFloat3("Scale", &selectionNode->scale.x, 0.01f);
-		}
-	}
-
-	ImGui::End();
-}
-

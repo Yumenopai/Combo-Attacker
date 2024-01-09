@@ -34,11 +34,13 @@ PlayerAI::PlayerAI()
 
 	//初期化
 	enemySearch.clear();
+	enemyDist.clear();
 	EnemyManager& enemyManager = EnemyManager::Instance();
 	int enemyCount = enemyManager.GetEnemyCount();//全ての敵と総当たりで衝突処理
 	for (int i = 0; i < enemyCount; i++)
 	{
 		enemySearch[enemyManager.GetEnemy(i)] = EnemySearch::None;
+		enemyDist[enemyManager.GetEnemy(i)] = FLT_MAX;
 	}
 
 	position = { -7,5,-60 };
@@ -75,7 +77,9 @@ void PlayerAI::Update(float elapsedTime)
 
 	//if (enemyCount == 0) ESState = EnemySearch::None;
 	if (enemyCount == 0)
-		SceneManager::Instance().ChangeScene(new SceneLoading(new SceneGame(3), -255));
+	{
+		//SceneManager::Instance().ChangeScene(new SceneLoading(new SceneGame(), -255));
+	}
 
 	for (int i = 0; i < enemyCount; i++)
 	{
@@ -86,6 +90,8 @@ void PlayerAI::Update(float elapsedTime)
 		
 		XMVECTOR DistVec = XMVectorSubtract(PosEnemy, PosPlayer);
 		float dist = XMVectorGetX(XMVector3Length(DistVec));
+
+		enemyDist[enemy] = dist; //各エネミーとの距離等を更新毎に記録する
 
 		if (dist < playerVSenemyJudgeDist[(int)EnemySearch::Attack])
 			enemySearch[enemy] = EnemySearch::Attack;
@@ -189,11 +195,6 @@ void PlayerAI::ShadowRender(const RenderContext& rc, ShadowMap* shadowMap)
 void PlayerAI::Render(const RenderContext& rc, ModelShader* shader)
 {
 	shader->Draw(rc, model.get());
-
-#ifdef _DEBUG
-	//デバッグメニュー描画
-	DebugMenu();
-#endif
 }
 
 // 攻撃の軌跡描画
@@ -246,40 +247,6 @@ void PlayerAI::HPBarRender(const RenderContext& rc, Sprite* gauge)
 	);
 }
 
-void PlayerAI::DebugMenu()
-{
-	ImVec2 pos = ImGui::GetMainViewport()->GetWorkPos();
-	ImGui::SetNextWindowPos(ImVec2(pos.x + 10, pos.y + 10), ImGuiCond_FirstUseEver);
-	ImGui::SetNextWindowSize(ImVec2(300, 300), ImGuiCond_FirstUseEver);
-
-	if (ImGui::Begin("Player", nullptr, ImGuiWindowFlags_None))
-	{
-		if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
-		{
-			//位置
-			ImGui::DragFloat3("Position", &position.x, 0.1f);
-			ImGui::DragFloat3("Offset", &offset.x, 0.1f);
-
-			//回転
-			XMFLOAT3 a;
-			a.x = XMConvertToDegrees(angle.x);
-			a.y = XMConvertToDegrees(angle.y);
-			a.z = XMConvertToDegrees(angle.z);
-			ImGui::DragFloat3("Angle", &a.x, 1.0f);
-			if (a.y > 360) a.y = 0;
-			if (a.y < 0) a.y = 360;
-			angle.x = XMConvertToRadians(a.x);
-			angle.y = XMConvertToRadians(a.y);
-			angle.z = XMConvertToRadians(a.z);
-
-			//スケール
-			ImGui::DragFloat3("Scale", &scale.x, 0.01f);
-		}
-
-		ImGui::End();
-	}
-}
-
 //着地した時に呼ばれる
 void PlayerAI::OnLanding(float elapsedTime)
 {
@@ -314,7 +281,7 @@ bool PlayerAI::InputMove(float elapsedTime)
 	if (XMVectorGetX(XMVector3Length(AIto1P)) > 0.2f)
 		XMStoreFloat3(&moveVec, AIto1P);
 
-	if (Player1P::Instance().GetESState() > EnemySearch::None)
+	if (Player1P::Instance().GetESState() >= EnemySearch::Find)
 	{
 		if (nearestDist < 10.0f) moveVec = nearestVec;
 		else XMStoreFloat3(&moveVec, AIto1P);
@@ -358,53 +325,4 @@ bool PlayerAI::InputSwordButton()
 bool PlayerAI::InputSpearButton()
 {
 	return InputButtonDown(InputState::Spear);
-}
-
-//スティック入力値から移動ベクトルを取得
-XMFLOAT3 PlayerAI::GetMoveVec() const
-{
-	//入力情報を取得
-	GamePad& gamePad = Input::Instance().GetGamePad();
-	float ax = gamePad.GetAxisLX();
-	float ay = gamePad.GetAxisLY();
-
-	//カメラ方向とスティックの入力値によって進行方向を計算する
-	Camera& camera = Camera::Instance();
-	const DirectX::XMFLOAT3& cameraRight = camera.GetRight();
-	const DirectX::XMFLOAT3& cameraFront = camera.GetFront();
-
-	//移動ベクトルはXZ平面に水平なベクトルになるようにする
-
-	//カメラ右方向ベクトルをXZ単位ベクトルに変換
-	float cameraRightX = cameraRight.x;
-	float cameraRightZ = cameraRight.z;
-	float cameraRightLength = sqrtf(cameraRightX * cameraRightX + cameraRightZ * cameraRightZ);
-	if (cameraRightLength > 0.0f)
-	{
-		//単位ベクトル化
-		cameraRightX /= cameraRightLength;
-		cameraRightZ /= cameraRightLength;
-	}
-
-	//カメラ前方向ベクトルをXZ単位ベクトルに変換
-	float cameraFrontX = cameraFront.x;
-	float cameraFrontZ = cameraFront.z;
-	float cameraFrontLength = sqrtf(cameraFrontX * cameraFrontX + cameraFrontZ * cameraFrontZ);
-	if (cameraFrontLength > 0.0f)
-	{
-		//単位ベクトル化
-		cameraFrontX /= cameraFrontLength;
-		cameraFrontZ /= cameraFrontLength;
-	}
-
-	//スティックの水平入力値をカメラ右方向に反映し、
-	//スティックの垂直入力値をカメラ前方向に反映し、進行ベクトルを計算する
-	XMFLOAT3 vec;
-	vec.x = cameraFrontX * ay + cameraRightX * ax;
-	vec.z = cameraFrontZ * ay + cameraRightZ * ax;
-
-	//Y軸方向には移動しない
-	vec.y = 0.0f;
-
-	return vec;
 }
