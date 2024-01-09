@@ -196,7 +196,11 @@ void Player::UpdateEachState(float elapsedTime)
 	case State::Dead:
 		// Deathアニメーションは起き上がりまでなので途中で止めるのが良い?
 		// アニメーション終了後Idleにとりあえず移行
-		if (!model->IsPlayAnimation()) TransitionIdleState();
+		if (!model->IsPlayAnimation())
+		{
+			health = maxHealth;
+			TransitionIdleState();
+		}
 		break;
 	case State::AttackHammer1:
 		Hammer.flag1 = (model->IsPlayAnimation());
