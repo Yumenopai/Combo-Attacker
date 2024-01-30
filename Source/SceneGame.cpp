@@ -115,6 +115,11 @@ void SceneGame::Update(float elapsedTime)
 	cameraController->SetTarget(target);
 	cameraController->Update(elapsedTime);
 
+	//カメラ更新処理
+	//Camera& camera = Camera::Instance();
+	//freeCameraController.Update();
+	//freeCameraController.SyncControllerToCamera(camera);
+
 	// マネージャーによる更新
 	PlayerManager::Instance().Update(elapsedTime);
 	EnemyManager::Instance().Update(elapsedTime);
@@ -228,10 +233,13 @@ void SceneGame::Render()
 
 		//titleSprite
 		dc->OMSetBlendState(renderState->GetBlendState(BlendState::Transparency), blendFactor, sampleMask);
+
+		//Item枠
 		for (int i = 0; i < 6; i++)
 		{
 			sprites[2]->Render(dc, 300.0f + 115*i, 610.0f, 0.0f, 100, 100, 0, 0, textureWidth, textureWidth, 0, 1, 1, 1, 1);
 		}
+		//AttackButton
 		sprites[0]->Render(dc, 1150.0f, 250.0f, 0.0f, 80, 80, 0, 0, textureWidth, textureWidth, 0, 1, 1, 1, 1);
 		sprites[0]->Render(dc, 1100.0f, 300.0f, 0.0f, 80, 80, 0, 0, textureWidth, textureWidth, 0, 1, 1, 1, 1);
 		sprites[0]->Render(dc, 1200.0f, 300.0f, 0.0f, 80, 80, 0, 0, textureWidth, textureWidth, 0, 1, 1, 1, 1);

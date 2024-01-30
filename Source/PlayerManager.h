@@ -30,19 +30,19 @@ public:
 	//デバッグプリミティブ描画
 	void Render2d(const RenderContext & rc, Sprite* gauge);
 
-	//エネミー登録
+	//プレイヤー登録
 	void Register(Player* player);
 
-	//エネミー数取得
+	//プレイヤー数取得
 	int GetPlayerCount() const { return static_cast<int>(players.size()); }
 
-	//エネミー取得
+	//プレイヤー取得
 	Player* GetPlayer(int index) { return players.at(index); }
 
-	//エネミー削除
+	//プレイヤー削除
 	void Remove(Player* player);
 
-	//エネミー全削除
+	//プレイヤー全削除
 	void Clear();
 	void CollisionPlayerVsPlayer();
 

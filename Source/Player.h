@@ -112,6 +112,9 @@ public:
 	// 攻撃処理
 	bool InputAttackFromNoneAttack(float elapsedTime);
 	bool InputAttackFromJump(float elapsedTime);
+
+	//回復遷移確認処理
+	bool IsRecoverTransition();
 	
 	// 入力処理
 	virtual bool InputJumpButtonDown() = 0;
@@ -178,6 +181,8 @@ protected:
 	void TransitionDamageState();
 	// 死亡ステート
 	void TransitionDeadState();
+	// 回復ステート
+	void TransitionRecoverState();
 
 	// 攻撃ステート
 	void TransitionAttackHummer1State();
@@ -257,6 +262,7 @@ public:
 		JumpEnd,
 		Damage,
 		Dead,
+		Recover,
 		AttackHammer1,
 		AttackHammer2,
 		AttackHammerJump,

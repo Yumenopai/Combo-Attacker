@@ -44,8 +44,6 @@ PlayerAI::PlayerAI()
 	}
 
 	position = { -7,5,-60 };
-	health = 100;
-	maxHealth = 100;
 
 	//待機ステートへ遷移
 	TransitionIdleState();
@@ -215,6 +213,7 @@ void PlayerAI::HPBarRender(const RenderContext& rc, Sprite* gauge)
 	const float guageHeight = 15.0f;
 
 	float healthRate = GetHealth() / static_cast<float>(GetMaxHealth());
+	bool hpWorning = healthRate < 0.2f;
 	int frameExpansion = 6;
 	Graphics& graphics = Graphics::Instance();
 	float screenWidth = static_cast<float>(graphics.GetScreenWidth());
@@ -243,7 +242,7 @@ void PlayerAI::HPBarRender(const RenderContext& rc, Sprite* gauge)
 		static_cast<float>(gauge->GetTextureWidth()),
 		static_cast<float>(gauge->GetTextureHeight()),
 		0.0f,
-		0.2f, 0.6f, 0.2f, 1.0f
+		hpWorning ? 0.8f : 0.2f, hpWorning ? 0.2f : 0.6f, 0.2f, 1.0f
 	);
 }
 
@@ -278,7 +277,7 @@ bool PlayerAI::InputMove(float elapsedTime)
 	playerPos.y = position.y; //Y方向は自身の高さで良い
 
 	XMVECTOR AIto1P = XMVectorSubtract(XMLoadFloat3(&playerPos), XMLoadFloat3(&position));
-	if (XMVectorGetX(XMVector3Length(AIto1P)) > 0.2f)
+	if (XMVectorGetX(XMVector3LengthSq(AIto1P)) > 0.2f * 0.2f)
 		XMStoreFloat3(&moveVec, AIto1P);
 
 	if (Player1P::Instance().GetESState() >= EnemySearch::Find)

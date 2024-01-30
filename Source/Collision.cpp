@@ -12,7 +12,7 @@ bool Collision::IntersectSphereVsSphere(
 	XMVECTOR PositionA = XMLoadFloat3(&positionA);
 	XMVECTOR PositionB = XMLoadFloat3(&positionB);
 	XMVECTOR Vec = XMVectorSubtract(PositionB, PositionA);
-	XMVECTOR LengthSq = XMVector3Length(Vec);
+	XMVECTOR LengthSq = XMVector3LengthSq(Vec);
 	float lengthSq;
 	XMStoreFloat(&lengthSq, LengthSq);
 

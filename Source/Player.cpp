@@ -9,6 +9,7 @@
 #include "SceneGame.h"
 #include "SceneClear.h"
 #include "EnemyManager.h"
+#include "PlayerManager.h"
 
 #include "Stage.h"
 #include "imgui.h"
@@ -145,6 +146,8 @@ void Player::UpdateEachState(float elapsedTime)
 		if (!InputMove(elapsedTime)) TransitionIdleState();
 		// ジャンプ入力処理
 		if (InputJumpButtonDown()) TransitionJumpStartState();
+		// 回復遷移確認処理
+		if (IsRecoverTransition()) TransitionRecoverState();
 		// 攻撃処理
 		InputAttackFromNoneAttack(elapsedTime);
 		break;
@@ -199,6 +202,24 @@ void Player::UpdateEachState(float elapsedTime)
 		if (!model->IsPlayAnimation())
 		{
 			health = maxHealth;
+			TransitionIdleState();
+		}
+		break;
+	case State::Recover:
+		if (!model->IsPlayAnimation())
+		{
+			//回復処理
+			Player* targetplayer = this;
+			PlayerManager& playerManager = PlayerManager::Instance();
+			int playerCount = playerManager.GetPlayerCount();
+			for (int i = 0; i < playerCount; i++)
+			{
+				if (playerManager.GetPlayer(i) == this) continue;
+				targetplayer = playerManager.GetPlayer(i);
+			}
+			targetplayer->AddHealth(30);
+
+			//移行
 			TransitionIdleState();
 		}
 		break;
@@ -526,7 +547,7 @@ bool Player::InputMove(float elapsedTime)
 	XMVECTOR MoveVec = XMLoadFloat3(&moveVec); //進行ベクトルを取得
 
 	// 動いていて且つ最近距離が登録されている
-	if (XMVectorGetX(XMVector3Length(MoveVec)) != 0 && nearestDist < FLT_MAX)
+	if (XMVectorGetX(XMVector3LengthSq(MoveVec)) != 0 && nearestDist < FLT_MAX)
 	{
 		// 向かっているのがエネミーベクトルと鋭角関係なら
 		float dot = XMVectorGetX(XMVector3Dot(MoveVec, XMLoadFloat3(&nearestVec)));
@@ -566,6 +587,30 @@ bool Player::InputAttackFromJump(float elapsedTime)
 	else if (InputSpearButton()) TransitionAttackSpearJumpState();
 	else return false;
 
+	return true;
+}
+
+//回復遷移確認処理
+bool Player::IsRecoverTransition()
+{
+	Player* targetplayer = this;
+	PlayerManager& playerManager = PlayerManager::Instance();
+	int playerCount = playerManager.GetPlayerCount();
+	for (int i = 0; i < playerCount; i++)
+	{
+		if (playerManager.GetPlayer(i) == this) continue;
+		targetplayer = playerManager.GetPlayer(i);
+	}
+	// 20%以上はfalse
+	if (targetplayer->GetHealthRate() > 20) return false;
+
+	XMVECTOR posPlayerthis = XMLoadFloat3(&GetPosition());
+	XMVECTOR posPlayertarget = XMLoadFloat3(&targetplayer->GetPosition());
+	float distSq = XMVectorGetX(XMVector3LengthSq(XMVectorSubtract(posPlayerthis, posPlayertarget)));
+	// 近く無ければfalse
+	if (distSq > 2.0f * 2.0f) return false;
+
+	// trueで回復遷移
 	return true;
 }
 
@@ -766,6 +811,12 @@ void Player::TransitionDeadState()
 {
 	state = State::Dead;
 	model->PlayAnimation(Anim_Death, false);
+}
+// 回復ステート
+void Player::TransitionRecoverState()
+{
+	state = State::Recover;
+	model->PlayAnimation(Anim_JumpEnd, false);
 }
 // 攻撃ステート
 void Player::TransitionAttackHummer1State()

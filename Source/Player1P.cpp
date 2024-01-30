@@ -45,8 +45,6 @@ Player1P::Player1P()
 	ESState = EnemySearch::None;
 
 	position = { -7,5,-66 };
-	health = 100;
-	maxHealth = 100;
 
 	//待機ステートへ遷移
 	TransitionIdleState();
@@ -107,19 +105,6 @@ void Player1P::Update(float elapsedTime)
 		}
 	}
 
-	//for (auto itr = enemySearch.begin(); itr != enemySearch.end(); ++itr) 
-	//{
-	//	if (static_cast<int>(itr->second) <= static_cast<int>(EnemySearch::Find))
-	//	{
-
-
-
-	//	}
-
-
-	//}
-
-
 	// 配列ズラし
 	//ShiftTrailPositions();
 
@@ -177,6 +162,7 @@ void Player1P::HPBarRender(const RenderContext& rc, Sprite* gauge)
 	const float guageHeight = 15.0f;
 
 	float healthRate = GetHealth() / static_cast<float>(GetMaxHealth());
+	bool hpWorning = healthRate < 0.2f;
 	int frameExpansion = 6;
 	Graphics& graphics = Graphics::Instance();
 	float screenWidth = static_cast<float>(graphics.GetScreenWidth());
@@ -205,7 +191,7 @@ void Player1P::HPBarRender(const RenderContext& rc, Sprite* gauge)
 		static_cast<float>(gauge->GetTextureWidth()),
 		static_cast<float>(gauge->GetTextureHeight()),
 		0.0f,
-		0.2f, 0.8f, 0.2f, 1.0f
+		hpWorning ? 1.0f : 0.2f, hpWorning ? 0.2f : 0.8f, 0.2f, 1.0f
 	);
 }
 
@@ -282,7 +268,7 @@ bool Player1P::InputMove(float elapsedTime)
 	XMFLOAT3 moveVec = GetMoveVec();
 	XMVECTOR MoveVec = XMLoadFloat3(&moveVec); //進行ベクトルを取得
 
-	if (XMVectorGetX(XMVector3Length(MoveVec)) != 0 && nearestDist < FLT_MAX)
+	if (XMVectorGetX(XMVector3LengthSq(MoveVec)) != 0 && nearestDist < FLT_MAX)
 	{
 		float dot = XMVectorGetX(XMVector3Dot(MoveVec, XMLoadFloat3(&nearestVec)));
 

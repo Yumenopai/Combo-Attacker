@@ -47,10 +47,10 @@ void FreeCameraController::SyncControllerToCamera(Camera& camera)
 void FreeCameraController::Update()
 {
 	//デバッグウィンドウ操作中は処理しない
-	if (ImGui::IsWindowFocused(ImGuiFocusedFlags_AnyWindow))
-	{
-		return;
-	}
+	//if (ImGui::IsWindowFocused(ImGuiFocusedFlags_AnyWindow))
+	//{
+	//	return;
+	//}
 
 	//ImGuiのマウス入力値を使ってカメラ操作する
 	ImGuiIO io = ImGui::GetIO();
@@ -59,11 +59,14 @@ void FreeCameraController::Update()
 	float moveX = io.MouseDelta.x * 0.02f;
 	float moveY = io.MouseDelta.y * 0.02f;
 
+	//マウス感度倍率
+	float MouseRate = 0.1f;
+
 	//マウス左ボタン押下中
-	if (io.MouseDown[ImGuiMouseButton_Left])
+	//if (io.MouseDown[ImGuiMouseButton_Left])
 	{
 		//Y軸回転
-		angleY += moveX * 0.5f;
+		angleY += moveX * MouseRate;
 		if (angleY > XM_PI)
 		{
 			angleY -= XM_2PI;
@@ -73,7 +76,7 @@ void FreeCameraController::Update()
 			angleY += XM_2PI;
 		}
 		//X軸回転
-		angleX += moveY * 0.5f;
+		angleX += moveY * MouseRate;
 		if (angleX > XM_PI)
 		{
 			angleX -= XM_2PI;
@@ -83,34 +86,33 @@ void FreeCameraController::Update()
 			angleX += XM_2PI;
 		}
 	}
-	//マウス中ボタン押下中
-	else if (io.MouseDown[ImGuiMouseButton_Middle])
-	{
-		//平行移動
-		float s = distance * 0.035f;
-		float x = moveX * s;
-		float y = moveY * s;
+	////マウス中ボタン押下中
+	//else if (io.MouseDown[ImGuiMouseButton_Middle])
+	//{
+	//	//平行移動
+	//	float s = distance * 0.035f;
+	//	float x = moveX * s;
+	//	float y = moveY * s;
 
-		focus.x -= right.x * x;
-		focus.y -= right.y * x;
-		focus.z -= right.z * x;
+	//	focus.x -= right.x * x;
+	//	focus.y -= right.y * x;
+	//	focus.z -= right.z * x;
 
-		focus.x += up.x * y;
-		focus.y += up.y * y;
-		focus.z += up.z * y;
-	}
-	//マウス右ボタン押下中
-	else if (io.MouseDown[ImGuiMouseButton_Right])
-	{
-		//ズーム
-		distance += (-moveY - moveX) * distance * 0.1f;
-	}
+	//	focus.x += up.x * y;
+	//	focus.y += up.y * y;
+	//	focus.z += up.z * y;
+	//}
+	////マウス右ボタン押下中
+	//else if (io.MouseDown[ImGuiMouseButton_Right])
+	//{
+	//	//ズーム
+	//	distance += (-moveY - moveX) * distance * 0.1f;
+	//}
 	//マウスホイール
-	else if (io.MouseWheel != 0)
+	if (io.MouseWheel != 0)
 	{
 		//ズーム
 		distance -= io.MouseWheel * distance * 0.1f;
-
 	}
 
 	float sx = ::sinf(angleX);

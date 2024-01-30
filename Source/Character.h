@@ -37,10 +37,14 @@ public:
 	//ÕŒ‚‚ğ—^‚¦‚é
 	void AddImpulse(const XMFLOAT3& impulse);
 
+	//Œ’N%ó‘Ô‚ğæ“¾
+	int GetHealthRate() const { return 100 * health / maxHealth; }
 	//Œ’Nó‘Ô‚ğæ“¾
 	int GetHealth() const { return health; }
 	//Å‘åŒ’Nó‘Ô‚ğæ“¾
 	int GetMaxHealth() const { return maxHealth; }
+	// Œ’Nó‘Ô‚ğİ’è
+	void AddHealth(const int h) { health += h; }
 
 protected:
 	//ˆÚ“®ˆ—
