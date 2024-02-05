@@ -148,7 +148,6 @@
     <ClInclude Include="Source\Input\GamePad.h" />
     <ClInclude Include="Source\Input\Input.h" />
     <ClInclude Include="Source\Input\Mouse.h" />
-    <ClInclude Include="Source\ItemManager.h" />
     <ClInclude Include="Source\Light.h" />
     <ClInclude Include="Source\MathScript.h" />
     <ClInclude Include="Source\Misc.h" />
@@ -207,7 +206,6 @@
     <ClCompile Include="Source\Input\GamePad.cpp" />
     <ClCompile Include="Source\Input\Input.cpp" />
     <ClCompile Include="Source\Input\Mouse.cpp" />
-    <ClCompile Include="Source\ItemManager.cpp" />
     <ClCompile Include="Source\Main.cpp" />
     <ClCompile Include="Source\Player.cpp" />
     <ClCompile Include="Source\Player1P.cpp" />

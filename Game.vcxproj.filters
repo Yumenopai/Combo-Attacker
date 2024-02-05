@@ -40,9 +40,6 @@
     <Filter Include="Source\Effect">
       <UniqueIdentifier>{9d07265a-e587-451a-8208-221a8766799a}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source\Object\Item">
-      <UniqueIdentifier>{9847f38e-fe0e-474b-a0b4-d578f3aee035}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Shader\2D">
       <UniqueIdentifier>{0fcc07b1-aa29-424a-a132-de8afbc99690}</UniqueIdentifier>
     </Filter>
@@ -228,9 +225,6 @@
     <ClInclude Include="Source\EnemyTurtleShell.h">
       <Filter>Source\Object\Character\Enemy</Filter>
     </ClInclude>
-    <ClInclude Include="Source\ItemManager.h">
-      <Filter>Source\Object\Item</Filter>
-    </ClInclude>
     <ClInclude Include="Source\Shader\ToonShader.h">
       <Filter>Source\Shader</Filter>
     </ClInclude>
@@ -397,9 +391,6 @@
     </ClCompile>
     <ClCompile Include="Source\EnemyTurtleShell.cpp">
       <Filter>Source\Object\Character\Enemy</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\ItemManager.cpp">
-      <Filter>Source\Object\Item</Filter>
     </ClCompile>
     <ClCompile Include="Source\Shader\ToonShader.cpp">
       <Filter>Source\Shader</Filter>
