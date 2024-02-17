@@ -33,12 +33,6 @@ void SceneClear::Initialize()
 		XMFLOAT3(0, 0, 0),		//注視点
 		XMFLOAT3(0, 1, 0)		//上ベクトル
 	);
-
-	//ライト設定
-	DirectionalLight directionalLight;
-	directionalLight.direction = { 1, -1, 0 };
-	directionalLight.color = { 1,1,1 };
-	lightManager.SetDirectionalLight(directionalLight);
 }
 
 void SceneClear::Finalize()
@@ -99,16 +93,6 @@ void SceneClear::Render()
 	rc.camera = &camera;
 	rc.deviceContext = Graphics::Instance().GetDeviceContext();
 	rc.renderState = Graphics::Instance().GetRenderState();
-	rc.lightManager = &lightManager;
-	rc.shadowMap = shadowMap;
-	rc.shadowColor = { 0.5f,0.5f,0.5f };
-
-	//シャドウマップ描画
-	shadowMap->Begin(rc, camera.GetFocus());
-	//シャドウマップにモデル描画
-	shadowMap->Draw(rc, model.get());
-	shadowMap->End(rc);
-
 	RenderState* renderState = Graphics::Instance().GetRenderState();
 
 	ID3D11SamplerState* samplers[] =
@@ -154,5 +138,4 @@ void SceneClear::Render()
 		if (isShow)
 			sprite[1]->Render(dc, 0.0f, 0.0f, 0.0f, screenWidth, screenHeight, 0, 0, textureWidth, textureHeight, 0, 1, 1, 1, 1);
 	}
-
 }

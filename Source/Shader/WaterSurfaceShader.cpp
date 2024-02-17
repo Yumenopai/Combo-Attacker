@@ -95,13 +95,8 @@ void WaterSurfaceShader::Begin(const RenderContext& rc)
 	cbScene.shadowColor.z = rc.shadowColor.z;
 	cbScene.shadowTexelSize = rc.shadowMap->GetTexelSize();
 
-	const DirectionalLight& directionalLight = rc.lightManager->GetDirectionalLight();
-	cbScene.lightDirection.x = directionalLight.direction.x;
-	cbScene.lightDirection.y = directionalLight.direction.y;
-	cbScene.lightDirection.z = directionalLight.direction.z;
-	cbScene.lightColor.x = directionalLight.color.x;
-	cbScene.lightColor.y = directionalLight.color.y;
-	cbScene.lightColor.z = directionalLight.color.z;
+	cbScene.lightDirection = rc.directionalLightData.direction;
+	cbScene.lightColor = rc.directionalLightData.color;
 
 	const XMFLOAT3& eye = rc.camera->GetEye();
 	cbScene.cameraPosition.x = eye.x;

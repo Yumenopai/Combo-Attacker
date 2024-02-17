@@ -148,7 +148,8 @@
     <ClInclude Include="Source\Input\GamePad.h" />
     <ClInclude Include="Source\Input\Input.h" />
     <ClInclude Include="Source\Input\Mouse.h" />
-    <ClInclude Include="Source\Light.h" />
+    <ClInclude Include="Source\Light\Light.h" />
+    <ClInclude Include="Source\Light\LightManager.h" />
     <ClInclude Include="Source\MathScript.h" />
     <ClInclude Include="Source\Misc.h" />
     <ClInclude Include="Source\Player.h" />
@@ -209,13 +210,14 @@
     <ClCompile Include="Source\Input\GamePad.cpp" />
     <ClCompile Include="Source\Input\Input.cpp" />
     <ClCompile Include="Source\Input\Mouse.cpp" />
+    <ClCompile Include="Source\Light\Light.cpp" />
+    <ClCompile Include="Source\Light\LightManager.cpp" />
     <ClCompile Include="Source\Main.cpp" />
     <ClCompile Include="Source\Player.cpp" />
     <ClCompile Include="Source\Player1P.cpp" />
     <ClCompile Include="Source\PlayerAI.cpp" />
     <ClCompile Include="Source\PlayerManager.cpp" />
     <ClCompile Include="Source\PostEffect.cpp" />
-    <ClCompile Include="Source\Scene.cpp" />
     <ClCompile Include="Source\SceneClear.cpp" />
     <ClCompile Include="Source\SceneGame.cpp" />
     <ClCompile Include="Source\SceneLoading.cpp" />

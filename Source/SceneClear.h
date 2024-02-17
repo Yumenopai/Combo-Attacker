@@ -17,7 +17,6 @@ public:
 private:
 	std::unique_ptr<Sprite> sprite[2];
 	std::unique_ptr<Model> model;
-	LightManager lightManager;
 
 	XMFLOAT3	angle = { -0.3f, 3.1f, 0 };
 	XMFLOAT3	scale = { 1,1,1 };

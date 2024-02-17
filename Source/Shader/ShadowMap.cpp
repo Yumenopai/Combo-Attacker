@@ -137,8 +137,10 @@ void ShadowMap::Begin(const RenderContext& rc, const XMFLOAT3& position)
 	dc->VSSetConstantBuffers(0, _countof(constantBuffers), constantBuffers);
 
 	//ライトビュープロジェクション行列作成
-	const DirectionalLight& directionalLight = rc.lightManager->GetDirectionalLight();
-	XMVECTOR LightDirection = XMLoadFloat3(&directionalLight.direction);
+	
+	XMVECTOR LightDirection = { rc.directionalLightData.direction.x,
+								rc.directionalLightData.direction.y,
+								rc.directionalLightData.direction.z };
 	LightDirection = XMVector3Normalize(LightDirection);
 	XMVECTOR Up = XMVectorSet(0, 1, 0, 0);
 	XMVECTOR Focus = XMLoadFloat3(&position);

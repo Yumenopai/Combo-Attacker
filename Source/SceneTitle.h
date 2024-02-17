@@ -3,6 +3,7 @@
 #include "Graphics/Sprite.h"
 #include "Scene.h"
 #include "Stage.h"
+#include "Light/Light.h"
 
 class SceneTitle : public Scene
 {
@@ -19,7 +20,7 @@ private:
 	std::unique_ptr<Sprite> sprite;
 	std::unique_ptr<Model> model[2];
 	std::unique_ptr<Stage> stage;
-	LightManager lightManager;
+	Light* mainDirectionalLight = nullptr;
 
 	XMFLOAT3	angle = { -0.3f, 3.1f, 0 };
 	XMFLOAT3	scale = { 0.6f,0.6f,0.6f };

@@ -2,6 +2,8 @@
 
 #include "Graphics/FontSprite.h"
 #include "Stage.h"
+#include "Light/Light.h"
+#include "Camera/CameraController.h"
 #include "Player1P.h"
 #include "playerAI.h"
 #include "EnemySlime.h"
@@ -78,11 +80,12 @@ private:
 	float waterTimer = 0.0f;
 
 	Model::Node* selectionNode = nullptr;
-	FreeCameraController freeCameraController;
 	std::unique_ptr<CameraController> cameraController;
 
 	bool		animationLoop = false;
 	float		animationBlendSeconds = 0;
-	LightManager lightManager;
+
+	// ïΩçsåıåπ
+	Light* mainDirectionalLight = nullptr;
 };
 

@@ -11,6 +11,7 @@
 #include "EnemyTurtleShell.h"
 #include "EnemyBlue.h"
 #include "TransformUtils.h"
+#include "Light/LightManager.h"
 #include "EffectManager.h"
 #include "Input/Input.h"
 
@@ -94,11 +95,10 @@ void SceneGame::Initialize()
 
 	enemyManager.Register(enemyBlue.get());
 
-	//ライト設定
-	DirectionalLight directionalLight;
-	directionalLight.direction = { 1, -1, -2 };
-	directionalLight.color = { 1,1,1 };
-	lightManager.SetDirectionalLight(directionalLight);
+	// 平行光源を追加
+	mainDirectionalLight = new Light(LightType::Directional);
+	mainDirectionalLight->SetDirection({ 1, -1, -2 });
+	LightManager::Instane().Register(mainDirectionalLight);
 }
 
 // 終了化
@@ -152,7 +152,7 @@ void SceneGame::Render()
 	rc.camera = &camera;
 	rc.deviceContext = Graphics::Instance().GetDeviceContext();
 	rc.renderState = Graphics::Instance().GetRenderState();
-	rc.lightManager = &lightManager;
+	LightManager::Instane().PushRenderContext(rc);// ライトの情報を詰め込む
 	rc.shadowMap = shadowMap;
 	rc.shadowColor = { 0.5f,0.5f,0.5f };
 

@@ -59,12 +59,6 @@ void PlayerAI::Update(float elapsedTime)
 	nearestDist = FLT_MAX;
 	nearestVec = {};
 
-	//if (enemyCount == 0) ESState = EnemySearch::None;
-	if (enemyCount == 0)
-	{
-		//SceneManager::Instance().ChangeScene(new SceneLoading(new SceneGame(), -255));
-	}
-
 	for (int i = 0; i < enemyCount; i++)
 	{
 		Enemy* enemy = enemyManager.GetEnemy(i);

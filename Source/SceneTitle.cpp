@@ -1,10 +1,9 @@
 #include "Graphics/Graphics.h"
-
+#include "Light/LightManager.h"
 #include "SceneManager.h"
 #include "SceneTitle.h"
 #include "SceneGame.h"
 #include "SceneLoading.h"
-
 
 #include "Input/Input.h"
 
@@ -34,11 +33,10 @@ void SceneTitle::Initialize()
 		XMFLOAT3(0, 1, 0)		//上ベクトル
 	);
 
-	//ライト設定
-	DirectionalLight directionalLight;
-	directionalLight.direction = { 2, -2, 2 };
-	directionalLight.color = { 1,1,1 };
-	lightManager.SetDirectionalLight(directionalLight);
+	// 平行光源を追加
+	mainDirectionalLight = new Light(LightType::Directional);
+	mainDirectionalLight->SetDirection({ 2, -2, 2 });
+	LightManager::Instane().Register(mainDirectionalLight);
 }
 
 void SceneTitle::Finalize()
@@ -96,7 +94,7 @@ void SceneTitle::Render()
 	rc.camera = &camera;
 	rc.deviceContext = Graphics::Instance().GetDeviceContext();
 	rc.renderState = Graphics::Instance().GetRenderState();
-	rc.lightManager = &lightManager;
+	LightManager::Instane().PushRenderContext(rc);// ライトの情報を詰め込む
 	rc.shadowMap = shadowMap;
 	rc.shadowColor = { 0.5f,0.5f,0.5f };
 
