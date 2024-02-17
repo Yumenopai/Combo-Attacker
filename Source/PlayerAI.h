@@ -70,10 +70,6 @@ public:
 		return false;
 	}
 
-protected:
-	//’…’n‚µ‚½‚ÉŒÄ‚Î‚ê‚é
-	void OnLanding(float elapsedTime) override;
-
 private:
 	// ˆÚ“®“ü—Íˆ—
 	bool InputMove(float elapsedTime);

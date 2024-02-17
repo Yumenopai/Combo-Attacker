@@ -170,6 +170,9 @@
     <ClInclude Include="Source\Shader\UVScrollShader.h" />
     <ClInclude Include="Source\Shader\WaterSurfaceShader.h" />
     <ClInclude Include="Source\Stage.h" />
+    <ClInclude Include="Source\State\Player\PlayerEachState.h" />
+    <ClInclude Include="Source\State\Player\PlayerStateBase.h" />
+    <ClInclude Include="Source\State\Player\PlayerStateMachine.h" />
     <ClInclude Include="Source\TransformUtils.h" />
   </ItemGroup>
   <ItemGroup>
@@ -225,6 +228,8 @@
     <ClCompile Include="Source\Shader\UVScrollShader.cpp" />
     <ClCompile Include="Source\Shader\WaterSurfaceShader.cpp" />
     <ClCompile Include="Source\Stage.cpp" />
+    <ClCompile Include="Source\State\Player\PlayerEachState.cpp" />
+    <ClCompile Include="Source\State\Player\PlayerStateMachine.cpp" />
     <ClCompile Include="Source\TransformUtils.cpp" />
   </ItemGroup>
   <ItemGroup>

@@ -1,3 +1,5 @@
+#pragma once
+
 #include "Graphics/FontSprite.h"
 #include "Stage.h"
 #include "Player1P.h"

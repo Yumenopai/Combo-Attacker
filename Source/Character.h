@@ -39,6 +39,8 @@ public:
 
 	//Œ’N%ó‘Ô‚ğæ“¾
 	int GetHealthRate() const { return 100 * health / maxHealth; }
+	//Œ’Nó‘Ôİ’è
+	void SetHealth(int h) { health = h; }
 	//Œ’Nó‘Ô‚ğæ“¾
 	int GetHealth() const { return health; }
 	//Å‘åŒ’Nó‘Ô‚ğæ“¾

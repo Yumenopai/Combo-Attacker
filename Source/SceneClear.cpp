@@ -15,7 +15,7 @@ void SceneClear::Initialize()
 	sprite[0] = std::make_unique<Sprite>(device, "Data/Sprite/4.png");
 	sprite[1] = std::make_unique<Sprite>(device, "Data/Sprite/5.png");
 	//model = std::make_unique<Model>(device, "Data/Model/Jammo/Jammo_Player.fbx", 0.02f);
-	model->PlayAnimation(Player::Anim_Running, true);
+	model->PlayAnimation(static_cast<int>(Player::Animation::Running), true);
 
 	float screenWidth = Graphics::Instance().GetScreenWidth();
 	float screenHeight = Graphics::Instance().GetScreenHeight();

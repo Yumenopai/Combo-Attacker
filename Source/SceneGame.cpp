@@ -2,6 +2,7 @@
 #include "Graphics/Graphics.h"
 #include "Graphics/FontSprite.h"
 #include "SceneManager.h"
+#include "SceneTitle.h"
 #include "SceneLoading.h"
 #include "SceneGame.h"
 #include "PlayerManager.h"
@@ -128,6 +129,11 @@ void SceneGame::Update(float elapsedTime)
 	EffectManager::Instance().Update(elapsedTime);
 
 	GamePad& gamePad = Input::Instance().GetGamePad();
+
+	//if (gamePad.GetButtonDown() & GamePad::BTN_START)
+	//{
+	//	SceneManager::Instance().ChangeScene(new SceneTitle());
+	//}
 }
 
 void SceneGame::Render()

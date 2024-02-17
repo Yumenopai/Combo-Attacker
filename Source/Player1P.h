@@ -40,10 +40,6 @@ public:
 	bool InputSwordButton();
 	bool InputSpearButton();
 
-protected:
-	//着地した時に呼ばれる
-	void OnLanding(float elapsedTime) override;
-
 private:
 	// スティック入力値から移動ベクトルを取得
 	XMFLOAT3 GetMoveVec() const;

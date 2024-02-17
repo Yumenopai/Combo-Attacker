@@ -8,8 +8,9 @@
 #include "SceneLoading.h"
 #include "SceneGame.h"
 #include "SceneClear.h"
-#include "EnemyManager.h"
 #include "PlayerManager.h"
+#include "State/Player/PlayerEachState.h"
+#include "EnemyManager.h"
 
 #include "Stage.h"
 #include "imgui.h"
@@ -17,10 +18,17 @@
 //コンストラクタ
 Player::Player()
 {
-	ID3D11Device* device = Graphics::Instance().GetDevice();
-	//プレイヤーモデル読み込み
-	model = std::make_unique<Model>(device, "Data/Model/SD-UnityChan/UnityChan.fbx", 0.02f);
-	//model = std::make_unique<Model>(device, "Data/Model/Enemy/red.fbx", 0.02f);
+}
+
+Player::~Player()
+{
+}
+
+// 初期化
+void Player::Init()
+{
+	//ヒットエフェクト読み込み
+	hitEffect = std::make_unique<Effect>("Data/Effect/Hit.efk");
 
 	//初期化
 	enemySearch.clear();
@@ -33,19 +41,37 @@ Player::Player()
 		enemyDist[enemyManager.GetEnemy(i)] = FLT_MAX;
 	}
 
-	position = { -7,5,-66 };
 	health = 100;
 	maxHealth = 100;
 
-	//待機ステートへ遷移
-	TransitionIdleState();
+	// StateMachineを生成 
+	stateMachine = new PlayerStateMachine();
+	// ステートマシンにステート登録 
+	stateMachine->RegisterState(new StateIdle(this));
+	stateMachine->RegisterState(new StateIdleToRun(this));
+	stateMachine->RegisterState(new StateRun(this));
+	stateMachine->RegisterState(new StateRunToIdle(this));
+	stateMachine->RegisterState(new StateJumpStart(this));
+	stateMachine->RegisterState(new StateJumpLoop(this));
+	stateMachine->RegisterState(new StateJumpAir(this));
+	stateMachine->RegisterState(new StateJumpEnd(this));
+	stateMachine->RegisterState(new StateDamage(this));
+	stateMachine->RegisterState(new StateDead(this));
+	stateMachine->RegisterState(new StateRecover(this));
+	stateMachine->RegisterState(new StateAttackHammer1(this));
+	stateMachine->RegisterState(new StateAttackHammer2(this));
+	stateMachine->RegisterState(new StateAttackHammerJump(this));
+	stateMachine->RegisterState(new StateAttackSpear1(this));
+	stateMachine->RegisterState(new StateAttackSpear2(this));
+	stateMachine->RegisterState(new StateAttackSpear3(this));
+	stateMachine->RegisterState(new StateAttackSpearJump(this));
+	stateMachine->RegisterState(new StateAttackSword1(this));
+	stateMachine->RegisterState(new StateAttackSword2(this));
+	stateMachine->RegisterState(new StateAttackSword3(this));
+	stateMachine->RegisterState(new StateAttackSwordJump(this));
 
-	//ヒットエフェクト読み込み
-	hitEffect = std::make_unique<Effect>("Data/Effect/Hit.efk");
-}
-
-Player::~Player()
-{
+	// ステートをセット 
+	stateMachine->SetState(static_cast<int>(State::Idle));
 }
 
 // 攻撃の軌跡描画
@@ -101,346 +127,27 @@ void Player::OnLanding(float elapsedTime)
 		// 着地してすぐは何もさせないためここで処理を書かない
 		// 各StateUpdateにてアニメーション終了後にIdleStateへ遷移する
 	}
-	else if (InputMove(elapsedTime)) TransitionRunState();
-	else TransitionJumpEndState();
+	else if (InputMove(elapsedTime))
+	{
+		stateMachine->ChangeState(static_cast<int>(State::Run));
+	}
+	else {
+		stateMachine->ChangeState(static_cast<int>(State::JumpEnd));
+	}
 }
 
 void Player::OnDamaged()
 {
 	isDamaged = true;
-	TransitionDamageState();
+	stateMachine->ChangeState(static_cast<int>(State::Damage));
 }
 
 void Player::OnDead()
 {
 	if(!isDead)
 	{
-		TransitionDeadState();
+		stateMachine->ChangeState(static_cast<int>(State::Dead));
 		isDead = true;
-	}
-}
-
-// 各ステージごとの更新処理
-void Player::UpdateEachState(float elapsedTime)
-{
-	switch (state)
-	{
-	// 待機ステート
-	case State::Idle:
-		// 移動入力処理
-		if (InputMove(elapsedTime)) TransitionIdleToRunState();
-		// ジャンプ入力処理
-		if (InputJumpButtonDown()) TransitionJumpStartState();
-		// 攻撃処理
-		InputAttackFromNoneAttack(elapsedTime);
-		break;
-
-	case State::IdleToRun:
-		InputMove(elapsedTime);
-		// アニメーション終了後
-		if (!model->IsPlayAnimation()) TransitionRunState();
-		break;
-
-	case State::Run:
-		// 移動入力処理
-		if (!InputMove(elapsedTime)) TransitionIdleState();
-		// ジャンプ入力処理
-		if (InputJumpButtonDown()) TransitionJumpStartState();
-		// 回復遷移確認処理
-		if (IsRecoverTransition()) TransitionRecoverState();
-		// 攻撃処理
-		InputAttackFromNoneAttack(elapsedTime);
-		break;
-
-	// 現在未使用
-	case State::RunToIdle:
-		// アニメーション終了後
-		if (!model->IsPlayAnimation()) TransitionIdleState();
-		break;
-
-	case State::JumpStart:
-		InputMove(elapsedTime);
-		// さらにジャンプ入力時の処理
-		if (InputJumpButtonDown()) TransitionJumpAirState();
-		// アニメーション終了後
-		if (!model->IsPlayAnimation()) TransitionJumpLoopState();
-		break;
-
-	case State::JumpLoop:
-		InputMove(elapsedTime);
-		// さらにジャンプ入力時の処理
-		if (InputJumpButtonDown()) TransitionJumpAirState();
-		// ジャンプ中の攻撃処理はUpdateJumpにて行う
-		
-		// 着地(JumpEnd)ステートへの遷移は着地時にしか行わない
-		// 保険で既に着地している時用に呼び出し
-		if (isGround) OnLanding(elapsedTime);
-		break;
-
-	case State::JumpAir:
-		InputMove(elapsedTime);
-		// 保険で既に着地している時用に呼び出し
-		if (isGround) OnLanding(elapsedTime);
-		break;
-
-	case State::JumpEnd:
-		// InputMove時などOnLandingでここを通らない可能性あり
-		// アニメーション終了後
-		if (InputJumpButtonDown()) TransitionJumpStartState();
-		if (!model->IsPlayAnimation()) TransitionIdleState();
-		break;
-
-	case State::Damage:
-		// ダメージ受けたら止まる?
-		// アニメーション終了後
-		if (!model->IsPlayAnimation()) TransitionIdleState();
-		break;
-
-	case State::Dead:
-		// Deathアニメーションは起き上がりまでなので途中で止めるのが良い?
-		// アニメーション終了後Idleにとりあえず移行
-		if (!model->IsPlayAnimation())
-		{
-			health = maxHealth;
-			TransitionIdleState();
-		}
-		break;
-	case State::Recover:
-		if (!model->IsPlayAnimation())
-		{
-			//回復処理
-			Player* targetplayer = this;
-			PlayerManager& playerManager = PlayerManager::Instance();
-			int playerCount = playerManager.GetPlayerCount();
-			for (int i = 0; i < playerCount; i++)
-			{
-				if (playerManager.GetPlayer(i) == this) continue;
-				targetplayer = playerManager.GetPlayer(i);
-			}
-			targetplayer->AddHealth(30);
-
-			//移行
-			TransitionIdleState();
-		}
-		break;
-	case State::AttackHammer1:
-		Hammer.flag1 = (model->IsPlayAnimation());
-		if (Hammer.flag1)
-		{
-			UpdateArmPositions(model.get(), Hammer);
-			//任意のアニメーション再生区間でのみ次の攻撃技を出すようにする
-			float animationTime = model->GetCurrentAnimationSeconds();
-			if (animationTime >= 0.4f) CollisionArmsVsEnemies(Hammer);
-			
-			if (InputHammerButton() && animationTime >= 0.5f && animationTime <= 0.8f)
-			{
-				TransitionAttackHummer2State();
-			}
-		}
-		else TransitionIdleState();
-		break;
-	case State::AttackHammer2:
-		Hammer.flag1 = false;
-		Hammer.flag2 = (model->IsPlayAnimation());
-		if (Hammer.flag2)
-		{
-			UpdateArmPositions(model.get(), Hammer);
-			CollisionArmsVsEnemies(Hammer);
-		}
-		else TransitionIdleState();
-		break;
-	case State::AttackHammerJump:
-		Hammer.flagJump = model->IsPlayAnimation();
-		if (Hammer.flagJump)
-		{
-			UpdateArmPositions(model.get(), Hammer);
-			CollisionArmsVsEnemies(Hammer);
-		}
-
-		if (isMoveAttack)
-		{
-			HorizontalVelocityByAttack(false, 800, elapsedTime);
-		}
-		if (!model->IsPlayAnimation())
-		{
-			isMoveAttack = false;
-			TransitionIdleState();
-		}
-		break;
-	case State::AttackSpear1:
-		if (model->IsPlayAnimation())
-		{
-			UpdateArmPositions(model.get(), Spear);
-			CollisionArmsVsEnemies(Spear);
-
-			float animationTime = model->GetCurrentAnimationSeconds();
-			// 武器出現アニメーション再生区間
-			Spear.flag1 = (animationTime >= 0.20f && animationTime <= 0.7f);
-			// 足を踏ん張る際の前進をここで行う 既に何か進んでいる時はこの処理をしない
-			if (animationTime < 0.25f && !InputMove(elapsedTime))
-			{	
-				HorizontalVelocityByAttack(true, 40, elapsedTime);
-			}
-			else if (Spear.flag1 && InputSpearButton())
-			{
-				attackCount++;
-				TransitionAttackSpear2State();
-			}
-		}
-		else TransitionIdleState();
-		break;
-	case State::AttackSpear2:
-		Spear.flag1 = false;
-		Spear.flag2 = model->IsPlayAnimation();
-		if (Spear.flag2)
-		{
-			UpdateArmPositions(model.get(), Spear);
-
-			float animationTime = model->GetCurrentAnimationSeconds();
-			if (animationTime >= 0.30f) CollisionArmsVsEnemies(Spear);
-
-			if (animationTime >= 0.30f && animationTime <= 0.45f)
-			{
-				// 足を踏ん張る際の前進
-				HorizontalVelocityByAttack(true, 60, elapsedTime);
-			}
-			// 武器出現アニメーション再生区間
-			if (animationTime >= 0.37f && animationTime <= 0.6f && InputSpearButton())
-			{
-				attackCount++;
-				if (attackCount >= 4) TransitionAttackSpear3State();
-				else TransitionAttackSpear1State();
-			}
-		}
-		else TransitionIdleState();
-		break;
-	case State::AttackSpear3:
-		Spear.flag2 = false;
-		Spear.flag3 = model->IsPlayAnimation();
-		if (Spear.flag3)
-		{
-			UpdateArmPositions(model.get(), Spear);
-			float animationTime = model->GetCurrentAnimationSeconds();
-			if (animationTime >= 0.30f) CollisionArmsVsEnemies(Spear);
-
-			// 足を踏ん張る際の前進をここで行う
-			if (animationTime < 0.43f)
-			{
-				HorizontalVelocityByAttack(true, 39, elapsedTime);
-			}
-		}
-		else TransitionIdleState();
-		break;
-	case State::AttackSpearJump:
-		Spear.flagJump = model->IsPlayAnimation();
-		if (Spear.flagJump)
-		{
-			UpdateArmPositions(model.get(), Spear);
-			CollisionArmsVsEnemies(Spear);
-
-			float animationTime = model->GetCurrentAnimationSeconds();
-			// 回転しながら前下方向に突き刺していくアニメーション
-			if (animationTime >= 0.15f && animationTime <= 0.5f)
-			{
-				HorizontalVelocityByAttack(false, 800, elapsedTime);
-			}
-		}
-		else TransitionIdleState();
-		break;
-	case State::AttackSword1:
-		Sword.flag1 = model->IsPlayAnimation();
-		if (Sword.flag1)
-		{
-			UpdateArmPositions(model.get(), Sword);
-			CollisionArmsVsEnemies(Sword);
-
-			float animationTime = model->GetCurrentAnimationSeconds();
-			// 足を踏ん張る際の前進をここで行う 既に何か進んでいる時はこの処理をしない
-			if (animationTime < 0.2f && !InputMove(elapsedTime))
-			{
-				HorizontalVelocityByAttack(true, 43, elapsedTime);
-			}
-			// 任意のアニメーション再生区間でのみ次の攻撃技を出すようにする
-			else if (InputSwordButton() && animationTime >= 0.3f && animationTime <= 0.7f)
-			{
-				attackCount++;
-				TransitionAttackSword2State();
-			}
-			// 足元の動きに合わせた前進 違和感あるので一旦コメント
-			//else if (animationTime >= 0.50f)
-			//{
-			//	velocity.x += sinf(angle.y) * 38 * elapsedTime;
-			//	velocity.z += cosf(angle.y) * 38 * elapsedTime;
-			//}
-		}
-		else TransitionIdleState();
-		break;
-	case State::AttackSword2:
-		Sword.flag1 = false;
-		Sword.flag2 = model->IsPlayAnimation();
-		if (Sword.flag2)
-		{
-			UpdateArmPositions(model.get(), Sword);
-			CollisionArmsVsEnemies(Sword);
-
-			float animationTime = model->GetCurrentAnimationSeconds();
-			// 足を踏ん張る際の前進をここで行う
-			if (animationTime < 0.25f)
-			{
-				HorizontalVelocityByAttack(true, 45, elapsedTime);
-			}
-			// 任意のアニメーション再生区間でのみ次の攻撃技を出すようにする
-			else if (InputSwordButton() && animationTime >= 0.35f && animationTime <= 0.6f)
-			{
-				attackCount++;
-				if (attackCount >= 4) TransitionAttackSword3State();
-				else TransitionAttackSword1State();
-			}
-		}
-		else TransitionIdleState();
-		break;
-	case State::AttackSword3:
-		Sword.flag2 = false;
-		Sword.flag3 = model->IsPlayAnimation();
-		if (Sword.flag3)
-		{
-			UpdateArmPositions(model.get(), Sword);
-			float animationTime = model->GetCurrentAnimationSeconds();
-			if (animationTime >= 0.25f && animationTime <= 0.6f)
-				CollisionArmsVsEnemies(Sword);
-
-			// 足を踏ん張る際の前進をここで行う
-			if (animationTime >= 0.25f && animationTime <= 0.5f)
-			{
-				HorizontalVelocityByAttack(true, 48, elapsedTime);
-				if (animationTime <= 0.4f)
-					velocity.y += 150 * elapsedTime;
-			}
-		}
-		else TransitionIdleState();
-		break;
-	case State::AttackSwordJump:
-		Sword.flagJump = model->IsPlayAnimation();
-		if (Sword.flagJump)
-		{
-			UpdateArmPositions(model.get(), Sword);
-			CollisionArmsVsEnemies(Sword);
-		}
-
-		if (isMoveAttack)
-		{
-			HorizontalVelocityByAttack(false, 800, elapsedTime);
-		}
-		if (!model->IsPlayAnimation())
-		{
-			isMoveAttack = false;
-			TransitionIdleState();
-		}
-		break;
-	case State::CliffGrab:
-		// アニメーション終了後Idleにとりあえず移行
-		if (!model->IsPlayAnimation()) TransitionIdleState();
-		break;
 	}
 }
 
@@ -524,19 +231,18 @@ void Player::RenderTrail()
 //垂直速力更新オーバーライド
 void Player::UpdateVerticalVelocity(float elapsedFrame)
 {
-	//ジャンプ攻撃中は重力を無視する
-	if (state == State::AttackHammerJump || state == State::AttackSwordJump)
-	{
-		velocity.y = 0;
-	}
-	
+	auto state = static_cast<Player::State>(stateMachine->GetStateNumber());
+
+	// ジャンプスピアー攻撃のみ別の下向き処理を使用する
 	if (state == State::AttackSpearJump)
 	{
 		if (velocity.y > 0)	velocity.y = 0;
 		velocity.y += gravity * 0.25f * elapsedFrame;
 	}
-	// スピアー攻撃のみ別の下向き処理を使用する
-	else velocity.y += gravity * elapsedFrame;
+	else
+	{
+		velocity.y += gravity * elapsedFrame;
+	}
 }
 
 // ===========入力処理===========
@@ -567,10 +273,18 @@ bool Player::InputMove(float elapsedTime)
 // 攻撃入力処理
 bool Player::InputAttackFromNoneAttack(float elapsedTime)
 {
-	if (InputHammerButton())	 TransitionAttackHummer1State();
-	else if (InputSwordButton()) TransitionAttackSword1State();
-	else if (InputSpearButton()) TransitionAttackSpear1State();
-	else return false;
+	if (InputHammerButton()) {
+		stateMachine->ChangeState(static_cast<int>(State::AttackHammer1));
+	}
+	else if (InputSwordButton()) {
+		stateMachine->ChangeState(static_cast<int>(State::AttackSword1));
+	}
+	else if (InputSpearButton()) {
+		stateMachine->ChangeState(static_cast<int>(State::AttackSpear1));
+	}
+	else {
+		return false;
+	}
 
 	if (enemySearch[nearestEnemy] >= EnemySearch::Find)
 	{
@@ -582,10 +296,18 @@ bool Player::InputAttackFromNoneAttack(float elapsedTime)
 }
 bool Player::InputAttackFromJump(float elapsedTime)
 {
-	if (InputHammerButton())	 TransitionAttackHummerJumpState(elapsedTime);
-	else if (InputSwordButton()) TransitionAttackSwordJumpState(elapsedTime);
-	else if (InputSpearButton()) TransitionAttackSpearJumpState();
-	else return false;
+	if (InputHammerButton()) {
+		stateMachine->ChangeState(static_cast<int>(State::AttackHammerJump));
+	}
+	else if (InputSwordButton()) {
+		stateMachine->ChangeState(static_cast<int>(State::AttackSwordJump));
+	}
+	else if (InputSpearButton()) {
+		stateMachine->ChangeState(static_cast<int>(State::AttackSpearJump));
+	}
+	else {
+		return false;
+	}
 
 	return true;
 }
@@ -747,154 +469,4 @@ void Player::DrawDebugPrimitive()
 
 	//描画実行
 	gizmos->Render(rc);
-}
-
-
-// ========遷移========
-// 待機ステート
-void Player::TransitionIdleState()
-{
-	state = State::Idle;
-	attackCount = 0;
-	// 攻撃後は必ず待機に戻る為ここで攻撃タイプ リセットを行う
-	Atype = AttackType::None;
-	model->PlayAnimation(Anim_Idle, true);
-}
-// 移動ステート
-void Player::TransitionRunState()
-{
-	state = State::Run;
-	model->PlayAnimation(Anim_Running, true);
-}
-// 待機->移動切替ステート
-void Player::TransitionIdleToRunState()
-{
-	state = State::IdleToRun;
-	model->PlayAnimation(Anim_IdleToRun, false);
-}
-// 移動->待機切替ステート
-void Player::TransitionRunToIdleState()	// 未使用
-{
-	state = State::RunToIdle;
-	model->PlayAnimation(Anim_RunToIdle, false);
-}
-
-// ジャンプステートへ遷移
-void Player::TransitionJumpStartState()
-{
-	state = State::JumpStart;
-	model->PlayAnimation(Anim_JumpStart, false);
-}
-void Player::TransitionJumpLoopState()
-{
-	state = State::JumpLoop;
-	model->PlayAnimation(Anim_JumpLoop, false);
-}
-void Player::TransitionJumpAirState()
-{
-	state = State::JumpAir;
-	model->PlayAnimation(Anim_JumpAir, false);
-}
-void Player::TransitionJumpEndState()
-{
-	state = State::JumpEnd;
-	model->PlayAnimation(Anim_JumpEnd, false);
-}
-// ダメージステート
-void Player::TransitionDamageState()
-{
-	state = State::Damage;
-	model->PlayAnimation(Anim_Damage, false);
-}
-// 死亡ステート
-void Player::TransitionDeadState()
-{
-	state = State::Dead;
-	model->PlayAnimation(Anim_Death, false);
-}
-// 回復ステート
-void Player::TransitionRecoverState()
-{
-	state = State::Recover;
-	model->PlayAnimation(Anim_JumpEnd, false);
-}
-// 攻撃ステート
-void Player::TransitionAttackHummer1State()
-{
-	state = State::AttackHammer1;
-	Atype = AttackType::Hammer;
-	isAttackjudge = true;
-	model->PlayAnimation(Anim_AttackHammer1, false);
-}
-void Player::TransitionAttackHummer2State()
-{
-	state = State::AttackHammer2;
-	isAttackjudge = true;
-	model->PlayAnimation(Anim_AttackHammer2, false);
-}
-void Player::TransitionAttackHummerJumpState(float elapsedTime)
-{
-	state = State::AttackHammerJump;
-	Atype = AttackType::Hammer;
-	isAttackjudge = true;
-	if (InputMove(elapsedTime)) isMoveAttack = true;
-	model->PlayAnimation(Anim_AttackHammerJump, false);
-}
-void Player::TransitionAttackSpear1State()
-{
-	state = State::AttackSpear1;
-	Atype = AttackType::Spear;
-	isAttackjudge = true;
-	model->PlayAnimation(Anim_AttackSpear1, false);
-}
-void Player::TransitionAttackSpear2State()
-{
-	state = State::AttackSpear2;
-	isAttackjudge = true;
-	model->PlayAnimation(Anim_AttackSpear2, false);
-}
-void Player::TransitionAttackSpear3State()
-{
-	state = State::AttackSpear3;
-	isAttackjudge = true;
-	model->PlayAnimation(Anim_AttackSpear3, false);
-}
-void Player::TransitionAttackSpearJumpState()
-{
-	state = State::AttackSpearJump;
-	Atype = AttackType::Spear;
-	isAttackjudge = true;
-	model->PlayAnimation(Anim_AttackSpearJump, false);
-}
-void Player::TransitionAttackSword1State()
-{
-	state = State::AttackSword1;
-	Atype = AttackType::Sword;
-	isAttackjudge = true;
-	model->PlayAnimation(Anim_AttackSword1, false);
-}
-void Player::TransitionAttackSword2State()
-{
-	state = State::AttackSword2;
-	isAttackjudge = true;
-	model->PlayAnimation(Anim_AttackSword2, false);
-}
-void Player::TransitionAttackSword3State()
-{
-	state = State::AttackSword3;
-	isAttackjudge = true;
-	model->PlayAnimation(Anim_AttackSword3, false);
-}
-void Player::TransitionAttackSwordJumpState(float elapsedTime)
-{
-	state = State::AttackSwordJump;
-	Atype = AttackType::Sword;
-	isAttackjudge = true;
-	if (InputMove(elapsedTime)) isMoveAttack = true;
-	model->PlayAnimation(Anim_AttackSwordJump, false);
-}
-void Player::TransitionCliffGrabState()
-{
-	state = State::CliffGrab;
-	model->PlayAnimation(Anim_CliffGrab, false);
 }

@@ -85,6 +85,9 @@
     <Filter Include="Shader\2D\PostEffect">
       <UniqueIdentifier>{58002e0b-023b-45d3-83de-ccf2c2efc409}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source\Object\Character\Player\State">
+      <UniqueIdentifier>{a61bf687-d9c0-4d9d-9551-1ffa718ab88c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\Framework.h">
@@ -267,6 +270,15 @@
     <ClInclude Include="Source\MathScript.h">
       <Filter>Source\system</Filter>
     </ClInclude>
+    <ClInclude Include="Source\State\Player\PlayerStateBase.h">
+      <Filter>Source\Object\Character\Player\State</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\State\Player\PlayerEachState.h">
+      <Filter>Source\Object\Character\Player\State</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\State\Player\PlayerStateMachine.h">
+      <Filter>Source\Object\Character\Player\State</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\Framework.cpp">
@@ -427,6 +439,12 @@
     </ClCompile>
     <ClCompile Include="Source\PlayerManager.cpp">
       <Filter>Source\Object\Character\Player</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\State\Player\PlayerEachState.cpp">
+      <Filter>Source\Object\Character\Player\State</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\State\Player\PlayerStateMachine.cpp">
+      <Filter>Source\Object\Character\Player\State</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

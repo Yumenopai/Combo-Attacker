@@ -30,29 +30,15 @@ PlayerAI::PlayerAI()
 	ID3D11Device* device = Graphics::Instance().GetDevice();
 	//プレイヤーモデル読み込み
 	model = std::make_unique<Model>(device, "Data/Model/SD-UnityChan/UnityChan.fbx", 0.02f);
-	//model = std::make_unique<Model>(device, "Data/Model/Enemy/red.fbx", 0.02f);
 
-	//初期化
-	enemySearch.clear();
-	enemyDist.clear();
-	EnemyManager& enemyManager = EnemyManager::Instance();
-	int enemyCount = enemyManager.GetEnemyCount();//全ての敵と総当たりで衝突処理
-	for (int i = 0; i < enemyCount; i++)
-	{
-		enemySearch[enemyManager.GetEnemy(i)] = EnemySearch::None;
-		enemyDist[enemyManager.GetEnemy(i)] = FLT_MAX;
-	}
+	// 初期化
+	Player::Init();
 
 	position = { -7,5,-60 };
 
-	//待機ステートへ遷移
-	TransitionIdleState();
-
+	// ボタンステート初期化
 	oldInput = nowInput = nextInput = InputState::None;
 	ESState = EnemySearch::None;
-
-	//ヒットエフェクト読み込み
-	hitEffect = std::make_unique<Effect>("Data/Effect/Hit.efk");
 }
 
 PlayerAI::~PlayerAI()
@@ -116,7 +102,8 @@ void PlayerAI::Update(float elapsedTime)
 	//ShiftTrailPositions();
 
 	// ステート毎に中で処理分け
-	UpdateEachState(elapsedTime);
+	//UpdateEachState(elapsedTime);
+	stateMachine->Update(elapsedTime);
 
 	// 剣の軌跡描画更新処理
 	//RenderTrail();
@@ -145,40 +132,40 @@ void Player::UpdateJump(float elapsedTime)
 {
 	switch (jumpTrg)
 	{
-	case CanJump:
+	case JumpState::CanJump:
 		// 押した時の処理
 		if (InputJumpButtonDown())
 		{
 			velocity.y = 500.0f;
-			jumpTrg = CanDoubleJump;
+			jumpTrg = JumpState::CanDoubleJump;
 		}
 		break;
 
-	case CanDoubleJump:
+	case JumpState::CanDoubleJump:
 		// 2段目ジャンプは高さ調節不可
 		if (InputJumpButtonDown())
 		{
 			velocity.y += 15.0f;
-			jumpTrg = CannotJump;
+			jumpTrg = JumpState::CannotJump;
 		}
 		// 一段目ジャンプ中の攻撃ボタン
 		else if (InputAttackFromJump(elapsedTime))
 		{
-			jumpTrg = CannotJump;
+			jumpTrg = JumpState::CannotJump;
 		}
 
 		//break;
 		// fall through
-	case CannotJump:
+	case JumpState::CannotJump:
 
 		// ジャンプ可能状態の時のみ通らない
 		// 着地時(地面に立っている時は常時処理)
 		if (isGround)
 		{
 			// 着地時に押しっぱの場合は処理されないようにする
-			if (InputJumpButtonDown()) jumpTrg = CannotJump;
+			if (InputJumpButtonDown()) jumpTrg = JumpState::CannotJump;
 			// 押されていない時は地面にいるのでジャンプ可能状態にする
-			else jumpTrg = CanJump;
+			else jumpTrg = JumpState::CanJump;
 		}
 		break;
 	}
@@ -246,17 +233,6 @@ void PlayerAI::HPBarRender(const RenderContext& rc, Sprite* gauge)
 	);
 }
 
-//着地した時に呼ばれる
-void PlayerAI::OnLanding(float elapsedTime)
-{
-	if (Atype != AttackType::None) //攻撃中(主にジャンプ攻撃後)
-	{
-		// 着地してすぐは何もさせないためここで処理を書かない
-		// 各StateUpdateにてアニメーション終了後にIdleStateへ遷移する
-	}
-	else if (InputMove(elapsedTime)) TransitionRunState();
-	else TransitionJumpEndState();
-}
 
 //ジャンプ処理
 void PlayerAI::UpdateJump(float elapsedTime)

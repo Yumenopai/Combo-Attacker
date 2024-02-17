@@ -30,27 +30,11 @@ Player1P::Player1P()
 	ID3D11Device* device = Graphics::Instance().GetDevice();
 	//プレイヤーモデル読み込み
 	model = std::make_unique<Model>(device, "Data/Model/SD-UnityChan/UnityChan.fbx", 0.02f);
-	//model = std::make_unique<Model>(device, "Data/Model/Enemy/red.fbx", 0.02f);
 
-	//初期化
-	enemySearch.clear();
-	enemyDist.clear();
-	EnemyManager& enemyManager = EnemyManager::Instance();
-	int enemyCount = enemyManager.GetEnemyCount();//全ての敵と総当たりで衝突処理
-	for (int i = 0; i < enemyCount; i++)
-	{
-		enemySearch[enemyManager.GetEnemy(i)] = EnemySearch::None;
-		enemyDist[enemyManager.GetEnemy(i)] = FLT_MAX;
-	}
-	ESState = EnemySearch::None;
+	// 初期化
+	Player::Init();
 
 	position = { -7,5,-66 };
-
-	//待機ステートへ遷移
-	TransitionIdleState();
-
-	//ヒットエフェクト読み込み
-	hitEffect = std::make_unique<Effect>("Data/Effect/Hit.efk");
 }
 
 Player1P::~Player1P()
@@ -109,7 +93,7 @@ void Player1P::Update(float elapsedTime)
 	//ShiftTrailPositions();
 
 	// ステート毎に中で処理分け
-	UpdateEachState(elapsedTime);
+	stateMachine->Update(elapsedTime);
 
 	// 剣の軌跡描画更新処理
 	//RenderTrail();
@@ -195,18 +179,6 @@ void Player1P::HPBarRender(const RenderContext& rc, Sprite* gauge)
 	);
 }
 
-//着地した時に呼ばれる
-void Player1P::OnLanding(float elapsedTime)
-{
-	if (Atype != AttackType::None) //攻撃中(主にジャンプ攻撃後)
-	{
-		// 着地してすぐは何もさせないためここで処理を書かない
-		// 各StateUpdateにてアニメーション終了後にIdleStateへ遷移する
-	}
-	else if (InputMove(elapsedTime)) TransitionRunState();
-	else TransitionJumpEndState();
-}
-
 //ジャンプ処理
 void Player1P::UpdateJump(float elapsedTime)
 {
@@ -215,47 +187,47 @@ void Player1P::UpdateJump(float elapsedTime)
 
 	switch (jumpTrg)
 	{
-	case CanJump:
+	case JumpState::CanJump:
 		// 押している間の処理
 		if (gamePad.GetButton() & GamePad::BTN_A)
 		{
 			velocity.y += 150 * elapsedTime;
 			// 指定加速度まであがったら
-			if (velocity.y > jumpSpeed)	jumpTrg = CanDoubleJump;
+			if (velocity.y > jumpSpeed)	jumpTrg = JumpState::CanDoubleJump;
 		}
 		// 一回離した時
 		else if (gamePad.GetButtonUp() & GamePad::BTN_A)
 		{
-			jumpTrg = CanDoubleJump;
+			jumpTrg = JumpState::CanDoubleJump;
 		}
 		break;
 
-	case CanDoubleJump:
+	case JumpState::CanDoubleJump:
 		// 2段目ジャンプは高さ調節不可
 		if (gamePad.GetButtonDown() & GamePad::BTN_A)
 		{
 			if (velocity.y > 0) velocity.y += 15.0f;
 			else				velocity.y = 15.0f;
-			jumpTrg = CannotJump;
+			jumpTrg = JumpState::CannotJump;
 		}
 		// 一段目ジャンプ中の攻撃ボタン
 		else if (InputAttackFromJump(elapsedTime))
 		{
-			jumpTrg = CannotJump;
+			jumpTrg = JumpState::CannotJump;
 		}
 
 		//break;
 		// fall through
-	case CannotJump:
+	case JumpState::CannotJump:
 
 		// ジャンプ可能状態の時のみ通らない
 		// 着地時(地面に立っている時は常時処理)
 		if (isGround)
 		{
 			// 着地時に押しっぱの場合は処理されないようにする
-			if (gamePad.GetButton() & GamePad::BTN_A) jumpTrg = CannotJump;
+			if (gamePad.GetButton() & GamePad::BTN_A) jumpTrg = JumpState::CannotJump;
 			// 押されていない時は地面にいるのでジャンプ可能状態にする
-			else jumpTrg = CanJump;
+			else jumpTrg = JumpState::CanJump;
 		}
 		break;
 	}
