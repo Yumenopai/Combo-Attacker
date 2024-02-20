@@ -222,10 +222,11 @@ void SceneGame::Render()
 
 	// 2Dスプライト描画
 	{
+		// エネミーHP
+		RenderEnemyGauge(dc, rc.view, rc.projection);
+
 		PlayerManager::Instance().Render2d(rc, gauge.get());
 		RenderCharacterName(rc, rc.view, rc.projection);
-
-		RenderEnemyGauge(dc, rc.view, rc.projection);
 	}
 	//2DSprite
 	{
@@ -243,17 +244,17 @@ void SceneGame::Render()
 		//Item枠
 		for (int i = 0; i < 6; i++)
 		{
-			sprites[2]->Render(dc, 300.0f + 115*i, 610.0f, 0.0f, 100, 100, 0, 0, textureWidth, textureWidth, 0, 1, 1, 1, 1);
+			sprites[2]->Render(dc, 300.0f + 115 * i, 610.0f, 0.0f, 100, 100, 0, 0, textureWidth, textureWidth, 0, { 1, 1, 1, 1 });
 		}
 		//AttackButton
-		sprites[0]->Render(dc, 1150.0f, 250.0f, 0.0f, 80, 80, 0, 0, textureWidth, textureWidth, 0, 1, 1, 1, 1);
-		sprites[0]->Render(dc, 1100.0f, 300.0f, 0.0f, 80, 80, 0, 0, textureWidth, textureWidth, 0, 1, 1, 1, 1);
-		sprites[0]->Render(dc, 1200.0f, 300.0f, 0.0f, 80, 80, 0, 0, textureWidth, textureWidth, 0, 1, 1, 1, 1);
-		sprites[1]->Render(dc, 1150.0f, 350.0f, 0.0f, 80, 80, 0, 0, textureWidth, textureWidth, 0, 1, 1, 1, 1);
-		sprites[3]->Render(dc, 1150.0f+15.0f, 250.0f+10.0f, 0.0f, 50, 50, 900, 0, textureWidth, textureWidth, 0, 1, 1, 1, 1);
-		sprites[3]->Render(dc, 1100.0f+15.0f, 300.0f+10.0f, 0.0f, 50, 50, 300, 0, textureWidth, textureWidth, 0, 1, 1, 1, 1);
-		sprites[3]->Render(dc, 1200.0f+15.0f, 300.0f+10.0f, 0.0f, 50, 50, 600, 0, textureWidth, textureWidth, 0, 1, 1, 1, 1);
-		sprites[3]->Render(dc, 1150.0f+15.0f, 350.0f+10.0f, 0.0f, 50, 50, 0, 0, textureWidth, textureWidth, 0, 1, 1, 1, 1);
+		sprites[0]->Render(dc, 1150.0f, 250.0f, 0.0f, 80, 80, 0, 0, textureWidth, textureWidth, 0, { 1, 1, 1, 1 });
+		sprites[0]->Render(dc, 1100.0f, 300.0f, 0.0f, 80, 80, 0, 0, textureWidth, textureWidth, 0, { 1, 1, 1, 1 });
+		sprites[0]->Render(dc, 1200.0f, 300.0f, 0.0f, 80, 80, 0, 0, textureWidth, textureWidth, 0, { 1, 1, 1, 1 });
+		sprites[1]->Render(dc, 1150.0f, 350.0f, 0.0f, 80, 80, 0, 0, textureWidth, textureWidth, 0, { 1, 1, 1, 1 });
+		sprites[3]->Render(dc, 1150.0f+15.0f, 250.0f+10.0f, 0.0f, 50, 50, 900, 0, textureWidth, textureWidth, 0, { 1, 1, 1, 1 });
+		sprites[3]->Render(dc, 1100.0f+15.0f, 300.0f+10.0f, 0.0f, 50, 50, 300, 0, textureWidth, textureWidth, 0, { 1, 1, 1, 1 });
+		sprites[3]->Render(dc, 1200.0f+15.0f, 300.0f+10.0f, 0.0f, 50, 50, 600, 0, textureWidth, textureWidth, 0, { 1, 1, 1, 1 });
+		sprites[3]->Render(dc, 1150.0f + 15.0f, 350.0f + 10.0f, 0.0f, 50, 50, 0, 0, textureWidth, textureWidth, 0, { 1, 1, 1, 1 });
 	}
 
 
@@ -332,6 +333,12 @@ void SceneGame::RenderEnemyGauge(ID3D11DeviceContext* dc, const DirectX::XMFLOAT
 	{
 		Enemy* enemy = enemyManager.GetEnemy(i);
 
+		//距離が遠い時はcontinue
+		if (Player1P::Instance().GetEachEnemyDist(enemy) > 12.0f)
+		{
+			continue;
+		}
+
 		//エネミー頭上のワールド座標
 		XMFLOAT3 worldPosition = enemy->GetPosition();
 		worldPosition.y += enemy->GetHeight();
@@ -374,7 +381,7 @@ void SceneGame::RenderEnemyGauge(ID3D11DeviceContext* dc, const DirectX::XMFLOAT
 			static_cast<float>(gauge->GetTextureWidth()),
 			static_cast<float>(gauge->GetTextureHeight()),
 			0.0f,
-			0.5f, 0.5f, 0.5f, 0.5f
+			{ 0.5f, 0.5f, 0.5f, 0.5f }
 		);
 		//ゲージ描画
 		gauge->Render(dc,
@@ -387,7 +394,7 @@ void SceneGame::RenderEnemyGauge(ID3D11DeviceContext* dc, const DirectX::XMFLOAT
 			static_cast<float>(gauge->GetTextureWidth()),
 			static_cast<float>(gauge->GetTextureHeight()),
 			0.0f,
-			1.0f, 0.0f, 0.0f, 1.0f
+			{ 1.0f, 0.0f, 0.0f, 1.0f }
 		);
 	}
 }

@@ -7,7 +7,7 @@
 #include "State/Player/PlayerStateMachine.h"
 #include "Enemy.h"
 #include "Effect.h"
-
+#include "Input/GamePad.h"
 
 //プレイヤー
 class Player : public Character
@@ -31,6 +31,15 @@ public:
 
 		Max,
 	};
+	enum class InputState : unsigned int
+	{
+		None = 0,
+		Run = 1,
+		Jump = GamePad::BTN_A,
+		Hammer = GamePad::BTN_B,
+		Sword = GamePad::BTN_X,
+		Spear = GamePad::BTN_Y,
+	};
 
 	struct Arms
 	{
@@ -44,6 +53,8 @@ public:
 		bool flag3;
 		bool flagJump;
 	};
+
+	static inline const float playerVSenemyJudgeDist[(int)EnemySearch::Max] = { 6.5f, 2.5f };
 
 protected:
 	std::unique_ptr<Model> model;
@@ -66,7 +77,6 @@ protected:
 	//ジャンプ攻撃時に使用
 	bool isMoveAttack = false;
 	int attackCount = 0;
-	const float playerVSenemyJudgeDist[(int)EnemySearch::Max] = { 6.5f, 2.5f, };
 
 	// SwordAttack
 	static const int MAX_POLYGON = 32;
@@ -98,16 +108,21 @@ public:
 
 	//更新
 	virtual void Update(float elapsedTime) = 0;
-	virtual void UpdateJump(float elapsedTime) = 0;
+	void UpdateUtils(float elapsedTime);
+	void UpdateEnemyDistance(float elapsedTime);
+	void UpdateJump(float elapsedTime);
 
-	//描画
-	virtual void ShadowRender(const RenderContext& rc, ShadowMap* shadowMap) = 0;
-	//描画
-	virtual void Render(const RenderContext& rc, ModelShader* shader) = 0;
+	// シャドウマップ用描画
+	void ShadowRender(const RenderContext& rc, ShadowMap* shadowMap);
+	// 描画
+	void Render(const RenderContext& rc, ModelShader* shader);
+	// 攻撃の軌跡描画
 	void PrimitiveRender(const RenderContext& rc);
+	// HPバー描画
 	virtual void HPBarRender(const RenderContext& rc, Sprite* gauge) = 0;
+	void HPBarRender(const RenderContext& rc, Sprite* gauge, bool is1P);
 
-	// ステートマシン取得 
+	// ステートマシン取得
 	PlayerStateMachine* GetStateMachine() const { return stateMachine; }
 
 	int GetAttackCount() const { return attackCount; }
@@ -150,13 +165,18 @@ public:
 	//回復遷移確認処理
 	bool IsRecoverTransition();
 	
+	// ボタン判定
+	virtual bool InputButtonDown(InputState button) = 0;
+	virtual bool InputButton(InputState button) = 0;
+	virtual bool InputButtonUp(InputState button) = 0;
+
 	// 入力処理
-	virtual bool InputJumpButtonDown() = 0;
-	virtual bool InputJumpButton() = 0;
-	virtual bool InputJumpButtonUp() = 0;
-	virtual bool InputHammerButton() = 0;
-	virtual bool InputSwordButton() = 0;
-	virtual bool InputSpearButton() = 0;
+	bool InputJumpButtonDown();
+	bool InputJumpButton();
+	bool InputJumpButtonUp();
+	bool InputHammerButton();
+	bool InputSwordButton();
+	bool InputSpearButton();
 
 	//デバッグプリミティブ描画
 	void DrawDebugPrimitive();
@@ -178,7 +198,9 @@ public:
 	void CollisionArmsVsEnemies(Arms arm);
 
 	// 移動入力処理
-	virtual bool InputMove(float elapsedTime);
+	bool InputMove(float elapsedTime);
+	// 移動ベクトル
+	virtual XMFLOAT3 GetMoveVec() const = 0;
 
 	//デバッグ
 	void DebugMenu();

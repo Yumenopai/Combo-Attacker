@@ -72,7 +72,7 @@ void SceneLoading::Render()
 
 		if (remain == loadingOnly)
 		sprite->Render(dc, positionX, positionY, 0.0f, textureWidth, textureHeight,
-			0, 0, textureWidth, textureHeight, angle, 1, 1, 1, 1);
+			0, 0, textureWidth, textureHeight, angle, { 1, 1, 1, 1 });
 
 		if (remain != loadingOnly)
 		{

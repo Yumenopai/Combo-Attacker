@@ -150,9 +150,9 @@ void SceneTitle::Render()
 
 		//titleSprite
 		dc->OMSetBlendState(renderState->GetBlendState(BlendState::Transparency), blendFactor, sampleMask);
-		sprite->Render(dc, 0.0f, 60.0f, 0.0f, screenWidth, 120,     0, 0,   screenWidth, 120, 0, 1, 1, 1, 1);
+		sprite->Render(dc, 0.0f, 60.0f, 0.0f, screenWidth, 120, 0, 0, screenWidth, 120, 0, { 1, 1, 1, 1 });
 		if (timer <= 1.6f)
-			sprite->Render(dc, 0.0f, 480.0f, 0.0f, screenWidth, 120, 0, 120, screenWidth, 120, 0, 1, 1, 1, 1);
+			sprite->Render(dc, 0.0f, 480.0f, 0.0f, screenWidth, 120, 0, 120, screenWidth, 120, 0, { 1, 1, 1, 1 });
 	}
 
 }

@@ -1,27 +1,10 @@
 #pragma once
-
-#include <memory>
-#include "Shader/Shader.h"
-#include "Graphics/Model.h"
-#include "Character.h"
 #include "Player.h"
-#include "Enemy.h"
-#include "Effect.h"
-
 
 //プレイヤー
 class PlayerAI : public Player
 {
 private:
-	enum class InputState
-	{
-		None,
-		Run,
-		Jump,
-		Hammer,
-		Sword,
-		Spear,
-	};
 	InputState nowInput = InputState::None;
 	InputState oldInput, nextInput;
 
@@ -36,41 +19,14 @@ public:
 	void Update(float elapsedTime);
 
 	//描画
-	void ShadowRender(const RenderContext& rc, ShadowMap* shadowMap);
-	//描画
-	void Render(const RenderContext& rc, ModelShader* shader);
-	void PrimitiveRender(const RenderContext& rc);
 	void HPBarRender(const RenderContext& rc, Sprite* gauge);
 
-	void UpdateJump(float elapsedTime);
-	// 入力処理
-	bool InputJumpButtonDown();
-	bool InputJumpButton();
-	bool InputJumpButtonUp();
-	bool InputHammerButton();
-	bool InputSwordButton();
-	bool InputSpearButton();
-
-	// 擬似ボタン判定
-	bool InputButtonDown(InputState button)
-	{
-		if (oldInput == button) return false;
-		if (nowInput == button) return true;
-		return false;
-	}
-	bool InputButton(InputState button)
-	{
-		if (nowInput == button) return true;
-		return false;
-	}
-	bool InputButtonUp(InputState button)
-	{
-		if (nowInput == button) return false;
-		if (oldInput == button) return true;
-		return false;
-	}
+	// ボタン判定
+	bool InputButtonDown(InputState button) override;
+	bool InputButton(InputState button) override;
+	bool InputButtonUp(InputState button) override;
 
 private:
-	// 移動入力処理
-	bool InputMove(float elapsedTime);
+	// 移動ベクトル
+	XMFLOAT3 GetMoveVec() const;
 };

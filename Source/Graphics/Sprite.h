@@ -27,7 +27,7 @@ public:
 		float sx, float sy,					//画像切り抜き位置
 		float sw, float sh,					//画像切り抜きサイズ
 		float angle,						//角度
-		float r, float g, float b, float a	//色
+		DirectX::XMFLOAT4 color				//色
 	) const;
 
 	//描画実行(テクスチャ切り抜き指定なし)
@@ -36,7 +36,7 @@ public:
 		float dz,							//奥行
 		float dw, float dh,					//幅 高さ
 		float angle,						//角度
-		float r, float g, float b, float a	//色
+		DirectX::XMFLOAT4 color				//色
 	) const;
 
 	// テクスチャ幅取得

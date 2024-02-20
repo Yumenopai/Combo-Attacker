@@ -373,14 +373,14 @@ void EnemySlime::TransitionState(State nowState)
 {
 	state = nowState; //ステート設定
 
-	switch (nowState)
-	{
+	//switch (nowState)
+	//{
 	//case State::Idle:
 	//	break;
 	//case State::Wander:
-		//目標地点設定
-		//SetRandomTargetPosition();
-		//break;
+	//	//目標地点設定
+	//	SetRandomTargetPosition();
+	//	break;
 	//case State::Pursuit:
 	//	break;
 	//case State::Attack:
@@ -389,7 +389,7 @@ void EnemySlime::TransitionState(State nowState)
 	//	break;
 	//case State::HitDamage:
 	//	break;
-	}
+	//}
 
 	TransitionPlayAnimation(nowState);
 }

@@ -108,7 +108,7 @@ void Sprite::Render(ID3D11DeviceContext* dc,
 	float sx, float sy,					//画像切り抜き位置
 	float sw, float sh,					//画像切り抜きサイズ
 	float angle,						//角度
-	float r, float g, float b, float a	//色
+	DirectX::XMFLOAT4 color				//色
 ) const
 {
 	using namespace DirectX;
@@ -184,10 +184,7 @@ void Sprite::Render(ID3D11DeviceContext* dc,
 		v[i].position.y = positions[i].y;
 		v[i].position.z = dz;
 
-		v[i].color.x = r;
-		v[i].color.y = g;
-		v[i].color.z = b;
-		v[i].color.w = a;
+		v[i].color = color;
 
 		v[i].texcoord.x = texcoords[i].x / textureWidth;
 		v[i].texcoord.y = texcoords[i].y / textureHeight;
@@ -217,8 +214,8 @@ void Sprite::Render(ID3D11DeviceContext* dc,
 	float dz,							//奥行
 	float dw, float dh,					//幅 高さ
 	float angle,						//角度
-	float r, float g, float b, float a	//色
+	DirectX::XMFLOAT4 color				//色
 ) const
 {
-	Render(dc, dx, dy, dz, dw, dh, 0, 0, static_cast<float>(textureWidth), static_cast<float>(textureHeight), angle, r, g, b, a);
+	Render(dc, dx, dy, dz, dw, dh, 0, 0, static_cast<float>(textureWidth), static_cast<float>(textureHeight), angle, color);
 }
