@@ -95,7 +95,7 @@ void Player::UpdateUtils(float elapsedTime)
 	//RenderTrail();
 
 	// 攻撃中じゃなければジャンプ処理
-	if (Atype == AttackType::None) UpdateJump(elapsedTime);
+	if (currentAttackType == AttackType::None) UpdateJumpState(elapsedTime);
 
 	//プレイヤーとエネミーとの衝突処理
 	CollisionPlayerVsEnemies();
@@ -145,7 +145,7 @@ void Player::UpdateEnemyDistance(float elapsedTime)
 		{
 			enemySearch[enemy] = EnemySearch::None;
 			noneEnemy++;
-			if (i == (enemyCount - 1) && enemyCount == noneEnemy) ESState = EnemySearch::None;
+			if (i == (enemyCount - 1) && enemyCount == noneEnemy) currentEnemySearch = EnemySearch::None;
 			continue;
 		}
 
@@ -155,20 +155,20 @@ void Player::UpdateEnemyDistance(float elapsedTime)
 		{
 			nearestEnemy = enemy;
 			nearestDist = dist;
-			ESState = enemySearch[enemy];
+			currentEnemySearch = enemySearch[enemy];
 			XMStoreFloat3(&nearestVec, DistVec);
 		}
 	}
 }
 
 //ジャンプ処理
-void Player::UpdateJump(float elapsedTime)
+void Player::UpdateJumpState(float elapsedTime)
 {
 	switch (jumpTrg)
 	{
 	case JumpState::CanJump:
 		// 押している間の処理
-		if (InputJumpButton())
+		if (InputButton(Player::InputState::Jump))
 		{
 			velocity.y += 150 * elapsedTime;
 			// 指定加速度まであがったら
@@ -178,7 +178,7 @@ void Player::UpdateJump(float elapsedTime)
 			}
 		}
 		// 一回離した時
-		else if (InputJumpButtonUp())
+		else if (InputButtonUp(Player::InputState::Jump))
 		{
 			jumpTrg = JumpState::CanDoubleJump;
 		}
@@ -186,7 +186,7 @@ void Player::UpdateJump(float elapsedTime)
 
 	case JumpState::CanDoubleJump:
 		// 2段目ジャンプは高さ調節不可
-		if (InputJumpButtonDown())
+		if (InputButtonDown(Player::InputState::Jump))
 		{
 			if (velocity.y > 0) velocity.y += 15.0f;
 			else				velocity.y = 15.0f;
@@ -208,7 +208,7 @@ void Player::UpdateJump(float elapsedTime)
 		if (isGround)
 		{
 			// 着地時に押しっぱの場合は処理されないようにする
-			if (InputJumpButton())
+			if (InputButton(Player::InputState::Jump))
 			{
 				jumpTrg = JumpState::CannotJump;
 			}
@@ -296,7 +296,6 @@ void Player::DebugMenu()
 		{
 			//位置
 			ImGui::DragFloat3("Position", &position.x, 0.1f);
-			ImGui::DragFloat3("Offset", &offset.x, 0.1f);
 
 			//回転
 			XMFLOAT3 a;
@@ -314,7 +313,7 @@ void Player::DebugMenu()
 			ImGui::DragFloat3("Scale", &scale.x, 0.01f);
 		}
 			
-		ImGui::Checkbox("attacking", &isAttackjudge);
+		ImGui::Checkbox("attacking", &isAttackJudge);
 
 		ImGui::End();
 	}
@@ -323,7 +322,7 @@ void Player::DebugMenu()
 //着地した時に呼ばれる
 void Player::OnLanding(float elapsedTime)
 {
-	if (Atype != AttackType::None) //攻撃中(主にジャンプ攻撃後)
+	if (currentAttackType != AttackType::None) //攻撃中(主にジャンプ攻撃後)
 	{
 		// 着地してすぐは何もさせないためここで処理を書かない
 		// 各StateUpdateにてアニメーション終了後にIdleStateへ遷移する
@@ -339,17 +338,12 @@ void Player::OnLanding(float elapsedTime)
 
 void Player::OnDamaged()
 {
-	isDamaged = true;
 	stateMachine->ChangeState(static_cast<int>(State::Damage));
 }
 
 void Player::OnDead()
 {
-	if(!isDead)
-	{
-		stateMachine->ChangeState(static_cast<int>(State::Dead));
-		isDead = true;
-	}
+	stateMachine->ChangeState(static_cast<int>(State::Dead));
 }
 
 void Player::UpdateArmPositions(Model* model, Arms& arm)
@@ -429,7 +423,7 @@ void Player::RenderTrail()
 	}
 }
 
-//垂直速力更新オーバーライド
+//垂直速力更新
 void Player::UpdateVerticalVelocity(float elapsedFrame)
 {
 	auto state = static_cast<Player::State>(stateMachine->GetStateNumber());
@@ -444,37 +438,6 @@ void Player::UpdateVerticalVelocity(float elapsedFrame)
 	{
 		velocity.y += gravity * elapsedFrame;
 	}
-}
-
-// ===========入力処理===========
-// ジャンプボタンが押されたか
-bool Player::InputJumpButtonDown()
-{
-	return InputButtonDown(InputState::Jump);
-}
-bool Player::InputJumpButton()
-{
-	return InputButton(InputState::Jump);
-}
-bool Player::InputJumpButtonUp()
-{
-	return InputButtonUp(InputState::Jump);
-}
-
-// ハンマー攻撃ボタンが押されたか
-bool Player::InputHammerButton()
-{
-	return InputButtonDown(InputState::Hammer);
-}
-// ソード攻撃ボタンが押されたか
-bool Player::InputSwordButton()
-{
-	return InputButtonDown(InputState::Sword);
-}
-// スピアー攻撃ボタンが押されたか
-bool Player::InputSpearButton()
-{
-	return InputButtonDown(InputState::Spear);
 }
 
 // ===========入力処理===========
@@ -495,13 +458,13 @@ bool Player::InputMove(float elapsedTime)
 // 攻撃入力処理
 bool Player::InputAttackFromNoneAttack(float elapsedTime)
 {
-	if (InputHammerButton()) {
+	if (InputButtonDown(Player::InputState::Hammer)) {
 		stateMachine->ChangeState(static_cast<int>(State::AttackHammer1));
 	}
-	else if (InputSwordButton()) {
+	else if (InputButtonDown(Player::InputState::Sword)) {
 		stateMachine->ChangeState(static_cast<int>(State::AttackSword1));
 	}
-	else if (InputSpearButton()) {
+	else if (InputButtonDown(Player::InputState::Spear)) {
 		stateMachine->ChangeState(static_cast<int>(State::AttackSpear1));
 	}
 	else {
@@ -518,13 +481,13 @@ bool Player::InputAttackFromNoneAttack(float elapsedTime)
 }
 bool Player::InputAttackFromJump(float elapsedTime)
 {
-	if (InputHammerButton()) {
+	if (InputButtonDown(Player::InputState::Hammer)) {
 		stateMachine->ChangeState(static_cast<int>(State::AttackHammerJump));
 	}
-	else if (InputSwordButton()) {
+	else if (InputButtonDown(Player::InputState::Sword)) {
 		stateMachine->ChangeState(static_cast<int>(State::AttackSwordJump));
 	}
-	else if (InputSpearButton()) {
+	else if (InputButtonDown(Player::InputState::Spear)) {
 		stateMachine->ChangeState(static_cast<int>(State::AttackSpearJump));
 	}
 	else {
@@ -601,7 +564,7 @@ void Player::CollisionArmsVsEnemies(Arms arm)
 			outPosition
 		))
 		{
-			if (attackingEnemyNumber == i && !isAttackjudge) return; //攻撃判定しない場合は処理しない
+			if (attackingEnemyNumber == i && !isAttackJudge) return; //攻撃判定しない場合は処理しない
 
 			//ダメージを与える
 			if (enemy->ApplyDamage(1, 0))
@@ -635,12 +598,12 @@ void Player::CollisionArmsVsEnemies(Arms arm)
 					hitEffect->Play(e);
 				}
 				attackingEnemyNumber = i;
-				isAttackjudge = false;
+				isAttackJudge = false;
 			}
 		}
 		else if(attackingEnemyNumber == i)//攻撃中のエネミーと一旦攻撃が外れた時、次回当たった時に判定を行う
 		{
-			isAttackjudge = true;
+			isAttackJudge = true;
 		}
 	}
 }

@@ -201,16 +201,11 @@ void SceneGame::Render()
 
 	ModelShader* shader = Graphics::Instance().GetShader(ShaderId::Toon);
 	shader->Begin(rc);
-	player1P->Render(rc, shader);
+	PlayerManager::Instance().Render(rc, shader);
 	stage->TerrainRender(rc, shader);
 	EnemyManager::Instance().Render(rc, shader);
 	shader->End(rc);
 
-	RenderContext AIrc = rc;
-	AIrc.shadowColor = { 0.7f,0.1f,0.1f };
-	shader->Begin(AIrc);
-	playerAI->Render(AIrc, shader);
-	shader->End(AIrc);
 
 	ModelShader* waterShader = Graphics::Instance().GetShader(ShaderId::WaterSurface);
 	waterShader->Begin(rc);

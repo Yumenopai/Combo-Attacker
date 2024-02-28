@@ -21,7 +21,7 @@ PlayerAI::PlayerAI()
 
 	// ボタンステート初期化
 	oldInput = nowInput = nextInput = InputState::None;
-	ESState = EnemySearch::None;
+	currentEnemySearch = EnemySearch::None;
 }
 
 PlayerAI::~PlayerAI()
@@ -38,7 +38,7 @@ void PlayerAI::Update(float elapsedTime)
 
 	UpdateEnemyDistance(elapsedTime);
 
-	if (ESState == EnemySearch::Attack && nowInput != InputState::Sword) //長押しでないので今がソードの場合を除く
+	if (currentEnemySearch == EnemySearch::Attack && nowInput != InputState::Sword) //長押しでないので今がソードの場合を除く
 	{
 		nextInput = InputState::Sword;
 	}
@@ -73,7 +73,7 @@ XMFLOAT3 PlayerAI::GetMoveVec() const
 	}
 
 	// プレイヤーが発見ステート時
-	if (Player1P::Instance().GetESState() >= EnemySearch::Find)
+	if (Player1P::Instance().GetEnemySearch() >= EnemySearch::Find)
 	{
 		// 最近エネミーとの距離が近距離の場合、進行ベクトルを更新
 		if (nearestDist < 10.0f) moveVec = nearestVec;

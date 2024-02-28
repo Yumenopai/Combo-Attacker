@@ -21,7 +21,7 @@ void StateIdle::Update(float elapsedTime)
 		player->GetStateMachine()->ChangeState(static_cast<int>(Player::State::IdleToRun));
 	}
 	// ジャンプ入力処理
-	if (player->InputJumpButtonDown()) {
+	if (player->InputButtonDown(Player::InputState::Jump)) {
 		player->GetStateMachine()->ChangeState(static_cast<int>(Player::State::JumpStart));
 	}
 
@@ -61,7 +61,7 @@ void StateRun::Update(float elapsedTime)
 		player->GetStateMachine()->ChangeState(static_cast<int>(Player::State::Idle));
 	}
 	// ジャンプ入力処理
-	if (player->InputJumpButtonDown()) {
+	if (player->InputButtonDown(Player::InputState::Jump)) {
 		player->GetStateMachine()->ChangeState(static_cast<int>(Player::State::JumpStart));
 	}
 	// 回復遷移確認処理
@@ -102,7 +102,7 @@ void StateJumpStart::Update(float elapsedTime)
 	// 移動入力処理
 	player->InputMove(elapsedTime);
 	// さらにジャンプ入力時の処理
-	if (player->InputJumpButtonDown()) {
+	if (player->InputButtonDown(Player::InputState::Jump)) {
 		player->GetStateMachine()->ChangeState(static_cast<int>(Player::State::JumpAir));
 	}
 	// アニメーション終了後
@@ -124,7 +124,7 @@ void StateJumpLoop::Update(float elapsedTime)
 	// 移動入力処理
 	player->InputMove(elapsedTime);
 	// さらにジャンプ入力時の処理
-	if (player->InputJumpButtonDown()) {
+	if (player->InputButtonDown(Player::InputState::Jump)) {
 		player->GetStateMachine()->ChangeState(static_cast<int>(Player::State::JumpAir));
 	}
 	// ジャンプ中の攻撃処理はUpdateJumpにて行う
@@ -170,7 +170,7 @@ void StateJumpEnd::Update(float elapsedTime)
 	// Worning：InputMove時などOnLandingでここを通らない可能性あり
 
 	// アニメーション中でも次のジャンプは可能
-	if (player->InputJumpButtonDown()) {
+	if (player->InputButtonDown(Player::InputState::Jump)) {
 		player->GetStateMachine()->ChangeState(static_cast<int>(Player::State::JumpStart));
 	}
 	// アニメーション終了後
@@ -265,11 +265,14 @@ void StateAttackHammer1::Update(float elapsedTime)
 		player->UpdateArmPositions(player->GetModel(), Hammer);
 		float animationTime = player->GetModel()->GetCurrentAnimationSeconds();
 		//攻撃当たり判定時間
-		if (animationTime >= 0.4f) {
+		if (animationTime >= 0.4f)
+		{
 			player->CollisionArmsVsEnemies(Hammer);
 		}
 		//任意のアニメーション再生区間でのみ次の攻撃技を出すようにする
-		if (player->InputHammerButton() && animationTime >= 0.5f && animationTime <= 0.8f) {
+		if (player->InputButtonDown(Player::InputState::Hammer)
+			&& animationTime >= 0.5f && animationTime <= 0.8f)
+		{
 			player->GetStateMachine()->ChangeState(static_cast<int>(Player::State::AttackHammer2));
 		}
 	}
@@ -363,7 +366,7 @@ void StateAttackSpear1::Update(float elapsedTime)
 		{
 			player->HorizontalVelocityByAttack(true, 40, elapsedTime);
 		}
-		else if (Spear.flag1 && player->InputSpearButton())
+		else if (Spear.flag1 && player->InputButtonDown(Player::InputState::Spear))
 		{
 			player->AddAttackCount();
 			player->GetStateMachine()->ChangeState(static_cast<int>(Player::State::AttackSpear2));
@@ -401,7 +404,7 @@ void StateAttackSpear2::Update(float elapsedTime)
 			player->HorizontalVelocityByAttack(true, 60, elapsedTime);
 		}
 		// 武器出現アニメーション再生区間
-		if (animationTime >= 0.37f && animationTime <= 0.6f && player->InputSpearButton())
+		if (animationTime >= 0.37f && animationTime <= 0.6f && player->InputButtonDown(Player::InputState::Spear))
 		{
 			player->AddAttackCount();
 			if (player->GetAttackCount() < 4) {
@@ -508,7 +511,8 @@ void StateAttackSword1::Update(float elapsedTime)
 			player->HorizontalVelocityByAttack(true, 43, elapsedTime);
 		}
 		// 任意のアニメーション再生区間でのみ次の攻撃技を出すようにする
-		else if (player->InputSwordButton() && animationTime >= 0.3f && animationTime <= 0.7f)
+		else if (player->InputButtonDown(Player::InputState::Sword)
+			&& animationTime >= 0.3f && animationTime <= 0.7f)
 		{
 			player->AddAttackCount();
 			player->GetStateMachine()->ChangeState(static_cast<int>(Player::State::AttackSword2));
@@ -551,7 +555,8 @@ void StateAttackSword2::Update(float elapsedTime)
 			player->HorizontalVelocityByAttack(true, 45, elapsedTime);
 		}
 		// 任意のアニメーション再生区間でのみ次の攻撃技を出すようにする
-		else if (player->InputSwordButton() && animationTime >= 0.35f && animationTime <= 0.6f)
+		else if (player->InputButtonDown(Player::InputState::Sword)
+			&& animationTime >= 0.35f && animationTime <= 0.6f)
 		{
 			player->AddAttackCount();
 			if (player->GetAttackCount() < 4) {

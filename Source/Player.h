@@ -13,7 +13,7 @@
 class Player : public Character
 {
 public:
-	//ステート
+	// 攻撃タイプ
 	enum class AttackType
 	{
 		Hammer,
@@ -22,7 +22,7 @@ public:
 
 		None,
 	};
-	//ステート
+	// 敵探知ステート
 	enum class EnemySearch
 	{
 		None = -1,
@@ -31,6 +31,7 @@ public:
 
 		Max,
 	};
+	// 入力
 	enum class InputState : unsigned int
 	{
 		None = 0,
@@ -40,7 +41,15 @@ public:
 		Sword = GamePad::BTN_X,
 		Spear = GamePad::BTN_Y,
 	};
+	// ジャンプステート
+	enum class JumpState
+	{
+		CanJump,
+		CanDoubleJump,
+		CannotJump
+	};
 
+	// 武器
 	struct Arms
 	{
 		const char* nodeName;
@@ -54,29 +63,33 @@ public:
 		bool flagJump;
 	};
 
+private:
+	// プレイヤーと敵の判定距離
 	static inline const float playerVSenemyJudgeDist[(int)EnemySearch::Max] = { 6.5f, 2.5f };
 
-protected:
+	// キャラクターモデル
 	std::unique_ptr<Model> model;
-	AttackType	Atype = AttackType::None;
-	EnemySearch ESState = EnemySearch::None;
-
+	// ステートマシン
 	PlayerStateMachine* stateMachine = nullptr;
 
-	// VS-Enemy-Search
-	std::map<Enemy*, EnemySearch> enemySearch;
-	std::map<Enemy*, float> enemyDist;
+	// 敵毎の距離
+	std::unordered_map<Enemy*, float> enemyDist;
+	// 敵毎の敵探索ステート
+	std::unordered_map<Enemy*, EnemySearch> enemySearch;
 
-	Enemy* nearestEnemy = nullptr;
-	float nearestDist = FLT_MAX;
-	XMFLOAT3 nearestVec = {};
-
-	bool isAttackjudge = true;
-	int attackingEnemyNumber = -1;
-
-	//ジャンプ攻撃時に使用
-	bool isMoveAttack = false;
+	// 現在の攻撃タイプ
+	AttackType currentAttackType = AttackType::None;
+	// 現在の連続攻撃回数
 	int attackCount = 0;
+	// 攻撃中の敵ナンバー
+	int attackingEnemyNumber = -1;
+	// 攻撃判定 同一の敵の連続判定
+	bool isAttackJudge = true;
+
+	// ジャンプ遷移状態
+	JumpState jumpTrg = JumpState::CanJump;
+	// ジャンプ攻撃が動くか
+	bool isMoveAttack = false;
 
 	// SwordAttack
 	static const int MAX_POLYGON = 32;
@@ -84,20 +97,61 @@ protected:
 	XMFLOAT4 color = { 1, 1, 1, 1 };
 	bool isAddVertex = true;
 
-	float moveSpeed = 5.0f;
-	float turnSpeed = XMConvertToRadians(720);
-
-	bool isDamaged = false;
-	bool isDead = false;
-	float stateTimer = 0.0f;
-	float DamageFlash = 0.1f;
-	int flashCount = 0;
-
-	float jumpSpeed = 17.5f;
-
-	DirectX::XMFLOAT3 offset;
-
+	// Effect
 	std::unique_ptr<Effect> hitEffect;
+
+protected:
+	// 現在の敵探索ステート
+	EnemySearch currentEnemySearch = EnemySearch::None;
+	// 最も近い敵
+	Enemy* nearestEnemy = nullptr;
+	// 最も近い敵との距離
+	float nearestDist = FLT_MAX;
+	// 最も近い敵とのベクトル
+	XMFLOAT3 nearestVec = {};
+
+	// ***************** const *****************
+
+	const float moveSpeed = 5.0f;
+	const float turnSpeed = XMConvertToRadians(720);
+	const float jumpSpeed = 17.5f;
+
+protected:
+	// 更新
+	void UpdateUtils(float elapsedTime);
+	// 敵との距離更新
+	void UpdateEnemyDistance(float elapsedTime);
+	// ジャンプステート更新
+	void UpdateJumpState(float elapsedTime);
+
+	// 垂直速力更新
+	void UpdateVerticalVelocity(float elapsedFrame) override;
+
+	// プレイヤーとエネミーとの衝突処理
+	void CollisionPlayerVsEnemies();
+
+	// 着地した時に呼ばれる
+	void OnLanding(float elapsedTime) override;
+	// ダメージ受けた時に呼ばれる
+	void OnDamaged() override;
+	// 死亡した時に呼ばれる
+	void OnDead() override;
+
+	// 軌跡配列ズラし
+	void ShiftTrailPositions();
+	// 軌跡描画
+	void RenderTrail();
+
+	// HPバー描画
+	void HPBarRender(const RenderContext& rc, Sprite* gauge, bool is1P);
+
+	// デバッグプリミティブ描画
+	void DrawDebugPrimitive();
+	// デバッグ
+	void DebugMenu();
+
+	// 移動ベクトル
+	virtual XMFLOAT3 GetMoveVec() const = 0;
 
 public:
 	Player();
@@ -106,11 +160,19 @@ public:
 	// 初期化
 	void Init();
 
-	//更新
+	// 更新
 	virtual void Update(float elapsedTime) = 0;
-	void UpdateUtils(float elapsedTime);
-	void UpdateEnemyDistance(float elapsedTime);
-	void UpdateJump(float elapsedTime);
+
+	// 武器当たり判定位置の更新
+	void UpdateArmPositions(Model* model, Arms& arm);
+	// 攻撃中の水平加速度更新
+	void HorizontalVelocityByAttack(bool plus, int velo, float elapsedTime);
+
+	// 武器とエネミーの衝突処理
+	void CollisionArmsVsEnemies(Arms arm);
+
+	// 回復遷移確認処理
+	bool IsRecoverTransition();
 
 	// シャドウマップ用描画
 	void ShadowRender(const RenderContext& rc, ShadowMap* shadowMap);
@@ -120,27 +182,47 @@ public:
 	void PrimitiveRender(const RenderContext& rc);
 	// HPバー描画
 	virtual void HPBarRender(const RenderContext& rc, Sprite* gauge) = 0;
-	void HPBarRender(const RenderContext& rc, Sprite* gauge, bool is1P);
 
-	// ステートマシン取得
+	// 移動入力処理
+	bool InputMove(float elapsedTime);
+	// 攻撃入力処理
+	bool InputAttackFromNoneAttack(float elapsedTime);
+	// ジャンプ中の攻撃入力処理
+	bool InputAttackFromJump(float elapsedTime);
+
+	// ボタン判定(押下時)
+	virtual bool InputButtonDown(InputState button) = 0;
+	// ボタン判定(入力時)
+	virtual bool InputButton(InputState button) = 0;
+	// ボタン判定(押上時)
+	virtual bool InputButtonUp(InputState button) = 0;
+
+	// ***************** GETTER & SETTER *****************
+
 	PlayerStateMachine* GetStateMachine() const { return stateMachine; }
+
+	Model* GetModel() const { return model.get(); }
+
+	Enemy* GetNearestEnemy() { return nearestEnemy; }
+	EnemySearch GetEachEnemySearch(Enemy* enemy) { return enemySearch[enemy]; }
+	float GetEachEnemyDist(Enemy* enemy) { return enemyDist[enemy]; }
 
 	int GetAttackCount() const { return attackCount; }
 	void SetAttackCount(int count) { attackCount = count; }
 	void AddAttackCount() { attackCount++; }
 
-	AttackType GetAttackType() const { return Atype; }
-	void SetAttackType(AttackType at) { Atype = at; }
+	AttackType GetAttackType() const { return currentAttackType; }
+	void SetAttackType(AttackType at) { currentAttackType = at; }
 
-	EnemySearch GetESState() const { return ESState; }
+	EnemySearch GetEnemySearch() const { return currentEnemySearch; }
 
-	bool GetAttackJudge() const { return isAttackjudge; }
-	void SetAttackJadge(bool aj) { isAttackjudge = aj; }
+	bool GetAttackJudge() const { return isAttackJudge; }
+	void SetAttackJadge(bool aj) { isAttackJudge = aj; }
 
 	bool GetMoveAttack() const { return isMoveAttack; }
 	void SetMoveAttack(bool ma) { isMoveAttack = ma; }
 	
-	XMFLOAT3 GetVelocity() { return velocity; }
+	XMFLOAT3 GetVelocity() const { return velocity; }
 	void SetVelocity(float x = FLT_MAX, float y = FLT_MAX, float z = FLT_MAX)
 	{
 		if(x != FLT_MAX) velocity.x = x;
@@ -154,83 +236,11 @@ public:
 		velocity.z += velo.z;
 	}
 
-	Arms GetHammer() { return Hammer; }
-	Arms GetSpear() { return Spear; }
-	Arms GetSword() { return Sword; }
-
-	// 攻撃処理
-	bool InputAttackFromNoneAttack(float elapsedTime);
-	bool InputAttackFromJump(float elapsedTime);
-
-	//回復遷移確認処理
-	bool IsRecoverTransition();
-	
-	// ボタン判定
-	virtual bool InputButtonDown(InputState button) = 0;
-	virtual bool InputButton(InputState button) = 0;
-	virtual bool InputButtonUp(InputState button) = 0;
-
-	// 入力処理
-	bool InputJumpButtonDown();
-	bool InputJumpButton();
-	bool InputJumpButtonUp();
-	bool InputHammerButton();
-	bool InputSwordButton();
-	bool InputSpearButton();
-
-	//デバッグプリミティブ描画
-	void DrawDebugPrimitive();
-
-
-	Model* GetModel() const { return model.get(); }
-	
-	Enemy* GetNearestEnemy() { return nearestEnemy; }
-	EnemySearch GetEachEnemySearchState(Enemy* enemy) { return enemySearch[enemy]; }
-	float GetEachEnemyDist(Enemy* enemy) { return enemyDist[enemy]; }
-
-	// 武器当たり判定位置の更新
-	void UpdateArmPositions(Model* model, Arms& arm);
-	void HorizontalVelocityByAttack(bool plus, int velo, float elapsedTime);
-
-	// プレイヤーとエネミーとの衝突処理
-	void CollisionPlayerVsEnemies();
-	// 武器ととエネミーの衝突処理
-	void CollisionArmsVsEnemies(Arms arm);
-
-	// 移動入力処理
-	bool InputMove(float elapsedTime);
-	// 移動ベクトル
-	virtual XMFLOAT3 GetMoveVec() const = 0;
-
-	//デバッグ
-	void DebugMenu();
-
-	//着地した時に呼ばれる
-	void OnLanding(float elapsedTime) override;
-
-	//死亡した時に呼ばれる
-	void OnDead();
+	Arms GetHammer() const { return Hammer; }
+	Arms GetSpear() const { return Spear; }
+	Arms GetSword() const { return Sword; }
 
 protected:
-	//ダメージ受けた時に呼ばれる
-	void OnDamaged();
-
-	//垂直速力更新 オーバーライド
-	void UpdateVerticalVelocity(float elapsedFrame);
-
-	//軌跡
-	void ShiftTrailPositions();
-	void RenderTrail();
-
-protected:
-	enum class JumpState
-	{
-		CanJump,
-		CanDoubleJump,
-		CannotJump
-	};
-	JumpState jumpTrg = JumpState::CanJump;
-
 	Arms Hammer
 	{
 		"Hammer",
@@ -243,7 +253,6 @@ protected:
 		false,
 		false,
 	};
-
 	Arms Spear
 	{
 		"Spear",
@@ -269,8 +278,9 @@ protected:
 		false,
 		false,
 	};
+
 public:
-	//ステート
+	// ステート
 	enum class State
 	{
 		Idle,
@@ -300,7 +310,7 @@ public:
 		None,
 	};
 
-	//アニメーション
+	// アニメーション
 	enum class Animation
 	{
 		None,

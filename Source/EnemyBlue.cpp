@@ -115,12 +115,12 @@ void EnemyBlue::OnDead()
 Player::EnemySearch EnemyBlue::GetNearestPlayerES()
 {
 	Player::EnemySearch es = Player::EnemySearch::None;
-	//es = Player1P::Instance().GetEachEnemySearchState(this);
+	//es = Player1P::Instance().GetEachEnemySearch(this);
 
 	for (Player* player : PlayerManager::Instance().players)
 	{
-		if (static_cast<int>(es) < static_cast<int>(player->GetEachEnemySearchState(this)))
-			es = player->GetEachEnemySearchState(this);
+		if (static_cast<int>(es) < static_cast<int>(player->GetEachEnemySearch(this)))
+			es = player->GetEachEnemySearch(this);
 	}
 	return es;
 }
