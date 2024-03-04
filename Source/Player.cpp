@@ -1,17 +1,12 @@
 #include <map>
 
 #include "Player.h"
+#include "PlayerManager.h"
+#include "State/Player/PlayerEachState.h"
 #include "Graphics/Graphics.h"
 #include "Graphics/PrimitiveRenderer.h"
 #include "Input/Input.h"
-#include "SceneManager.h"
-#include "SceneLoading.h"
-#include "SceneGame.h"
-#include "SceneClear.h"
-#include "PlayerManager.h"
-#include "State/Player/PlayerEachState.h"
 #include "EnemyManager.h"
-
 #include "Stage.h"
 #include "imgui.h"
 
@@ -29,7 +24,7 @@ void Player::Init()
 {
 	ID3D11Device* device = Graphics::Instance().GetDevice();
 	//プレイヤーモデル読み込み
-	model = std::make_unique<Model>(device, "Data/Model/SD-UnityChan/UnityChan.fbx", 0.02f);
+	model = std::make_unique<Model>(device, "Data/Model/SD-UnityChan/UnityChan.fbx", playerModelSize);
 
 	//ヒットエフェクト読み込み
 	hitEffect = std::make_unique<Effect>("Data/Effect/Hit.efk");
@@ -45,8 +40,8 @@ void Player::Init()
 		enemyDist[enemyManager.GetEnemy(i)] = FLT_MAX;
 	}
 
-	health = 100;
-	maxHealth = 100;
+	// HP設定
+	health = maxHealth = playerMaxHealth;
 
 	// StateMachineを生成 
 	stateMachine = new PlayerStateMachine();
@@ -78,11 +73,6 @@ void Player::Init()
 	stateMachine->SetState(static_cast<int>(State::Idle));
 }
 
-//更新
-void Player::Update(float elapsedTime)
-{
-}
-
 void Player::UpdateUtils(float elapsedTime)
 {
 	// 配列ズラし
@@ -94,25 +84,26 @@ void Player::UpdateUtils(float elapsedTime)
 	// 剣の軌跡描画更新処理
 	//RenderTrail();
 
-	// 攻撃中じゃなければジャンプ処理
-	if (currentAttackType == AttackType::None) UpdateJumpState(elapsedTime);
+	// ジャンプ処理
+	UpdateJumpState(elapsedTime);
 
-	//プレイヤーとエネミーとの衝突処理
+	// プレイヤーとエネミーとの衝突処理
 	CollisionPlayerVsEnemies();
 
-	//速力処理更新
+	// 速力処理更新
 	UpdateVelocity(elapsedTime);
 
-	//オブジェクト行列更新
+	// オブジェクト行列更新
 	UpdateTransform();
 
-	//モデルアニメーション更新処理
+	// モデルアニメーション更新処理
 	model->UpdateAnimation(elapsedTime);
 
-	//モデル行列更新
+	// モデル行列更新
 	model->UpdateTransform(transform);
 }
 
+// 敵との距離更新
 void Player::UpdateEnemyDistance(float elapsedTime)
 {
 	EnemyManager& enemyManager = EnemyManager::Instance();
@@ -145,13 +136,16 @@ void Player::UpdateEnemyDistance(float elapsedTime)
 		{
 			enemySearch[enemy] = EnemySearch::None;
 			noneEnemy++;
-			if (i == (enemyCount - 1) && enemyCount == noneEnemy) currentEnemySearch = EnemySearch::None;
+			if (i == (enemyCount - 1) && enemyCount == noneEnemy)
+			{
+				currentEnemySearch = EnemySearch::None;
+			}
 			continue;
 		}
 
 		/***********************/
-
-		if (dist < nearestDist) //最近エネミーの登録
+		// 最近エネミーの登録
+		if (dist < nearestDist) 
 		{
 			nearestEnemy = enemy;
 			nearestDist = dist;
@@ -164,15 +158,22 @@ void Player::UpdateEnemyDistance(float elapsedTime)
 //ジャンプ処理
 void Player::UpdateJumpState(float elapsedTime)
 {
+	// 攻撃中の場合はジャンプさせない
+	if (currentAttackType != AttackType::None) return;
+
+	const float firstJumpSpeed = 150.0f;
+	const float secondJumpSpeed = 15.0f;
+	const float MaxJumpSpeed = 17.5f;
+
 	switch (jumpTrg)
 	{
 	case JumpState::CanJump:
 		// 押している間の処理
 		if (InputButton(Player::InputState::Jump))
 		{
-			velocity.y += 150 * elapsedTime;
+			velocity.y += firstJumpSpeed * elapsedTime;
 			// 指定加速度まであがったら
-			if (velocity.y > jumpSpeed)
+			if (velocity.y > MaxJumpSpeed)
 			{
 				jumpTrg = JumpState::CanDoubleJump;
 			}
@@ -188,8 +189,8 @@ void Player::UpdateJumpState(float elapsedTime)
 		// 2段目ジャンプは高さ調節不可
 		if (InputButtonDown(Player::InputState::Jump))
 		{
-			if (velocity.y > 0) velocity.y += 15.0f;
-			else				velocity.y = 15.0f;
+			if (velocity.y > 0) velocity.y += secondJumpSpeed;
+			else				velocity.y = secondJumpSpeed;
 
 			jumpTrg = JumpState::CannotJump;
 		}
@@ -249,6 +250,8 @@ void Player::HPBarRender(const RenderContext& rc, Sprite* gauge, bool is1P)
 	//HPゲージの長さ
 	const float guageWidth = 700.0f;
 	const float guageHeight = 15.0f;
+	const float guageY1P = 555.0f;
+	const float guageYAI = 580.0f;
 
 	float healthRate = GetHealth() / static_cast<float>(GetMaxHealth());
 	bool hpWorning = healthRate < 0.2f;
@@ -259,7 +262,7 @@ void Player::HPBarRender(const RenderContext& rc, Sprite* gauge, bool is1P)
 	//ゲージ描画(下地)
 	gauge->Render(dc,
 		(screenWidth / 2) - (guageWidth / 2),
-		is1P ? 555.0f : 580.0f,
+		is1P ? guageY1P : guageYAI,
 		0,
 		guageWidth + frameExpansion,
 		guageHeight + frameExpansion,
@@ -272,7 +275,7 @@ void Player::HPBarRender(const RenderContext& rc, Sprite* gauge, bool is1P)
 	//ゲージ描画
 	gauge->Render(dc,
 		(screenWidth / 2) - (guageWidth / 2) + frameExpansion / 2,
-		(is1P ? 555.0f : 580.0f) + frameExpansion / 2,
+		(is1P ? guageY1P : guageYAI) + frameExpansion / 2,
 		0,
 		guageWidth * healthRate,
 		guageHeight,
@@ -431,7 +434,10 @@ void Player::UpdateVerticalVelocity(float elapsedFrame)
 	// ジャンプスピアー攻撃のみ別の下向き処理を使用する
 	if (state == State::AttackSpearJump)
 	{
-		if (velocity.y > 0)	velocity.y = 0;
+		if (velocity.y > 0)
+		{
+			velocity.y = 0;
+		}
 		velocity.y += gravity * 0.25f * elapsedFrame;
 	}
 	else
@@ -474,7 +480,7 @@ bool Player::InputAttackFromNoneAttack(float elapsedTime)
 	if (enemySearch[nearestEnemy] >= EnemySearch::Find)
 	{
 		//旋回処理
-		Turn(elapsedTime, nearestVec.x, nearestVec.z, 1000);
+		Turn(elapsedTime, nearestVec.x, nearestVec.z, turnSpeed);
 	}
 
 	return true;

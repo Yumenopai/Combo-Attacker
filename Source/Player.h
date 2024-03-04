@@ -52,21 +52,18 @@ public:
 	// 武器
 	struct Arms
 	{
-		const char* nodeName;
-		XMFLOAT3	position;
-		const XMVECTOR	rootOffset;
-		const XMVECTOR	tipOffset;
-		float		radius;
-		bool flag1;
-		bool flag2;
-		bool flag3;
-		bool flagJump;
+		const char*		nodeName;	// 武器ノードの名前
+		XMFLOAT3		position;	// 位置
+		const XMVECTOR	rootOffset;	// 根本のオフセット
+		const XMVECTOR	tipOffset;	// 先のオフセット
+		float			radius;		// 半径
+		bool			flag1;		// 攻撃タイプ1が攻撃中か
+		bool			flag2;		// 攻撃タイプ2が攻撃中か
+		bool			flag3;		// 攻撃タイプ3が攻撃中か
+		bool			flagJump;	// ジャンプ攻撃が攻撃中か
 	};
 
 private:
-	// プレイヤーと敵の判定距離
-	static inline const float playerVSenemyJudgeDist[(int)EnemySearch::Max] = { 6.5f, 2.5f };
-
 	// キャラクターモデル
 	std::unique_ptr<Model> model;
 	// ステートマシン
@@ -100,6 +97,15 @@ private:
 	// Effect
 	std::unique_ptr<Effect> hitEffect;
 
+	// ***************** const *****************
+
+	// プレイヤーと敵の判定距離
+	static inline const float playerVSenemyJudgeDist[(int)EnemySearch::Max] =
+	{
+		6.5f,	// Find
+		2.5f,	// Attack
+	};
+
 protected:
 	// 現在の敵探索ステート
 	EnemySearch currentEnemySearch = EnemySearch::None;
@@ -112,9 +118,11 @@ protected:
 
 	// ***************** const *****************
 
+	const float playerModelSize = 0.02f;
+	const int playerMaxHealth = 100;
+
 	const float moveSpeed = 5.0f;
 	const float turnSpeed = XMConvertToRadians(720);
-	const float jumpSpeed = 17.5f;
 
 protected:
 	// 更新
@@ -130,8 +138,6 @@ protected:
 	// プレイヤーとエネミーとの衝突処理
 	void CollisionPlayerVsEnemies();
 
-	// 着地した時に呼ばれる
-	void OnLanding(float elapsedTime) override;
 	// ダメージ受けた時に呼ばれる
 	void OnDamaged() override;
 	// 死亡した時に呼ばれる
@@ -162,6 +168,9 @@ public:
 
 	// 更新
 	virtual void Update(float elapsedTime) = 0;
+
+	// 着地した時に呼ばれる
+	void OnLanding(float elapsedTime) override;
 
 	// 武器当たり判定位置の更新
 	void UpdateArmPositions(Model* model, Arms& arm);
@@ -264,7 +273,6 @@ protected:
 		false,
 		false,
 		false,
-
 	};
 	Arms Sword
 	{

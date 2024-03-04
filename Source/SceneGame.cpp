@@ -252,9 +252,11 @@ void SceneGame::Render()
 		sprites[3]->Render(dc, 1150.0f + 15.0f, 350.0f + 10.0f, 0.0f, 50, 50, 0, 0, textureWidth, textureWidth, 0, { 1, 1, 1, 1 });
 	}
 
+	const float guageY1P = 555.0f;
+	const float guageYAI = 580.0f;
 
-	font->Textout(rc, "Player", 16, 0, 1.0f, { -10, 10, 0 }, 12, 16, 32, 32, 16, 16, 0, 1, 1, 1, 1);
-	//font->Textout(rc, "Time:" + std::to_string((int)gameTimer), 16, 0, 1.0f, { 910, 10, 0 }, 32, 32, 32, 32, 16, 16, 0, 1, 1, 1, 1);
+	font->Textout(rc, "PLAYER", 200, 548.0f, 1.0f, { -10, 10, 0 }, 12, 16, 32, 32, 16, 16, 0, 0.1f, 0.65f, 0.9f, 1);
+	font->Textout(rc, "   COM", 200, 573.0f, 1.0f, { -10, 10, 0 }, 12, 16, 32, 32, 16, 16, 0, 1, 1, 1, 1);
 	
 	//gizmos
 	Gizmos* gizmos = Graphics::Instance().GetGizmos();
