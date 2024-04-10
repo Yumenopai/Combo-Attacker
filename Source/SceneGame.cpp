@@ -96,7 +96,7 @@ void SceneGame::Initialize()
 	enemyManager.Register(enemyBlue.get());
 
 	// •½sŒõŒ¹‚ð’Ç‰Á
-	mainDirectionalLight = new Light(LightType::Directional);
+	Light* mainDirectionalLight = new Light(LightType::Directional);
 	mainDirectionalLight->SetDirection({ 1, -1, -2 });
 	LightManager::Instane().Register(mainDirectionalLight);
 }

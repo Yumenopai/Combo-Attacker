@@ -45,6 +45,9 @@ public:
 protected:
 	std::unique_ptr<Model> model;
 	State	state = State::Wander;
+	
+	float effectOffset_Y = 0.8f;
+
 	DirectX::XMFLOAT3 territoryOrigin = { 0,0,0 };
 	float	territoryRange = 10.0f;
 	float	moveSpeed = 3.0f;
@@ -65,6 +68,8 @@ public:
 
 	//“ê’£‚èİ’è
 	void SetTerritory(const DirectX::XMFLOAT3& origin, float range);
+	//Getter
+	const float GetEffectOffset_Y() override { return effectOffset_Y; }
 
 protected:
 	//ƒ_ƒ[ƒW‚ÉŒÄ‚Î‚ê‚é

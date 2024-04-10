@@ -38,6 +38,7 @@ void PlayerAI::Update(float elapsedTime)
 
 	UpdateEnemyDistance(elapsedTime);
 
+	// UŒ‚“ü—Í
 	if (currentEnemySearch == EnemySearch::Attack && nowInput != InputState::Sword) //’·‰Ÿ‚µ‚Å‚È‚¢‚Ì‚Å¡‚ªƒ\[ƒh‚Ìê‡‚ğœ‚­
 	{
 		nextInput = InputState::Sword;

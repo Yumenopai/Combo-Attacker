@@ -275,6 +275,9 @@ void StateAttackHammer1::Update(float elapsedTime)
 		{
 			player->GetStateMachine()->ChangeState(static_cast<int>(Player::State::AttackHammer2));
 		}
+
+		// ‹ß‹——£UŒ‚Žž‚ÌŠp“x‹¸³
+		player->ForceTurnByAttack(elapsedTime);
 	}
 	else {
 		player->GetStateMachine()->ChangeState(static_cast<int>(Player::State::Idle));

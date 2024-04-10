@@ -27,6 +27,9 @@ public:
 	//Setter
 	void SetTargetPosition(DirectX::XMFLOAT3& pos) { targetPosition = pos; }
 
+	//Getter
+	virtual const float GetEffectOffset_Y() = 0;
+
 protected:
 	DirectX::XMFLOAT3 targetPosition = { 0,0,0 };
 };

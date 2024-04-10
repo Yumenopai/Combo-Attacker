@@ -20,6 +20,8 @@ public:
 
 	//縄張り設定
 	void SetTerritory(const DirectX::XMFLOAT3& origin, float range);
+	//Getter
+	const float GetEffectOffset_Y() override { return effectOffset_Y; }
 
 	//デバッグ
 	void DebugMenu();
@@ -127,6 +129,8 @@ private:
 private:
 	std::unique_ptr<Model> model;
 	State	state = State::Wander;
+
+	float effectOffset_Y = 0.3f;
 
 	bool isHalfHP = false;
 	bool isDead = false;

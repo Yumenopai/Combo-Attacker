@@ -26,9 +26,6 @@ void Player::Init()
 	//プレイヤーモデル読み込み
 	model = std::make_unique<Model>(device, "Data/Model/SD-UnityChan/UnityChan.fbx", playerModelSize);
 
-	//ヒットエフェクト読み込み
-	hitEffect = std::make_unique<Effect>("Data/Effect/Hit.efk");
-
 	//初期化
 	enemySearch.clear();
 	enemyDist.clear();
@@ -477,12 +474,6 @@ bool Player::InputAttackFromNoneAttack(float elapsedTime)
 		return false;
 	}
 
-	if (enemySearch[nearestEnemy] >= EnemySearch::Find)
-	{
-		//旋回処理
-		Turn(elapsedTime, nearestVec.x, nearestVec.z, turnSpeed);
-	}
-
 	return true;
 }
 bool Player::InputAttackFromJump(float elapsedTime)
@@ -501,6 +492,17 @@ bool Player::InputAttackFromJump(float elapsedTime)
 	}
 
 	return true;
+}
+
+// 近距離攻撃時の角度矯正
+void Player::ForceTurnByAttack(float elapsedTime)
+{
+	// 敵の発見時に進む方向を矯正する
+	if (enemySearch[nearestEnemy] >= EnemySearch::Find)
+	{
+		//旋回処理
+		Turn(elapsedTime, nearestVec.x, nearestVec.z, turnSpeed);
+	}
 }
 
 //回復遷移確認処理
@@ -573,7 +575,7 @@ void Player::CollisionArmsVsEnemies(Arms arm)
 			if (attackingEnemyNumber == i && !isAttackJudge) return; //攻撃判定しない場合は処理しない
 
 			//ダメージを与える
-			if (enemy->ApplyDamage(1, 0))
+			if (enemy->ApplyDamage(arm.damage, 0))
 			{
 				//吹き飛ばす
 				if (attackCount >= 4)
@@ -599,9 +601,8 @@ void Player::CollisionArmsVsEnemies(Arms arm)
 				}
 				//ヒットエフェクト再生
 				{
-					DirectX::XMFLOAT3 e = enemy->GetPosition();
-					e.y += enemy->GetHeight() * 0.5f;
-					hitEffect->Play(e);
+					outPosition.y += enemy->GetHeight() * enemy->GetEffectOffset_Y();
+					EffectArray[(int)EffectNumber::Hit].Play(outPosition);
 				}
 				attackingEnemyNumber = i;
 				isAttackJudge = false;

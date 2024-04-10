@@ -48,6 +48,14 @@ public:
 		CanDoubleJump,
 		CannotJump
 	};
+	// エフェクト番号
+	enum class EffectNumber
+	{
+		Hit,
+		Drill,
+
+		MaxCount
+	};
 
 	// 武器
 	struct Arms
@@ -56,7 +64,8 @@ public:
 		XMFLOAT3		position;	// 位置
 		const XMVECTOR	rootOffset;	// 根本のオフセット
 		const XMVECTOR	tipOffset;	// 先のオフセット
-		float			radius;		// 半径
+		const float		radius;		// 半径
+		const int		damage;		// ダメージ量
 		bool			flag1;		// 攻撃タイプ1が攻撃中か
 		bool			flag2;		// 攻撃タイプ2が攻撃中か
 		bool			flag3;		// 攻撃タイプ3が攻撃中か
@@ -95,7 +104,11 @@ private:
 	bool isAddVertex = true;
 
 	// Effect
-	std::unique_ptr<Effect> hitEffect;
+	Effect EffectArray[(int)EffectNumber::MaxCount] = 
+	{
+		 "Data/Effect/Hit.efk",
+		 "Data/Effect/drill.efk"
+	};
 
 	// ***************** const *****************
 
@@ -121,7 +134,7 @@ protected:
 	const float playerModelSize = 0.02f;
 	const int playerMaxHealth = 100;
 
-	const float moveSpeed = 5.0f;
+	const float moveSpeed = 8.0f;
 	const float turnSpeed = XMConvertToRadians(720);
 
 protected:
@@ -198,6 +211,8 @@ public:
 	bool InputAttackFromNoneAttack(float elapsedTime);
 	// ジャンプ中の攻撃入力処理
 	bool InputAttackFromJump(float elapsedTime);
+	// 近距離攻撃時の角度矯正
+	void ForceTurnByAttack(float elapsedTime);
 
 	// ボタン判定(押下時)
 	virtual bool InputButtonDown(InputState button) = 0;
@@ -257,6 +272,7 @@ protected:
 		{0,0,0},
 		{0,35,0},
 		0.5f,
+		3,
 		false,
 		false,
 		false,
@@ -269,6 +285,7 @@ protected:
 		{0,0,0},
 		{0,90,0},
 		0.4f,
+		1,
 		false,
 		false,
 		false,
@@ -281,6 +298,7 @@ protected:
 		{0,0,0},
 		{0,30,0},
 		0.4f,
+		1,
 		false,
 		false,
 		false,

@@ -84,8 +84,5 @@ private:
 
 	bool		animationLoop = false;
 	float		animationBlendSeconds = 0;
-
-	// ïΩçsåıåπ
-	Light* mainDirectionalLight = nullptr;
 };
 
