@@ -32,4 +32,9 @@ public:
 
 protected:
 	DirectX::XMFLOAT3 targetPosition = { 0,0,0 };
+
+	//// ƒpƒ‰ƒ[ƒ^
+	//Player* firstAttackPlayer = nullptr;
+	//int AttackedCount[2] = { 0,0 };
+
 };

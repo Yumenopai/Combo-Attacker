@@ -3,6 +3,7 @@
 #include <memory>
 #include "Graphics/Model.h"
 #include "EnemySlime.h"
+#include "Effect.h"
 
 class EnemyTurtleShell :public EnemySlime
 {
@@ -29,14 +30,36 @@ private:
 		Anim_Dizzy,
 		Anim_Die
 	};
+	// エフェクト番号
+	enum class EffectNumber
+	{
+		dead,
+
+		MaxCount
+	};
+
+public:
+	// Effect
+	Effect EffectArray[(int)EffectNumber::MaxCount] =
+	{
+		 "Data/Effect/cyanBroken.efk",
+	};
 
 public:
 	EnemyTurtleShell();
 
-	void OnDamaged();
+	//ダメージ時に呼ばれる
+	void OnDamaged() override;
+	//死亡した時に呼ばれる
+	void OnDead() override;
 
 	//プレイヤー索敵
 	bool SearchPlayer();
+
+	// 簡略化関数
+	void PlayEffect(EffectNumber num, const XMFLOAT3& position, float scale = 1.0f) {
+		EffectArray[static_cast<int>(num)].Play(position, scale);
+	}
 
 private:
 	// 各ステージごとの更新処理

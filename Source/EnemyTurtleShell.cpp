@@ -95,3 +95,38 @@ void EnemyTurtleShell::OnDamaged()
 	//ダメージステートへ遷移
 	TransitionState(State::HitDamage);
 }
+//死亡した時に呼ばれる
+void EnemyTurtleShell::OnDead()
+{
+	// 死亡時エフェクト再生
+	PlayEffect(EffectNumber::dead, position, 0.6f);
+
+	//自身を破棄
+	Destroy();
+
+	// アイテムゲット
+	// 現在持っていない武器リスト取得
+	auto remainList = Player1P::Instance().GetHaventArm();
+	// 残り出現個数
+	int remainCount = static_cast<int>(remainList.size());
+
+	if (remainCount == 0) {
+		return;
+	}
+	else {
+		// 乱数
+		int num = rand() % remainCount;
+
+		int i = 0;
+		// 獲得する武器を確定する
+		for (const auto& arm : remainList)
+		{
+			if (i == num)
+			{
+				Player1P::Instance().AddHaveArm(arm);
+				return;
+			}
+			i++;
+		}
+	}
+}

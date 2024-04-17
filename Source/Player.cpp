@@ -27,6 +27,18 @@ void Player::Init()
 	model = std::make_unique<Model>(device, "Data/Model/SD-UnityChan/UnityChan.fbx", playerModelSize);
 
 	//初期化
+	HaveArms.clear();
+	HaveArms.push_front(InitialArm);
+	CurrentUseArm = InitialArm;
+
+	HaventArms.clear();
+	for (int i = 0; i < static_cast<int>(Player::AttackType::MaxCount); i++)
+	{
+		if (static_cast<int>(InitialArm) == i) continue;
+		// 所持していない武器の登録
+		HaventArms.push_back(static_cast<Player::AttackType>(i));
+	}
+	
 	enemySearch.clear();
 	enemyDist.clear();
 	EnemyManager& enemyManager = EnemyManager::Instance();
@@ -156,7 +168,7 @@ void Player::UpdateEnemyDistance(float elapsedTime)
 void Player::UpdateJumpState(float elapsedTime)
 {
 	// 攻撃中の場合はジャンプさせない
-	if (currentAttackType != AttackType::None) return;
+	if (isAttacking) return;
 
 	const float firstJumpSpeed = 150.0f;
 	const float secondJumpSpeed = 15.0f;
@@ -322,28 +334,28 @@ void Player::DebugMenu()
 //着地した時に呼ばれる
 void Player::OnLanding(float elapsedTime)
 {
-	if (currentAttackType != AttackType::None) //攻撃中(主にジャンプ攻撃後)
+	if (isAttacking) //攻撃中(主にジャンプ攻撃後)
 	{
 		// 着地してすぐは何もさせないためここで処理を書かない
 		// 各StateUpdateにてアニメーション終了後にIdleStateへ遷移する
 	}
 	else if (InputMove(elapsedTime))
 	{
-		stateMachine->ChangeState(static_cast<int>(State::Run));
+		ChangeState(State::Run);
 	}
 	else {
-		stateMachine->ChangeState(static_cast<int>(State::JumpEnd));
+		ChangeState(State::JumpEnd);
 	}
 }
 
 void Player::OnDamaged()
 {
-	stateMachine->ChangeState(static_cast<int>(State::Damage));
+	ChangeState(State::Damage);
 }
 
 void Player::OnDead()
 {
-	stateMachine->ChangeState(static_cast<int>(State::Dead));
+	ChangeState(State::Dead);
 }
 
 void Player::UpdateArmPositions(Model* model, Arms& arm)
@@ -459,51 +471,74 @@ bool Player::InputMove(float elapsedTime)
 }
 
 // 攻撃入力処理
-bool Player::InputAttackFromNoneAttack(float elapsedTime)
+bool Player::InputAttackFromNoneAttack()
 {
-	if (InputButtonDown(Player::InputState::Hammer)) {
-		stateMachine->ChangeState(static_cast<int>(State::AttackHammer1));
-	}
-	else if (InputButtonDown(Player::InputState::Sword)) {
-		stateMachine->ChangeState(static_cast<int>(State::AttackSword1));
-	}
-	else if (InputButtonDown(Player::InputState::Spear)) {
-		stateMachine->ChangeState(static_cast<int>(State::AttackSpear1));
-	}
-	else {
-		return false;
+	// 押されていない時はreturn
+	if (!InputButtonDown(Player::InputState::Attack)) return false;
+
+	switch (CurrentUseArm)
+	{
+	case Player::AttackType::Hammer:
+		ChangeState(State::AttackHammer1);
+		break;
+	case Player::AttackType::Spear:
+		ChangeState(State::AttackSpear1);
+		break;
+	case Player::AttackType::Sword:
+		ChangeState(State::AttackSword1);
+		break;
 	}
 
 	return true;
 }
 bool Player::InputAttackFromJump(float elapsedTime)
 {
-	if (InputButtonDown(Player::InputState::Hammer)) {
-		stateMachine->ChangeState(static_cast<int>(State::AttackHammerJump));
-	}
-	else if (InputButtonDown(Player::InputState::Sword)) {
-		stateMachine->ChangeState(static_cast<int>(State::AttackSwordJump));
-	}
-	else if (InputButtonDown(Player::InputState::Spear)) {
-		stateMachine->ChangeState(static_cast<int>(State::AttackSpearJump));
-	}
-	else {
-		return false;
+	// 押されていない時はreturn
+	if (!InputButtonDown(Player::InputState::Attack)) return false;
+
+	switch (CurrentUseArm)
+	{
+	case Player::AttackType::Hammer:
+		ChangeState(State::AttackHammerJump);
+		break;
+	case Player::AttackType::Spear:
+		ChangeState(State::AttackSpearJump);
+		break;
+	case Player::AttackType::Sword:
+		ChangeState(State::AttackSwordJump);
+		break;
 	}
 
 	return true;
 }
 
-// 近距離攻撃時の角度矯正
-void Player::ForceTurnByAttack(float elapsedTime)
+// 武器変更処理
+void Player::InputChangeArm(AttackType arm)
 {
-	// 敵の発見時に進む方向を矯正する
-	if (enemySearch[nearestEnemy] >= EnemySearch::Find)
-	{
-		//旋回処理
-		Turn(elapsedTime, nearestVec.x, nearestVec.z, turnSpeed);
+	// 押されていない時はreturn
+	if (!InputButtonDown(Player::InputState::Change)) return;
+	// 一種類しか持っていない時は変更なし
+	if (HaveArms.size() <= 1) return;
+
+	// 指定されていたらそれを設定する
+	if (arm != AttackType::None) {
+		CurrentUseArm = arm;
+
+		// 現在の武器をListから削除
+		ListEraseArm(HaveArms, CurrentUseArm);
 	}
+	else {
+		// 武器選択
+		CurrentUseArm = HaveArms.front();
+
+		// 選択した武器を削除
+		HaveArms.pop_front();
+	}
+
+	// 一番後ろに再配置
+	HaveArms.push_back(CurrentUseArm);
 }
+
 
 //回復遷移確認処理
 bool Player::IsRecoverTransition()
@@ -529,6 +564,16 @@ bool Player::IsRecoverTransition()
 	return true;
 }
 
+// 近距離攻撃時の角度矯正
+void Player::ForceTurnByAttack(float elapsedTime)
+{
+	// 敵の発見時に進む方向を矯正する
+	if (enemySearch[nearestEnemy] >= EnemySearch::Find)
+	{
+		//旋回処理
+		Turn(elapsedTime, nearestVec.x, nearestVec.z, turnSpeed);
+	}
+}
 //プレイヤーとエネミーとの衝突処理
 void Player::CollisionPlayerVsEnemies()
 {
@@ -602,7 +647,7 @@ void Player::CollisionArmsVsEnemies(Arms arm)
 				//ヒットエフェクト再生
 				{
 					outPosition.y += enemy->GetHeight() * enemy->GetEffectOffset_Y();
-					EffectArray[(int)EffectNumber::Hit].Play(outPosition);
+					PlayEffect(EffectNumber::Hit, outPosition);
 				}
 				attackingEnemyNumber = i;
 				isAttackJudge = false;
