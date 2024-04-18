@@ -56,7 +56,7 @@ void PlayerAI::HPBarRender(const RenderContext& rc, Sprite* gauge)
 // 移動ベクトル
 XMFLOAT3 PlayerAI::GetMoveVec() const
 {
-	const float range = 2.5f;	// プレイヤーと味方の距離
+	const float range = 2.5f;	// プレイヤーと味方の判定距離
 	XMFLOAT3 moveVec = {};		// 移動ベクトル(return値)
 
 	XMFLOAT3 playerPos = Player1P::Instance().GetPosition();
@@ -64,24 +64,22 @@ XMFLOAT3 PlayerAI::GetMoveVec() const
 
 	// プレイヤーへのベクトル
 	XMVECTOR AIto1P = XMVectorSubtract(XMLoadFloat3(&playerPos), XMLoadFloat3(&position));
-	// 一定距離にいる場合は何も動かない
-	if (XMVectorGetX(XMVector3LengthSq(AIto1P)) < range * range) return {};
 
-	// 移動時はプレイヤーの斜め後ろ辺りに付かせる
-	playerPos.x -= sinf(playerAng.y - 45) * 2;
-	playerPos.z -= cosf(playerAng.y - 45) * 2;
-	playerPos.y = position.y; //Y方向は自身の高さで良い
-	// 目標位置へのベクトル
-	AIto1P = XMVectorSubtract(XMLoadFloat3(&playerPos), XMLoadFloat3(&position));
-	// 移動ベクトルを更新
-	XMStoreFloat3(&moveVec, AIto1P);
-
-	// プレイヤーが発見ステート時
-	if (Player1P::Instance().GetEnemySearch() >= EnemySearch::Find)
+	// 一定距離から離れている場合
+	if (XMVectorGetX(XMVector3LengthSq(AIto1P)) > range * range)
 	{
-		// 最近エネミーとの距離が近距離の場合、進行ベクトルを更新
-		if (nearestDist < 10.0f) moveVec = nearestVec;
+		// 移動時はプレイヤーの斜め後ろ辺りに付かせる
+		playerPos.x -= sinf(playerAng.y - 45) * 2;
+		playerPos.z -= cosf(playerAng.y - 45) * 2;
+		playerPos.y = position.y; //Y方向は自身の高さで良い
+		// 目標位置へのベクトル
+		AIto1P = XMVectorSubtract(XMLoadFloat3(&playerPos), XMLoadFloat3(&position));
+		// 移動ベクトルを更新
+		XMStoreFloat3(&moveVec, AIto1P);
 	}
+
+	// 最近エネミーとの距離が近距離の場合、進行ベクトルを更新
+	if (nearestDist < 10.0f) moveVec = nearestVec;
 
 	return moveVec;
 }
