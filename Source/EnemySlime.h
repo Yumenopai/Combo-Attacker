@@ -9,24 +9,24 @@ class EnemySlime :public Enemy
 {
 private:
 	//アニメーション
-	enum Animation
+	enum class Animation
 	{
-		Anim_IdleNormal,
-		Anim_IdleBattle,
-		Anim_Attack1,
-		Anim_Attack2,
-		Anim_WalkFWD,
-		Anim_WalkBWD,
-		Anim_WalkLeft,
-		Anim_WalkRight,
-		Anim_RunFWD,
-		Anim_SenseSomthingST,
-		Anim_SenseSomthingPRT,
-		Anim_Taunt,
-		Anim_Victory,
-		Anim_GetHit,
-		Anim_Dizzy,
-		Anim_Die
+		IdleNormal,
+		IdleBattle,
+		Attack1,
+		Attack2,
+		WalkFWD,
+		WalkBWD,
+		WalkLeft,
+		WalkRight,
+		RunFWD,
+		SenseSomthingST,
+		SenseSomthingPRT,
+		Taunt,
+		Victory,
+		GetHit,
+		Dizzy,
+		Die
 	};
 
 public:

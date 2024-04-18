@@ -397,32 +397,34 @@ void EnemySlime::TransitionState(State nowState)
 //遷移時アニメーション再生
 void EnemySlime::TransitionPlayAnimation(State nowState)
 {
-	Animation anime = Anim_IdleNormal; //アニメーション設定
+	//アニメーション設定
+	Animation anime = Animation::IdleNormal;
 	bool animeLoop = true;
 
 	switch (nowState)
 	{
 	case State::Idle:
-		anime = Anim_IdleNormal;
+		anime = Animation::IdleNormal;
 		break;
 	case State::Wander:
-		anime = Anim_WalkFWD;
+		anime = Animation::WalkFWD;
 		break;
 	case State::Pursuit:
-		anime = Anim_RunFWD;
+		anime = Animation::RunFWD;
 		break;
 	case State::Attack:
-		anime = Anim_Attack1;
+		anime = Animation::Attack1;
 		animeLoop = false;
 		break;
 	case State::IdleBattle:
-		anime = Anim_IdleBattle;
+		anime = Animation::IdleBattle;
 		break;
 	case State::HitDamage:
-		anime = Anim_GetHit;
+		anime = Animation::GetHit;
 		animeLoop = false;
 		break;
 	}
 
-	model->PlayAnimation(static_cast<int>(anime), animeLoop); //アニメーション再生
+	//アニメーション再生
+	model->PlayAnimation(static_cast<int>(anime), animeLoop);
 }

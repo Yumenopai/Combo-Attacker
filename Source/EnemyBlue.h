@@ -7,10 +7,43 @@
 
 class EnemyBlue :public Enemy
 {
+private:
+	//ステート
+	enum class State
+	{
+		Wander,
+		Idle,
+		Pursuit,
+		Attack,
+		IdleBattle,
+		GetHit,
+		Scream,
+		AttackClaw,
+		Die,
+	};
+	// エフェクト番号
+	enum class EffectNumber
+	{
+		dead,
+
+		MaxCount
+	};
+
+private:
+	// Effect
+	Effect EffectArray[(int)EffectNumber::MaxCount] =
+	{
+		 "Data/Effect/cyanBroken.efk",
+	};
+
+
 public:
 	EnemyBlue();
 	~EnemyBlue() override;
 
+	//ステート遷移
+	void TransitionState(State nowState);
+	virtual void TransitionPlayAnimation(State nowState);
 	//更新処理
 	void Update(float elapsedTime) override;
 
@@ -51,79 +84,53 @@ private:
 	// 最近プレイヤーのステート取得
 	Player::EnemySearch GetNearestPlayerES();
 
-	//徘徊ステートへ遷移
-	void TransitionWanderState();
 	//徘徊ステート更新処理
 	void UpdateWanderState(float elapsedTime);
-	//待機ステートへ遷移
-	void TransitionIdleState();
 	//待機ステート更新処理
 	void UpdateIdleState(float elapsedTime);
-	//追跡ステートへ遷移
-	void TransitionPursuitState();
 	//追跡ステート更新処理
 	void UpdatePursuitState(float elapsedTime);
-	//攻撃ステートへ遷移
-	void TransitionAttackState();
 	//攻撃ステート更新処理
 	void UpdateAttackState(float elapsedTime);
-	//戦闘待機ステートへ遷移
-	void TransitionIdleBattleState();
 	//戦闘待機ステート更新処理
 	void UpdateIdleBattleState(float elapsedTime);
-	//ダメージステートへ遷移
-	void TransitionGetHitState();
 	//ダメージステート更新処理
 	void UpdateGetHitState(float elapsedTime);
-	//咆哮ステートへ遷移
-	void TransitionScreamState();
 	//咆哮ステート更新処理
 	void UpdateScreamState(float elapsedTime);
-	//翼攻撃ステートへ遷移
-	void TransitionAttackClawState();
 	//翼攻撃ステート更新処理
 	void UpdateAttackClawState(float elapsedTime);
-	//死亡ステートへ遷移
-	void TransitionDieState();
 	//死亡ステート更新処理
 	void UpdateDieState(float elapsedTime);
 
+	// エフェクト再生
+	void PlayEffect(EffectNumber num, const XMFLOAT3& position, float scale = 1.0f) {
+		EffectArray[static_cast<int>(num)].Play(position, scale);
+	}
+
+
 private:
-	//ステート
-	enum class State
+	//アニメーション
+	enum class Animation
 	{
-		Wander,
-		Idle,
-		Pursuit,
-		Attack,
-		IdleBattle,
-		GetHit,
+		Idle1,
+		FlyForward,
+		Attack01,
+		TakeOff,
+		Land,
 		Scream,
 		AttackClaw,
+		AttackFlame,
+		Defend,
+		GetDamage,
+		Sleep,
+		Walk,
+		Run,
+		FlyAttackFlame,
+		FlyGlide,
+		Idle02,
 		Die,
-	};
-
-	//アニメーション
-	enum Animation
-	{
-		Anim_Idle1,
-		Anim_FlyForward,
-		Anim_Attack01,
-		Anim_TakeOff,
-		Anim_Land,
-		Anim_Scream,
-		Anim_AttackClaw,
-		Anim_AttackFlame,
-		Anim_Defend,
-		Anim_GetDamage,
-		Anim_Sleep,
-		Anim_Walk,
-		Anim_Run,
-		Anim_FlyAttackFlame,
-		Anim_FlyGlide,
-		Anim_Idle02,
-		Anim_Die,
-		Anim_FlyFloat,
+		FlyFloat,
 	};
 
 private:
