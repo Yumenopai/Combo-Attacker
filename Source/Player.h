@@ -3,13 +3,18 @@
 #include <memory>
 #include "Shader/Shader.h"
 #include "Graphics/Model.h"
+#include "Graphics/Graphics.h"
+#include "Graphics/FontSprite.h"
 #include "Character.h"
 #include "State/Player/PlayerStateMachine.h"
-#include "Enemy.h"
 #include "Effect.h"
 #include "Input/GamePad.h"
 
-//プレイヤー
+#define SC_INT static_cast<int>
+#define SC_AT static_cast<Player::AttackType>
+
+class Enemy;
+
 class Player : public Character
 {
 public:
@@ -76,9 +81,9 @@ public:
 	{
 		None = -1,
 
-		Hammer = 0,
+		Sword = 0,
+		Hammer,
 		Spear,
-		Sword,
 
 		MaxCount
 	};
@@ -98,8 +103,8 @@ public:
 		Run = 1,
 		Jump = GamePad::BTN_A,
 		Attack = GamePad::BTN_B,
-		Change = GamePad::BTN_X,
-		Other = GamePad::BTN_Y,
+		Player = GamePad::BTN_X,
+		Buddy = GamePad::BTN_Y,
 	};
 	// ジャンプステート
 	enum class JumpState
@@ -138,6 +143,7 @@ public:
 private:
 	// キャラクターモデル
 	std::unique_ptr<Model> model;
+
 	// ステートマシン
 	PlayerStateMachine* stateMachine = nullptr;
 
@@ -146,17 +152,12 @@ private:
 	// 敵毎の敵探索ステート
 	std::unordered_map<Enemy*, EnemySearch> enemySearch;
 
-	/*
-	所持武器の登録
-		武器選択でリスト先頭の武器を選び、選択したら一番後ろに置く。
-		武器獲得の際はリスト先頭に挿入し、一回の選択でその武器になる。
-	*/
-	std::list<AttackType> HaveArms;
-	std::list<AttackType> HaventArms;
-	// 初期装備
-	const AttackType InitialArm = AttackType::Sword;
-	// 使用中の武器
-	AttackType CurrentUseArm = AttackType::None;
+	/// <summary>
+	/// 所持武器の登録
+	///		first:所持できる武器
+	///		second : 所持しているか
+	/// </summary>
+	std::unordered_map<AttackType, bool> HaveArms;
 
 	// 現在攻撃しているか
 	bool isAttacking = false;
@@ -197,7 +198,23 @@ private:
 		2.5f,	// Attack
 	};
 
+	const float playerModelSize = 0.02f;
+	const int playerMaxHealth = 100;
+
+	const float moveSpeed = 8.0f;
+	const float turnSpeed = XMConvertToRadians(1200);
+	
+	// UI
+	const float hpGuageWidth = 700.0f;
+	const float hpGuageHeight = 15.0f;
+	const XMFLOAT4 hpGuageBack = { 0.3f, 0.3f, 0.3f, 0.8f };
+
 protected:
+	// 初期装備
+	AttackType InitialArm;
+	// 使用中の武器
+	AttackType CurrentUseArm = AttackType::None;
+
 	// 現在の敵探索ステート
 	EnemySearch currentEnemySearch = EnemySearch::None;
 	// 最も近い敵
@@ -207,13 +224,18 @@ protected:
 	// 最も近い敵とのベクトル
 	XMFLOAT3 nearestVec = {};
 
+	// 回復遷移可能か
+	bool enableRecoverTransition = false;
+
 	// ***************** const *****************
-
-	const float playerModelSize = 0.02f;
-	const int playerMaxHealth = 100;
-
-	const float moveSpeed = 8.0f;
-	const float turnSpeed = XMConvertToRadians(1200);
+	
+	Player* targetPlayer;
+	std::string characterName;
+	XMFLOAT4 nameColor;
+	// UI //1P & AI
+	float hpGuage_Y;
+	XMFLOAT4 hpColorNormal;
+	XMFLOAT4 hpColorWorning;
 
 protected:
 	// 更新
@@ -229,6 +251,9 @@ protected:
 	// プレイヤーとエネミーとの衝突処理
 	void CollisionPlayerVsEnemies();
 
+	// 回復遷移確認処理
+	bool EnableRecoverTransition();
+
 	// ダメージ受けた時に呼ばれる
 	void OnDamaged() override;
 	// 死亡した時に呼ばれる
@@ -238,9 +263,6 @@ protected:
 	void ShiftTrailPositions();
 	// 軌跡描画
 	void RenderTrail();
-
-	// HPバー描画
-	void HPBarRender(const RenderContext& rc, Sprite* gauge, bool is1P);
 
 	// デバッグプリミティブ描画
 	void DrawDebugPrimitive();
@@ -263,6 +285,9 @@ public:
 	// 着地した時に呼ばれる
 	void OnLanding(float elapsedTime) override;
 
+	// 次の選択武器取得
+	Player::AttackType GetNextArm();
+
 	// 近距離攻撃時の角度矯正
 	void ForceTurnByAttack(float elapsedTime);
 	// 武器当たり判定位置の更新
@@ -273,9 +298,6 @@ public:
 	// 武器とエネミーの衝突処理
 	void CollisionArmsVsEnemies(Arms arm);
 
-	// 回復遷移確認処理
-	bool IsRecoverTransition();
-
 	// シャドウマップ用描画
 	void ShadowRender(const RenderContext& rc, ShadowMap* shadowMap);
 	// 描画
@@ -283,7 +305,11 @@ public:
 	// 攻撃の軌跡描画
 	void PrimitiveRender(const RenderContext& rc);
 	// HPバー描画
-	virtual void HPBarRender(const RenderContext& rc, Sprite* gauge) = 0;
+	void RenderHPBar(ID3D11DeviceContext* dc, Sprite* gauge, FontSprite* font);
+	//キャラクター名前描画
+	void RenderCharacterName(const RenderContext& rc, FontSprite* font);
+	// 所持武器描画
+	void RenderHaveArms(ID3D11DeviceContext* dc, Sprite* frame, Sprite* ArmSprite);
 
 	// 移動入力処理
 	bool InputMove(float elapsedTime);
@@ -292,7 +318,11 @@ public:
 	// ジャンプ中の攻撃入力処理
 	bool InputAttackFromJump(float elapsedTime);
 	// 武器変更処理
-	void InputChangeArm(AttackType arm = AttackType::None);
+	virtual void InputChangeArm(AttackType arm = AttackType::None) = 0;
+	// ターゲット回復処理
+	virtual void InputRecover() = 0;
+	// 武器を使用可能にする
+	void AddHaveArm(AttackType arm = AttackType::None);
 
 	// ボタン判定(押下時)
 	virtual bool InputButtonDown(InputState button) = 0;
@@ -303,20 +333,23 @@ public:
 
 	// 簡略化関数
 	void ChangeState(State newState) {
-		stateMachine->ChangeState(static_cast<int>(newState));
+		stateMachine->ChangeState(SC_INT(newState));
 	}
 	void PlayAnimation(Animation anim, bool loop) {
-		model->PlayAnimation(static_cast<int>(anim), loop);
+		model->PlayAnimation(SC_INT(anim), loop);
 	}
 	void PlayEffect(EffectNumber num, const XMFLOAT3& position, float scale = 1.0f) {
-		EffectArray[static_cast<int>(num)].Play(position, scale);
+		EffectArray[SC_INT(num)].Play(position, scale);
 	}
 
+#pragma region GETTER & SETTER
 	// ***************** GETTER & SETTER *****************
 
 	PlayerStateMachine* GetStateMachine() const { return stateMachine; }
 
 	Model* GetModel() const { return model.get(); }
+
+	Player* GetTargetPlayer() const { return targetPlayer; }
 
 	Enemy* GetNearestEnemy() { return nearestEnemy; }
 	EnemySearch GetEachEnemySearch(Enemy* enemy) { return enemySearch[enemy]; }
@@ -328,6 +361,11 @@ public:
 
 	bool GetAttacking() const { return isAttacking; }
 	void SetAttacking(bool _isAttacking) { isAttacking = _isAttacking; }
+
+	bool GetEnableRecoverTransition() const { return enableRecoverTransition; }
+
+	AttackType GetCurrentUseArm() const { return CurrentUseArm; }
+	bool GetHpWorning() const { return GetHealthRate() <= 20; }
 
 	EnemySearch GetEnemySearch() const { return currentEnemySearch; }
 
@@ -354,21 +392,7 @@ public:
 	Arms GetHammer() const { return Hammer; }
 	Arms GetSpear() const { return Spear; }
 	Arms GetSword() const { return Sword; }
-
-	const std::list<AttackType> GetHaveArm() { return HaveArms; }
-	void AddHaveArm(AttackType arm) { HaveArms.push_front(arm); }
-	const std::list<AttackType> GetHaventArm() { return HaventArms; }
-	// list<AttackType>から指定された武器を削除する
-	void ListEraseArm(std::list<AttackType> list, AttackType arm)
-	{
-		for (auto it = list.begin(); it != list.end();) {
-			if (*it == arm) {
-				it = list.erase(it);
-				break;
-			}
-		}
-	}
-
+#pragma endregion
 
 protected:
 	Arms Hammer

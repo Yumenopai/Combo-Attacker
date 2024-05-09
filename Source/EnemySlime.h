@@ -55,6 +55,8 @@ protected:
 	float	searchRange = 5.0f;
 	float	attackRange = 3.0f;
 
+	const char* eyeBallNodeName = "";
+
 public:
 	EnemySlime();
 	~EnemySlime() override;

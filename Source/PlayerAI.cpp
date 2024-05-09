@@ -14,10 +14,20 @@ PlayerAI::PlayerAI()
 	//インスタンスポインタ設定
 	instance = this;
 
+	//初期装備
+	InitialArm = AttackType::Hammer;
+
 	// 初期化
 	Player::Init();
 
 	position = { -7,5,-60 };
+
+	characterName = " BUDDY";
+	nameColor = { 1.0f, 1.0f, 1.0f, 1.0f };
+	//UI
+	hpGuage_Y = 620.0f;
+	hpColorNormal = { 0.2f, 0.6f , 0.2f, 1.0f };
+	hpColorWorning = { 0.6f, 0.2f, 0.2f, 1.0f };
 
 	// ボタンステート初期化
 	oldInput = nowInput = nextInput = InputState::None;
@@ -31,6 +41,10 @@ PlayerAI::~PlayerAI()
 //更新
 void PlayerAI::Update(float elapsedTime)
 {
+	if (targetPlayer == nullptr) {
+		targetPlayer = &Player1P::Instance();
+	}
+
 	// ボタンステート初期化
 	oldInput = nowInput;
 	nowInput = nextInput;
@@ -47,12 +61,6 @@ void PlayerAI::Update(float elapsedTime)
 	UpdateUtils(elapsedTime);
 }
 
-// HP描画
-void PlayerAI::HPBarRender(const RenderContext& rc, Sprite* gauge)
-{
-	Player::HPBarRender(rc, gauge, false);
-}
-
 // 移動ベクトル
 XMFLOAT3 PlayerAI::GetMoveVec() const
 {
@@ -65,8 +73,10 @@ XMFLOAT3 PlayerAI::GetMoveVec() const
 	// プレイヤーへのベクトル
 	XMVECTOR AIto1P = XMVectorSubtract(XMLoadFloat3(&playerPos), XMLoadFloat3(&position));
 
-	// 一定距離から離れている場合
-	if (XMVectorGetX(XMVector3LengthSq(AIto1P)) > range * range)
+	bool readyRecover = targetPlayer->GetHpWorning();
+
+	// 一定距離から離れている場合 or ターゲット回復が必要な時
+	if (XMVectorGetX(XMVector3LengthSq(AIto1P)) > range * range || readyRecover)
 	{
 		// 移動時はプレイヤーの斜め後ろ辺りに付かせる
 		playerPos.x -= sinf(playerAng.y - 45) * 2;
@@ -79,7 +89,7 @@ XMFLOAT3 PlayerAI::GetMoveVec() const
 	}
 
 	// 最近エネミーとの距離が近距離の場合、進行ベクトルを更新
-	if (nearestDist < 10.0f) moveVec = nearestVec;
+	if (!readyRecover && nearestDist < 10.0f) moveVec = nearestVec;
 
 	return moveVec;
 }
@@ -102,4 +112,30 @@ bool PlayerAI::InputButtonUp(InputState button)
 	if (nowInput == button) return false;
 	if (oldInput == button) return true;
 	return false;
+}
+
+// 武器変更処理
+void PlayerAI::InputChangeArm(AttackType arm/* = AttackType::None*/)
+{
+	// 押されていない時はreturn
+	if (!Player1P::Instance().InputButtonDown(Player::InputState::Buddy)) return;
+
+	// 指定されていたらそれを設定する
+	if (arm != AttackType::None) {
+		CurrentUseArm = arm;
+		return;
+	}
+
+	// 次に所持しているものを選択する
+	CurrentUseArm = GetNextArm();
+}
+
+// ターゲット回復処理
+void PlayerAI::InputRecover()
+{
+	//回復遷移可能ならステート移行
+	if (enableRecoverTransition)
+	{
+		ChangeState(State::Recover);
+	}
 }

@@ -18,7 +18,7 @@ void Character::UpdateTransform()
 	XMStoreFloat4x4(&transform, W);
 }
 
-bool Character::ApplyDamage(int damage, float invincibleTime)
+bool Character::ApplyDamage(int damage, float invincibleTime/* = 0*/)
 {
 	if (damage == 0 || invincibleTime < 0) return false; //設定項目が無効
 	if (invincibleTimer > 0) return false; //タイマー進行中ならfalse

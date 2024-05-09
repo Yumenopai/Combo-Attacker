@@ -95,7 +95,7 @@ void FontSprite::Render(ID3D11DeviceContext * dc,
 	float sx, float sy,					 //画像切り抜き位置
 	float sw, float sh,					 //画像切り抜きサイズ
 	float angle,                         //角度
-	float r, float g, float b, float a	 //色
+	DirectX::XMFLOAT4 color				 //色
 )
 {
 
@@ -175,12 +175,12 @@ void FontSprite::Render(ID3D11DeviceContext * dc,
 	float u1{ (sx + sw) / textureWidth };
 	float v1{ (sy + sh) / textureHeight };
 
-	vertices.push_back({ {positions[0].x, positions[0].y, 0, }, {r, g, b, a},{u0, v0} });
-	vertices.push_back({ {positions[1].x, positions[1].y, 0, }, {r, g, b, a},{u1, v0} });
-	vertices.push_back({ {positions[2].x, positions[2].y, 0, }, {r, g, b, a},{u0, v1} });
-	vertices.push_back({ {positions[2].x, positions[2].y, 0, }, {r, g, b, a},{u0, v1} });
-	vertices.push_back({ {positions[1].x, positions[1].y, 0, }, {r, g, b, a},{u1, v0} });
-	vertices.push_back({ {positions[3].x, positions[3].y, 0, }, {r, g, b, a},{u1, v1} });
+	vertices.push_back({ {positions[0].x, positions[0].y, 0, }, color,{u0, v0} });
+	vertices.push_back({ {positions[1].x, positions[1].y, 0, }, color,{u1, v0} });
+	vertices.push_back({ {positions[2].x, positions[2].y, 0, }, color,{u0, v1} });
+	vertices.push_back({ {positions[2].x, positions[2].y, 0, }, color,{u0, v1} });
+	vertices.push_back({ {positions[1].x, positions[1].y, 0, }, color,{u1, v0} });
+	vertices.push_back({ {positions[3].x, positions[3].y, 0, }, color,{u1, v1} });
 }
 
 void FontSprite::begin(ID3D11DeviceContext* dc)
@@ -191,8 +191,6 @@ void FontSprite::begin(ID3D11DeviceContext* dc)
 	dc->PSSetShader(pixelShader.Get(), nullptr, 0);
 
 	dc->PSSetShaderResources(0, 1, shaderResourceView.GetAddressOf());
-
-
 }
 
 void FontSprite::End(ID3D11DeviceContext* dc)
@@ -228,7 +226,7 @@ void FontSprite::End(ID3D11DeviceContext* dc)
 	}
 }
 
-void FontSprite::Textout(const RenderContext& rc, std::string str,
+void FontSprite::Textout(ID3D11DeviceContext* dc, std::string str,
 	float dx, float dy,					 //左上位置
 	float dz,							 //奥行
 	DirectX::XMFLOAT3 offset,
@@ -236,37 +234,18 @@ void FontSprite::Textout(const RenderContext& rc, std::string str,
 	float sx, float sy,					 //画像切り抜き位置
 	float sw, float sh,					 //画像切り抜きサイズ
 	float angle,						 //角度
-	float r, float g, float b, float a)	 //色
+	DirectX::XMFLOAT4 color)			 //色
 {
-	ID3D11DeviceContext* dc = rc.deviceContext;
-	
-	//レンダーステート設定
-	FLOAT blendFactor[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
-	dc->OMSetBlendState(rc.renderState->GetBlendState(BlendState::Transparency), blendFactor, 0xFFFFFFFF);
-	dc->OMSetDepthStencilState(rc.renderState->GetDepthStencilState(DepthState::NoTestNoWrite), 0);
-	dc->RSSetState(rc.renderState->GetRasterizerState(RasterizerState::SolidCullNone));
-
-	//サンプラーステート設定
-	ID3D11SamplerState* samplers[] =
-	{
-		rc.renderState->GetSamplerState(SamplerState::LinearWrap)
-	};
-	dc->PSSetSamplers(0, _countof(samplers), samplers);
-
 	//文字列描画
+	int i = 2;
+	begin(dc);
+
+	for (char c : str)
 	{
-		int i = 2;
-		const char* string = str.c_str();
-
-		begin(dc);
-
-		for (char c : str)
-		{
-			int x = c % 16;
-			int y = c / 16;
-			Render(dc, dx + i * dw, dy, dz, offset, dw, dh, x * sx, y * sy, textureWidth / sw, textureHeight / sh, angle, r, g, b, a);
-			++i;
-		}
-		End(dc);
+		int x = c % 16;
+		int y = c / 16;
+		Render(dc, dx + i * dw, dy, dz, offset, dw, dh, x * sx, y * sy, textureWidth / sw, textureHeight / sh, angle, color);
+		++i;
 	}
+	End(dc);
 }

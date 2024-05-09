@@ -63,13 +63,12 @@ void SceneGame::Initialize()
 	//スカイボックス
 	skyBox = std::make_unique<SkyBox>("Data/Texture/incskies_002_8k.png");
 
-	//sprites[1] = std::make_unique<Sprite>(device);
-	sprites[0] = std::make_unique<Sprite>(device, "Data/Sprite/button.png");
-	sprites[1] = std::make_unique<Sprite>(device, "Data/Sprite/item.png");
-	sprites[2] = std::make_unique<Sprite>(device, "Data/Sprite/item2.png");
-	sprites[3] = std::make_unique<Sprite>(device, "Data/Sprite/weapon.png");
+	// load sprite
+	spriteFrame = std::make_unique<Sprite>(device, "Data/Sprite/frame.png");
+	spriteArm = std::make_unique<Sprite>(device, "Data/Sprite/arm.png");
+	spriteName = std::make_unique<Sprite>(device, "Data/Sprite/Name.png");
+	
 	font = std::make_unique<FontSprite>(device, "Data/Font/font6.png", 256);
-	//ゲージスプライト
 	gauge = std::make_unique<Sprite>(device);
 
 	//エネミー初期化
@@ -80,6 +79,8 @@ void SceneGame::Initialize()
 
 	enemyTurtleShell[0]->SetPosition(DirectX::XMFLOAT3(-26, 5, 6));
 	enemyTurtleShell[1]->SetPosition(DirectX::XMFLOAT3(28, 5, 0));
+	enemyTurtleShell[2]->SetPosition(DirectX::XMFLOAT3(-7, 5, -36));
+	enemyTurtleShell[3]->SetPosition(DirectX::XMFLOAT3(-12, 5, -40));
 
 	enemyBlue->SetPosition(DirectX::XMFLOAT3(-28, 5, -12));
 
@@ -219,16 +220,14 @@ void SceneGame::Render()
 	{
 		// エネミーHP
 		RenderEnemyGauge(dc, rc.view, rc.projection);
-
-		PlayerManager::Instance().Render2d(rc, gauge.get());
-		RenderCharacterName(rc, rc.view, rc.projection);
+		// プレイヤー2DRender
+		PlayerManager::Instance().Render2d(rc, gauge.get(), font.get(), spriteFrame.get(), spriteArm.get());
 	}
 	//2DSprite
 	{
-		float screenWidth = static_cast<float>(graphics.GetScreenWidth());
-		float screenHeight = static_cast<float>(graphics.GetScreenHeight());
-		float textureWidth = static_cast<float>(sprites[0]->GetTextureWidth());
-		float textureHeight = static_cast<float>(sprites[0]->GetTextureHeight());
+		const float screenWidth = static_cast<float>(graphics.GetScreenWidth());
+		const float screenHeight = static_cast<float>(graphics.GetScreenHeight());
+		const DirectX::XMFLOAT2 spriteSize = { 300.0f,300.f };
 
 		FLOAT blendFactor[4] = { 1.0f,1.0f,1.0f,1.0f };
 		UINT sampleMask = 0xFFFFFFFF;
@@ -237,26 +236,91 @@ void SceneGame::Render()
 		dc->OMSetBlendState(renderState->GetBlendState(BlendState::Transparency), blendFactor, sampleMask);
 
 		//Item枠
-		for (int i = 0; i < 6; i++)
-		{
-			sprites[2]->Render(dc, 300.0f + 115 * i, 610.0f, 0.0f, 100, 100, 0, 0, textureWidth, textureWidth, 0, { 1, 1, 1, 1 });
-		}
+		//for (int i = 0; i < 6; i++)
+		//{
+		//	sprites[2]->Render(dc, 300.0f + 115 * i, 610.0f, 0.0f, 100, 100, 0, 0, textureWidth, textureWidth, 0, { 1, 1, 1, 1 });
+		//}
+
 		//AttackButton
-		sprites[0]->Render(dc, 1150.0f, 250.0f, 0.0f, 80, 80, 0, 0, textureWidth, textureWidth, 0, { 1, 1, 1, 1 });
-		sprites[0]->Render(dc, 1100.0f, 300.0f, 0.0f, 80, 80, 0, 0, textureWidth, textureWidth, 0, { 1, 1, 1, 1 });
-		sprites[0]->Render(dc, 1200.0f, 300.0f, 0.0f, 80, 80, 0, 0, textureWidth, textureWidth, 0, { 1, 1, 1, 1 });
-		sprites[1]->Render(dc, 1150.0f, 350.0f, 0.0f, 80, 80, 0, 0, textureWidth, textureWidth, 0, { 1, 1, 1, 1 });
-		sprites[3]->Render(dc, 1150.0f+15.0f, 250.0f+10.0f, 0.0f, 50, 50, 900, 0, textureWidth, textureWidth, 0, { 1, 1, 1, 1 });
-		sprites[3]->Render(dc, 1100.0f+15.0f, 300.0f+10.0f, 0.0f, 50, 50, 300, 0, textureWidth, textureWidth, 0, { 1, 1, 1, 1 });
-		sprites[3]->Render(dc, 1200.0f+15.0f, 300.0f+10.0f, 0.0f, 50, 50, 600, 0, textureWidth, textureWidth, 0, { 1, 1, 1, 1 });
-		sprites[3]->Render(dc, 1150.0f + 15.0f, 350.0f + 10.0f, 0.0f, 50, 50, 0, 0, textureWidth, textureWidth, 0, { 1, 1, 1, 1 });
+		spriteFrame->Render(dc, { 1150.0f, 250.0f, 0.0f }, { 80, 80 }, { 0, 0 }, spriteSize, 0, { 1, 1, 1, 1 });
+		spriteFrame->Render(dc, { 1100.0f, 300.0f, 0.0f }, { 80, 80 }, { 0, 0 }, spriteSize, 0, { 1, 1, 1, 1 });
+		spriteFrame->Render(dc, { 1200.0f, 300.0f, 0.0f }, { 80, 80 }, { 0, 0 }, spriteSize, 0, { 1, 1, 1, 1 });
+		spriteFrame->Render(dc, { 1150.0f, 350.0f, 0.0f }, { 80, 80 }, { spriteSize.x, 0 }, spriteSize, 0, { 1, 1, 1, 1 });
+
+		float spSize_x = 0;
+		//X：左 Player
+		auto next1P = Player1P::Instance().GetNextArm();
+		if (next1P == Player1P::Instance().GetCurrentUseArm())
+		{
+			spSize_x = spriteSize.x * 4;
+		}
+		else
+		{
+			switch (next1P)
+			{
+			case Player::AttackType::Sword:
+				spSize_x = spriteSize.x;
+				break;
+			case Player::AttackType::Spear:
+				spSize_x = spriteSize.x * 3;
+				break;
+			case Player::AttackType::Hammer:
+				spSize_x = spriteSize.x * 2;
+				break;
+			}
+
+		}
+		spriteArm->Render(dc, { 1100.0f + 15.0f, 300.0f + 10.0f, 0.0f }, { 50, 50 }, { spSize_x, spriteSize.y }, spriteSize, 0, { 1, 1, 1, 1 });
+		//Y：上 Buddy
+		if (Player1P::Instance().GetEnableRecoverTransition())
+		{
+			spSize_x = 0;
+		}
+		else
+		{
+			auto nextAI = PlayerAI::Instance().GetNextArm();
+			if (nextAI == PlayerAI::Instance().GetCurrentUseArm())
+			{
+				spSize_x = spriteSize.x * 4;
+			}
+			else
+			{
+				switch (nextAI)
+				{
+				case Player::AttackType::Sword:
+					spSize_x = spriteSize.x;
+					break;
+				case Player::AttackType::Spear:
+					spSize_x = spriteSize.x * 3;
+					break;
+				case Player::AttackType::Hammer:
+					spSize_x = spriteSize.x * 2;
+					break;
+				}
+			}
+		}
+		spriteArm->Render(dc, { 1150.0f + 15.0f, 250.0f + 10.0f, 0.0f }, { 50, 50 }, { spSize_x, spriteSize.y }, spriteSize, 0, { 1, 1, 1, 1 });
+		//B：右 Attack
+		switch (Player1P::Instance().GetCurrentUseArm())
+		{
+		case Player::AttackType::Sword:
+			spSize_x = spriteSize.x;
+			break;
+		case Player::AttackType::Spear:
+			spSize_x = spriteSize.x * 3;
+			break;
+		case Player::AttackType::Hammer:
+			spSize_x = spriteSize.x * 2;
+			break;
+		}
+		spriteArm->Render(dc, { 1200.0f + 15.0f, 300.0f + 10.0f, 0.0f }, { 50, 50 }, { spSize_x, 0 }, spriteSize, 0, { 1, 1, 1, 1 });
+		//A：下 Jump
+		spriteArm->Render(dc, { 1150.0f + 15.0f, 350.0f + 10.0f, 0.0f }, { 50, 50 }, { 0, 0 }, spriteSize, 0, { 1, 1, 1, 1 });
+
+		// 名前
+		spriteName->Render(dc, { 1100.0f + 15.0f, 300.0f + 10.0f, 0.0f }, { 50, 25 }, { 0, 0 }, { spriteSize.x,spriteSize.y / 2 }, 0, { 1, 1, 1, 1 });
+		spriteName->Render(dc, { 1150.0f + 15.0f, 250.0f + 10.0f, 0.0f }, { 50, 25 }, { 0, 150 }, { spriteSize.x,spriteSize.y / 2 }, 0, { 1, 1, 1, 1 });
 	}
-
-	const float guageY1P = 555.0f;
-	const float guageYAI = 580.0f;
-
-	font->Textout(rc, "PLAYER", 200, 548.0f, 1.0f, { -10, 10, 0 }, 12, 16, 32, 32, 16, 16, 0, 0.1f, 0.65f, 0.9f, 1);
-	font->Textout(rc, "   COM", 200, 573.0f, 1.0f, { -10, 10, 0 }, 12, 16, 32, 32, 16, 16, 0, 1, 1, 1, 1);
 	
 	//gizmos
 	Gizmos* gizmos = Graphics::Instance().GetGizmos();
@@ -318,9 +382,9 @@ void SceneGame::RenderEnemyGauge(ID3D11DeviceContext* dc, const DirectX::XMFLOAT
 	dc->RSGetViewports(&numViewports, &viewport);
 
 	//変換行列
-	XMMATRIX View = XMLoadFloat4x4(&view);
-	XMMATRIX Projection = XMLoadFloat4x4(&projection);
-	XMMATRIX World = XMMatrixIdentity();
+	DirectX::XMMATRIX View = XMLoadFloat4x4(&view);
+	DirectX::XMMATRIX Projection = XMLoadFloat4x4(&projection);
+	DirectX::XMMATRIX World = XMMatrixIdentity();
 
 	//全ての敵の頭上にHPゲージを表示
 	EnemyManager& enemyManager = EnemyManager::Instance();
@@ -337,12 +401,12 @@ void SceneGame::RenderEnemyGauge(ID3D11DeviceContext* dc, const DirectX::XMFLOAT
 		}
 
 		//エネミー頭上のワールド座標
-		XMFLOAT3 worldPosition = enemy->GetPosition();
+		DirectX::XMFLOAT3 worldPosition = enemy->GetPosition();
 		worldPosition.y += enemy->GetHeight();
-		XMVECTOR WorldPosition = XMLoadFloat3(&worldPosition);
+		DirectX::XMVECTOR WorldPosition = XMLoadFloat3(&worldPosition);
 
 		//ワールドからスクリーンへの変換
-		XMVECTOR ScreenPosition = XMVector3Project(
+		DirectX::XMVECTOR ScreenPosition = XMVector3Project(
 			WorldPosition,
 			viewport.TopLeftX,
 			viewport.TopLeftY,
@@ -355,8 +419,8 @@ void SceneGame::RenderEnemyGauge(ID3D11DeviceContext* dc, const DirectX::XMFLOAT
 			World
 		);
 
-		XMFLOAT3 screenPosition;
-		XMStoreFloat3(&screenPosition, ScreenPosition);
+		DirectX::XMFLOAT3 screenPosition;
+		DirectX::XMStoreFloat3(&screenPosition, ScreenPosition);
 
 		//カメラの背後にいるか、明らかに離れているなら描画しない
 		if (screenPosition.z < 0.0f || screenPosition.z > 1.0f) continue;
@@ -393,108 +457,6 @@ void SceneGame::RenderEnemyGauge(ID3D11DeviceContext* dc, const DirectX::XMFLOAT
 			0.0f,
 			{ 1.0f, 0.0f, 0.0f, 1.0f }
 		);
-	}
-}
-
-// キャラクター名前描画
-void SceneGame::RenderCharacterName(const RenderContext& rc, const DirectX::XMFLOAT4X4& view, const DirectX::XMFLOAT4X4& projection)
-{
-	ID3D11DeviceContext* dc = rc.deviceContext;
-
-	//ビューポート
-	D3D11_VIEWPORT viewport;
-	UINT numViewports = 1;
-	dc->RSGetViewports(&numViewports, &viewport);
-
-	//変換行列
-	XMMATRIX View = XMLoadFloat4x4(&view);
-	XMMATRIX Projection = XMLoadFloat4x4(&projection);
-	XMMATRIX World = XMMatrixIdentity();
-
-	{
-		Player1P& player = Player1P::Instance();
-
-		//Player頭上のワールド座標
-		XMFLOAT3 worldPosition = player.GetPosition();
-		worldPosition.y += player.GetHeight() + 0.4f;
-		XMVECTOR WorldPosition = XMLoadFloat3(&worldPosition);
-
-		//ワールドからスクリーンへの変換
-		XMVECTOR ScreenPosition = XMVector3Project(
-			WorldPosition,
-			viewport.TopLeftX,
-			viewport.TopLeftY,
-			viewport.Width,
-			viewport.Height,
-			viewport.MinDepth,
-			viewport.MaxDepth,
-			Projection,
-			View,
-			World
-		);
-
-		XMFLOAT3 screenPosition;
-		XMStoreFloat3(&screenPosition, ScreenPosition);
-		//HPゲージの長さ
-		const float guageWidth = 60.0f;
-		const float guageHeight = 8.0f;
-		float screenWidth = Graphics::Instance().GetScreenWidth();
-		float screenHeight = Graphics::Instance().GetScreenHeight();
-
-
-		//カメラの背後にいるか、明らかに離れているなら描画しない
-		if (screenPosition.z > 0.0f && screenPosition.z < 1.0f)
-		{
-			font->Textout(rc, "PLAYER",
-				0,
-				screenPosition.y,
-				0,
-				{ screenPosition.x - 12 * 5, 0, 0 },
-				12, 16,
-				32, 32, 16, 16, 0, 0.1f, 0.65f, 0.9f, 1);
-		}
-	}
-	{
-		PlayerAI& player = PlayerAI::Instance();
-
-		//Player頭上のワールド座標
-		XMFLOAT3 worldPosition = player.GetPosition();
-		worldPosition.y += player.GetHeight() + 0.4f;
-		XMVECTOR WorldPosition = XMLoadFloat3(&worldPosition);
-
-		//ワールドからスクリーンへの変換
-		XMVECTOR ScreenPosition = XMVector3Project(
-			WorldPosition,
-			viewport.TopLeftX,
-			viewport.TopLeftY,
-			viewport.Width,
-			viewport.Height,
-			viewport.MinDepth,
-			viewport.MaxDepth,
-			Projection,
-			View,
-			World
-		);
-
-		XMFLOAT3 screenPosition;
-		XMStoreFloat3(&screenPosition, ScreenPosition);
-		//HPゲージの長さ
-		const float guageWidth = 60.0f;
-		const float guageHeight = 8.0f;
-		float screenWidth = Graphics::Instance().GetScreenWidth();
-		float screenHeight = Graphics::Instance().GetScreenHeight();
-
-		//カメラの背後にいるか、明らかに離れているなら描画しない
-		if (screenPosition.z > 0.0f && screenPosition.z < 1.0f)
-		{
-			font->Textout(rc, "COM",
-				0,
-				screenPosition.y,
-				0,
-				{ screenPosition.x - 12 * 3, 0, 0 },
-				12, 16,
-				32, 32, 16, 16, 0, 1, 1, 1, 1);
-		}
 	}
 }
 

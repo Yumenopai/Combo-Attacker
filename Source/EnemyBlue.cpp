@@ -14,6 +14,7 @@ EnemyBlue::EnemyBlue()
 	radius = 1.8f;
 	health = maxHealth = 100;
 	isHalfHP = false;
+	damage = 2;
 
 	//待機ステートへ遷移
 	TransitionState(State::Idle);
@@ -180,7 +181,6 @@ void EnemyBlue::OnDead()
 Player::EnemySearch EnemyBlue::GetNearestPlayerES()
 {
 	Player::EnemySearch es = Player::EnemySearch::None;
-	//es = Player1P::Instance().GetEachEnemySearch(this);
 
 	for (Player* player : PlayerManager::Instance().players)
 	{
@@ -409,7 +409,7 @@ void EnemyBlue::CollisionNodeVsPlayer(const char* nodeName, float nodeRadius)
 		))
 		{
 			//ダメージを与える
-			if (player->ApplyDamage(2, 0))
+			if (player->ApplyDamage(damage))
 			{
 				//敵を吹っ飛ばすベクトルを算出
 				XMFLOAT3 vec;

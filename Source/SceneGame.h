@@ -36,12 +36,6 @@ private:
 		const DirectX::XMFLOAT4X4& view,
 		const DirectX::XMFLOAT4X4& projection
 	);
-	//キャラクター名前描画
-	void RenderCharacterName(
-		const RenderContext& rc,
-		const DirectX::XMFLOAT4X4& view,
-		const DirectX::XMFLOAT4X4& projection
-	);
 
 	//シーンGUI描画
 	void DrawSceneGUI();
@@ -50,10 +44,21 @@ private:
 
 
 private:
-	static const int enemySlimeCount = 4;
-	static const int enemyTurtleShellCount = 2;
+	enum class SpriteName
+	{
+		frame,
+		arm,
 
-	std::unique_ptr<Sprite> sprites[8];
+		MaxCount,
+	};
+
+private:
+	static const int enemySlimeCount = 4;
+	static const int enemyTurtleShellCount = 4;
+
+	std::unique_ptr<Sprite> spriteFrame;
+	std::unique_ptr<Sprite> spriteArm;
+	std::unique_ptr<Sprite> spriteName;
 	std::unique_ptr<SkyBox> skyBox;
 
 	std::unique_ptr<Stage> stage;

@@ -65,6 +65,9 @@ private:
 	// 各ステージごとの更新処理
 	void UpdateEachState(float elapsedTime);
 
+	//追跡ステート更新処理
+	void UpdatePursuitState(float elapsedTime);
+
 	//遷移時のアニメーション再生
 	void TransitionPlayAnimation(State nowState);
 };

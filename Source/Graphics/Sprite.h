@@ -20,6 +20,16 @@ public:
 	};
 
 	//描画実行
+	void Sprite::Render(ID3D11DeviceContext* dc,
+		DirectX::XMFLOAT3 scPos,	//座標、奥行
+		DirectX::XMFLOAT2 scSize,	//幅 高さ
+		DirectX::XMFLOAT2 spPos,	//画像切り抜き位置
+		DirectX::XMFLOAT2 spSize,	//画像切り抜きサイズ
+		float angle,				//角度
+		DirectX::XMFLOAT4 color		//色
+	) const;
+
+	//描画実行
 	void Render(ID3D11DeviceContext* dc,
 		float dx, float dy,					//左上位置
 		float dz,							//奥行

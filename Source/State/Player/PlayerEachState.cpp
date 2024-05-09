@@ -30,9 +30,7 @@ void StateIdle::Update(float elapsedTime)
 	// 武器変更
 	player->InputChangeArm();
 	// 能力処理
-	if (player->InputButtonDown(Player::InputState::Other)) {
-		player->ChangeState(Player::State::AttackSpear1);
-	}
+
 }
 
 /************************************
@@ -70,19 +68,13 @@ void StateRun::Update(float elapsedTime)
 	if (player->InputButtonDown(Player::InputState::Jump)) {
 		player->ChangeState(Player::State::JumpStart);
 	}
-	// 回復遷移確認処理
-	if (player->IsRecoverTransition()) {
-		player->ChangeState(Player::State::Recover);
-	}
 
 	// 攻撃処理
 	player->InputAttackFromNoneAttack();
 	// 武器変更
 	player->InputChangeArm();
 	// 能力処理
-	if (player->InputButtonDown(Player::InputState::Other)) {
-		player->ChangeState(Player::State::AttackSpear1);
-	}
+	player->InputRecover();
 }
 
 /************************************
@@ -235,38 +227,17 @@ void StateDead::Update(float elapsedTime)
 void StateRecover::Init()
 {
 	player->PlayAnimation(Player::Animation::JumpEnd, false);
-
-	Player* targetplayer = player;
-	PlayerManager& playerManager = PlayerManager::Instance();
-	int playerCount = playerManager.GetPlayerCount();
-	for (int i = 0; i < playerCount; i++)
-	{
-		if (playerManager.GetPlayer(i) == player) continue;
-		targetplayer = playerManager.GetPlayer(i);
-	}
-
-	player->PlayEffect(Player::EffectNumber::Recovery, targetplayer->GetPosition(), 0.6f);
+	player->PlayEffect(Player::EffectNumber::Recovery, player->GetTargetPlayer()->GetPosition(), 0.6f);
 }
 
 void StateRecover::Update(float elapsedTime)
 {
-	// アニメーション終了後
-	if (!player->GetModel()->IsPlayAnimation())
-	{
-		//回復処理
-		Player* targetplayer = player;
-		PlayerManager& playerManager = PlayerManager::Instance();
-		int playerCount = playerManager.GetPlayerCount();
-		for (int i = 0; i < playerCount; i++)
-		{
-			if (playerManager.GetPlayer(i) == player) continue;
-			targetplayer = playerManager.GetPlayer(i);
-		}
-		targetplayer->AddHealth(30);
+	if (player->GetModel()->IsPlayAnimation()) return;
 
-		//移行
-		player->ChangeState(Player::State::Idle);
-	}
+	// 回復
+	player->GetTargetPlayer()->AddHealth(30);
+	// 移行
+	player->ChangeState(Player::State::Idle);
 }
 
 /************************************

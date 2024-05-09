@@ -137,7 +137,7 @@ private:
 	std::unique_ptr<Model> model;
 	State	state = State::Wander;
 
-	float effectOffset_Y = 0.3f;
+	float effectOffset_Y = 0.8f;
 
 	bool isHalfHP = false;
 	bool isDead = false;
