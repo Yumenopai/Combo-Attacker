@@ -14,14 +14,77 @@ EnemyBlue::EnemyBlue()
 	radius = 1.8f;
 	health = maxHealth = 100;
 	isHalfHP = false;
+	damage = 2;
 
 	//待機ステートへ遷移
-	TransitionIdleState();
+	TransitionState(State::Idle);
 }
 
 //デストラクタ
 EnemyBlue::~EnemyBlue()
 {
+}
+
+//ステート遷移
+void EnemyBlue::TransitionState(State nowState)
+{
+	state = nowState; //ステート設定
+
+	switch (nowState)
+	{
+	case State::Wander:
+		//目標地点設定
+		SetRandomTargetPosition();
+	}
+
+	TransitionPlayAnimation(nowState);
+}
+
+//遷移時アニメーション再生
+void EnemyBlue::TransitionPlayAnimation(State nowState)
+{
+	//アニメーション設定
+	Animation anime = Animation::Idle1;
+	bool animeLoop = true;
+
+	switch (nowState)
+	{
+	case State::Idle:
+		anime = Animation::Idle1;
+		break;
+	case State::Wander:
+		anime = Animation::Walk;
+		break;
+	case State::Pursuit:
+		anime = Animation::Run;
+		break;
+	case State::Attack:
+		anime = Animation::Attack01;
+		animeLoop = false;
+		break;
+	case State::IdleBattle:
+		anime = Animation::Idle02;
+		break;
+	case State::Scream:
+		anime = Animation::Scream;
+		animeLoop = false;
+		break;
+	case State::AttackClaw:
+		anime = Animation::AttackClaw;
+		animeLoop = false;
+		break;
+	case State::GetHit:
+		anime = Animation::GetDamage;
+		animeLoop = false;
+		break;
+	case State::Die:
+		anime = Animation::Die;
+		animeLoop = false;
+		break;
+	}
+
+	//アニメーション再生
+	model->PlayAnimation(static_cast<int>(anime), animeLoop);
 }
 
 //更新処理
@@ -55,6 +118,9 @@ void EnemyBlue::Update(float elapsedTime)
 		break;
 	case State::AttackClaw:
 		UpdateAttackClawState(elapsedTime);
+		break;
+	case State::Die:
+		UpdateDieState(elapsedTime);
 		break;
 	}
 
@@ -97,7 +163,7 @@ void EnemyBlue::OnDamaged()
 	if (health <= 50 && !isHalfHP)
 	{
 		//ダメージステートへ遷移
-		TransitionGetHitState();
+		TransitionState(State::GetHit);
 		isHalfHP = true;
 	}
 }
@@ -107,7 +173,7 @@ void EnemyBlue::OnDead()
 	if (!isDead)
 	{
 		//死亡ステートへ遷移
-		TransitionDieState();
+		TransitionState(State::Die);
 		isDead = true;
 	}
 }
@@ -115,7 +181,6 @@ void EnemyBlue::OnDead()
 Player::EnemySearch EnemyBlue::GetNearestPlayerES()
 {
 	Player::EnemySearch es = Player::EnemySearch::None;
-	//es = Player1P::Instance().GetEachEnemySearch(this);
 
 	for (Player* player : PlayerManager::Instance().players)
 	{
@@ -180,18 +245,6 @@ bool EnemyBlue::SearchPlayer()
 	return false;
 }
 
-//徘徊ステートへ遷移
-void EnemyBlue::TransitionWanderState()
-{
-	state = State::Wander;
-
-	//目標地点設定
-	SetRandomTargetPosition();
-
-	//歩きアニメーション再生
-	model->PlayAnimation(Anim_Walk, true);
-}
-
 //徘徊ステート更新処理
 void EnemyBlue::UpdateWanderState(float elapsedTime)
 {
@@ -202,17 +255,8 @@ void EnemyBlue::UpdateWanderState(float elapsedTime)
 	if (SearchPlayer())
 	{
 		//見つかったら追跡ステートへ遷移
-		TransitionPursuitState();
+		TransitionState(State::Pursuit);
 	}
-}
-
-//待機ステートへ遷移
-void EnemyBlue::TransitionIdleState()
-{
-	state = State::Idle;
-
-	//待機アニメーション再生
-	model->PlayAnimation(Anim_Idle1, true);
 }
 
 //待機ステート更新処理
@@ -222,17 +266,8 @@ void EnemyBlue::UpdateIdleState(float elapsedTime)
 	if (SearchPlayer())
 	{
 		//見つかったら追跡ステートへ遷移
-		TransitionPursuitState();
+		TransitionState(State::Pursuit);
 	}
-}
-
-//追跡ステートへ遷移
-void EnemyBlue::TransitionPursuitState()
-{
-	state = State::Pursuit;
-
-	//歩きアニメーション再生
-	model->PlayAnimation(Anim_Run, true);
 }
 
 //追跡ステート更新処理
@@ -247,21 +282,12 @@ void EnemyBlue::UpdatePursuitState(float elapsedTime)
 	if (es >= Player::EnemySearch::Attack)
 	{
 		//攻撃ステートへ遷移
-		isHalfHP ? TransitionAttackClawState() : TransitionAttackState();
+		isHalfHP ? TransitionState(State::AttackClaw): TransitionState(State::Attack);
 	}
 	else if (!SearchPlayer())
 	{
-		TransitionIdleState();
+		TransitionState(State::Idle);
 	}
-}
-
-//攻撃ステートへ遷移
-void EnemyBlue::TransitionAttackState()
-{
-	state = State::Attack;
-
-	//攻撃アニメーション再生
-	model->PlayAnimation(Anim_Attack01, false);
 }
 
 //攻撃ステート更新処理
@@ -279,17 +305,8 @@ void EnemyBlue::UpdateAttackState(float elapsedTime)
 	//攻撃アニメーションが終わったら戦闘待機ステートへ遷移
 	if (!model->IsPlayAnimation())
 	{
-		TransitionIdleBattleState();
+		TransitionState(State::IdleBattle);
 	}
-}
-
-//戦闘待機ステートへ遷移
-void EnemyBlue::TransitionIdleBattleState()
-{
-	state = State::IdleBattle;
-
-	//戦闘待機アニメーション再生
-	model->PlayAnimation(Anim_Idle02, true);
 }
 
 //戦闘待機ステート更新処理
@@ -301,24 +318,15 @@ void EnemyBlue::UpdateIdleBattleState(float elapsedTime)
 	if (es >= Player::EnemySearch::Attack)
 	{
 		//攻撃ステートへ遷移
-		isHalfHP ? TransitionAttackClawState() : TransitionAttackState();
+		isHalfHP ? TransitionState(State::AttackClaw) : TransitionState(State::Attack);
 	}
 	else
 	{
 		//待機ステートへ遷移
-		TransitionIdleState();
+		TransitionState(State::Idle);
 	}
 
 	MoveToTarget(elapsedTime, 0.0f);
-}
-
-//咆哮ステートへ遷移
-void EnemyBlue::TransitionScreamState()
-{
-	state = State::Scream;
-
-	//咆哮アニメーション再生
-	model->PlayAnimation(Anim_Scream, false);
 }
 
 //咆哮ステート更新処理
@@ -329,17 +337,8 @@ void EnemyBlue::UpdateScreamState(float elapsedTime)
 	//アニメーション終了後
 	{
 		//攻撃ステートへ遷移
-		TransitionIdleBattleState();
+		TransitionState(State::IdleBattle);
 	}
-}
-
-//翼攻撃ステートへ遷移
-void EnemyBlue::TransitionAttackClawState()
-{
-	state = State::AttackClaw;
-
-	//翼攻撃アニメーション再生
-	model->PlayAnimation(Anim_AttackClaw, false);
 }
 
 //翼攻撃ステート更新処理
@@ -357,17 +356,8 @@ void EnemyBlue::UpdateAttackClawState(float elapsedTime)
 	//攻撃アニメーションが終わったら戦闘待機ステートへ遷移
 	if (!model->IsPlayAnimation())
 	{
-		TransitionIdleBattleState();
+		TransitionState(State::IdleBattle);
 	}
-}
-
-//戦闘待機ステートへ遷移
-void EnemyBlue::TransitionGetHitState()
-{
-	state = State::GetHit;
-
-	//戦闘待機アニメーション再生
-	model->PlayAnimation(Anim_GetDamage, false);
 }
 
 //戦闘待機ステート更新処理
@@ -378,26 +368,21 @@ void EnemyBlue::UpdateGetHitState(float elapsedTime)
 	//アニメーション終了後
 	{
 		//咆哮ステートへ遷移
-		TransitionScreamState();
+		TransitionState(State::Scream);
 	}
 }
-//死亡ステートへ遷移
-void EnemyBlue::TransitionDieState()
-{
-	state = State::Die;
 
-	//戦闘待機アニメーション再生
-	model->PlayAnimation(Anim_Die, false);
-}
 //死亡ステート更新処理
 void EnemyBlue::UpdateDieState(float elapsedTime)
 {
+	//アニメーション再生中は何もしない
 	if (model->IsPlayAnimation()) return;
 	
-	//アニメーション終了後
-	{
-		Destroy();
-	}
+	//アニメーション終了に合わせエフェクト再生
+	PlayEffect(EffectNumber::dead, position);
+
+	//破棄
+	Destroy();
 }
 
 //ノードとプレイヤーの衝突処理
@@ -424,7 +409,7 @@ void EnemyBlue::CollisionNodeVsPlayer(const char* nodeName, float nodeRadius)
 		))
 		{
 			//ダメージを与える
-			if (player->ApplyDamage(2, 0))
+			if (player->ApplyDamage(damage))
 			{
 				//敵を吹っ飛ばすベクトルを算出
 				XMFLOAT3 vec;

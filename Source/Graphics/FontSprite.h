@@ -33,12 +33,12 @@ public:
 		float sx, float sy,					 //画像切り抜き位置
 		float sw, float sh,					 //画像切り抜きサイズ
 		float angle,						 //角度
-		float r, float g, float b, float a	 //色
+		DirectX::XMFLOAT4 color				 //色
 	);
 
 	void begin(ID3D11DeviceContext* dc);
 
-	void Textout(const RenderContext& rc, std::string str,
+	void Textout(ID3D11DeviceContext* dc, std::string str,
 		float dx, float dy,					 //左上位置
 		float dz,							 //奥行
 		DirectX::XMFLOAT3 offset,
@@ -46,7 +46,7 @@ public:
 		float sx, float sy,					 //画像切り抜き位置
 		float sw, float sh,					 //画像切り抜きサイズ
 		float angle,						 //角度
-		float r, float g, float b, float a);	 //色
+		DirectX::XMFLOAT4 color);			 //色
 	void End(ID3D11DeviceContext* dc);
 
 	//スプライトの幅を取得

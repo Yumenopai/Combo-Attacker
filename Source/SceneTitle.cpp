@@ -11,8 +11,8 @@ void SceneTitle::Initialize()
 {
 	ID3D11Device* device = Graphics::Instance().GetDevice();
 	sprite = std::make_unique<Sprite>(device, "Data/Sprite/Logo.png");
-	model[0] = std::make_unique<Model>(device, "Data/Model/SD-UnityChan/UnityChan.fbx", 0.2f);
-	model[0]->PlayAnimation(static_cast<int>(Player::Animation::Idle), true);
+	model = std::make_unique<Model>(device, "Data/Model/SD-UnityChan/UnityChan.fbx", 0.2f);
+	model->PlayAnimation(static_cast<int>(Player::Animation::Idle), true);
 
 	stage = std::make_unique<Stage>();
 
@@ -65,10 +65,10 @@ void SceneTitle::Update(float elapsedTime)
 		XMStoreFloat4x4(&worldTramsform, S * R * T);
 
 		//モデルアニメーション更新処理
-		model[0]->UpdateAnimation(elapsedTime);
+		model->UpdateAnimation(elapsedTime);
 
 		//モデル行列更新
-		model[0]->UpdateTransform(worldTramsform);
+		model->UpdateTransform(worldTramsform);
 	}
 	stage->Update(elapsedTime);
 
@@ -102,7 +102,7 @@ void SceneTitle::Render()
 	shadowMap->Begin(rc, camera.GetFocus());
 	//シャドウマップにモデル描画
 	stage->ShadowRender(rc, shadowMap);
-	shadowMap->Draw(rc, model[0].get());
+	shadowMap->Draw(rc, model.get());
 	shadowMap->End(rc);
 
 	RenderState* renderState = Graphics::Instance().GetRenderState();
@@ -132,7 +132,7 @@ void SceneTitle::Render()
 		shader->Begin(rc);
 		//シェーダーにモデル描画
 		stage->TerrainRender(rc, shader);
-		shader->Draw(rc, model[0].get());
+		shader->Draw(rc, model.get());
 		shader->End(rc);
 
 		ModelShader* waterShader = Graphics::Instance().GetShader(ShaderId::WaterSurface);

@@ -1,5 +1,6 @@
 #include "Player1P.h"
 #include "Input/Input.h"
+#include "PlayerAI.h"
 
 static Player1P* instance = nullptr;
 
@@ -15,10 +16,20 @@ Player1P::Player1P()
 	//インスタンスポインタ設定
 	instance = this;
 
+	//初期装備
+	InitialArm = AttackType::Sword;
+
 	// 初期化
 	Player::Init();
 
 	position = { -7,5,-66 };
+
+	characterName = "PLAYER";
+	nameColor = { 0.1f, 0.65f, 0.9f, 1.0f };
+	//UI
+	hpGuage_Y = 555.0f;
+	hpColorNormal = { 0.2f, 0.8f , 0.2f, 1.0f };
+	hpColorWorning = { 0.8f, 0.2f, 0.2f, 1.0f };
 }
 
 Player1P::~Player1P()
@@ -28,28 +39,12 @@ Player1P::~Player1P()
 //更新
 void Player1P::Update(float elapsedTime)
 {
+	if (targetPlayer == nullptr) {
+		targetPlayer = &PlayerAI::Instance();
+	}
+
 	UpdateEnemyDistance(elapsedTime);
 	UpdateUtils(elapsedTime);
-}
-
-// HP描画
-void Player1P::HPBarRender(const RenderContext& rc, Sprite* gauge)
-{
-	Player::HPBarRender(rc, gauge, true);
-}
-
-// ボタン判定
-bool Player1P::InputButtonDown(InputState button)
-{
-	return Input::Instance().GetGamePad().GetButtonDown() & static_cast<unsigned int>(button);
-}
-bool Player1P::InputButton(InputState button)
-{
-	return Input::Instance().GetGamePad().GetButton() & static_cast<unsigned int>(button);
-}
-bool Player1P::InputButtonUp(InputState button)
-{
-	return Input::Instance().GetGamePad().GetButtonUp() & static_cast<unsigned int>(button);
 }
 
 //スティック入力値から移動ベクトルを取得
@@ -112,4 +107,46 @@ XMFLOAT3 Player1P::GetMoveVec() const
 	}
 
 	return vec;
+}
+
+// ===========入力処理===========
+// ボタン判定
+bool Player1P::InputButtonDown(InputState button)
+{
+	return Input::Instance().GetGamePad().GetButtonDown() & static_cast<unsigned int>(button);
+}
+bool Player1P::InputButton(InputState button)
+{
+	return Input::Instance().GetGamePad().GetButton() & static_cast<unsigned int>(button);
+}
+bool Player1P::InputButtonUp(InputState button)
+{
+	return Input::Instance().GetGamePad().GetButtonUp() & static_cast<unsigned int>(button);
+}
+
+// 武器変更処理
+void Player1P::InputChangeArm(AttackType arm/* = AttackType::None*/)
+{
+	if (enableRecoverTransition) return;
+	// 押されていない時はreturn
+	if (!InputButtonDown(Player::InputState::Player)) return;
+
+	// 指定されていたらそれを設定する
+	if (arm != AttackType::None) {
+		CurrentUseArm = arm;
+		return;
+	}
+
+	// 次に所持しているものを選択する
+	CurrentUseArm = GetNextArm();
+}
+
+// ターゲット回復処理
+void Player1P::InputRecover()
+{
+	if (!enableRecoverTransition) return;
+	if (!InputButtonDown(Player::InputState::Buddy)) return;
+
+	// 回復ステートへ移行
+	ChangeState(State::Recover);
 }

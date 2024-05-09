@@ -76,8 +76,7 @@ void SceneLoading::Render()
 
 		if (remain != loadingOnly)
 		{
-			font->Textout(rc, "STAGE Mont & Ocean", 16, 0, 1.0f, { screenWidth / 2 - 340, screenHeight / 2 - 100, 0 }, 32, 32, 32, 32, 16, 16, 0, 1, 1, 1, 1);
-			font->Textout(rc, "Jammo : " + std::to_string(remain), 16, 0, 1.0f, { screenWidth / 2 - 200, screenHeight / 2 + 50, 0 }, 32, 32, 32, 32, 16, 16, 0, 1, 1, 1, 1);
+			font->Textout(dc, "STAGE Mont & Ocean", 16, 0, 1.0f, { screenWidth / 2 - 340, screenHeight / 2 - 100, 0 }, 32, 32, 32, 32, 16, 16, 0, { 1, 1, 1, 1 });
 		}
 	}
 }

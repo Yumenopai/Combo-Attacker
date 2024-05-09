@@ -7,6 +7,7 @@
 #include "Graphics/PrimitiveRenderer.h"
 #include "Input/Input.h"
 #include "EnemyManager.h"
+#include "Enemy.h"
 #include "Stage.h"
 #include "imgui.h"
 
@@ -26,7 +27,16 @@ void Player::Init()
 	//プレイヤーモデル読み込み
 	model = std::make_unique<Model>(device, "Data/Model/SD-UnityChan/UnityChan.fbx", playerModelSize);
 
-	//初期化
+	// 武器登録
+	HaveArms.clear();
+	for (int i = 0; i < SC_INT(Player::AttackType::MaxCount); i++)
+	{
+		HaveArms.insert(std::pair<Player::AttackType, bool>(SC_AT(i), false));
+	}
+	// 初期武器
+	CurrentUseArm = InitialArm;
+	HaveArms[InitialArm] = true;
+
 	enemySearch.clear();
 	enemyDist.clear();
 	EnemyManager& enemyManager = EnemyManager::Instance();
@@ -67,13 +77,16 @@ void Player::Init()
 	stateMachine->RegisterState(new StateAttackSwordJump(this));
 
 	// ステートをセット 
-	stateMachine->SetState(static_cast<int>(State::Idle));
+	stateMachine->SetState(SC_INT(State::Idle));
 }
 
 void Player::UpdateUtils(float elapsedTime)
 {
 	// 配列ズラし
 	//ShiftTrailPositions();
+
+	// 回復遷移可能か
+	enableRecoverTransition = EnableRecoverTransition();
 
 	// ステート毎に中で処理分け
 	stateMachine->Update(elapsedTime);
@@ -156,7 +169,7 @@ void Player::UpdateEnemyDistance(float elapsedTime)
 void Player::UpdateJumpState(float elapsedTime)
 {
 	// 攻撃中の場合はジャンプさせない
-	if (currentAttackType != AttackType::None) return;
+	if (isAttacking) return;
 
 	const float firstJumpSpeed = 150.0f;
 	const float secondJumpSpeed = 15.0f;
@@ -240,29 +253,26 @@ void Player::PrimitiveRender(const RenderContext& rc)
 	primitiveRenderer->Render(rc.deviceContext, rc.camera->GetView(), rc.camera->GetProjection(), D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 }
 
-void Player::HPBarRender(const RenderContext& rc, Sprite* gauge, bool is1P)
+// HP描画
+void Player::RenderHPBar(ID3D11DeviceContext* dc, Sprite* gauge, FontSprite* font)
 {
-	ID3D11DeviceContext* dc = rc.deviceContext;
-
-	//HPゲージの長さ
-	const float guageWidth = 700.0f;
-	const float guageHeight = 15.0f;
-	const float guageY1P = 555.0f;
-	const float guageYAI = 580.0f;
-
-	float healthRate = GetHealth() / static_cast<float>(GetMaxHealth());
-	bool hpWorning = healthRate < 0.2f;
 	const int frameExpansion = 6;
 	Graphics& graphics = Graphics::Instance();
 	const float screenWidth = static_cast<float>(graphics.GetScreenWidth());
 
+	// 名前表示
+	font->Textout(dc, characterName, 200, hpGuage_Y - 7.0f, 1.0f, { -10, 10, 0 }, 12, 16, 32, 32, 16, 16, 0, nameColor);
+	// HP表示
+	std::string hpDisplay = std::to_string(GetHealth()) + '/' + std::to_string(GetMaxHealth());
+	font->Textout(dc, hpDisplay, 900, hpGuage_Y + 12.0f, 1.0f, { -10, 10, 0 }, 12, 16, 32, 32, 16, 16, 0, nameColor);
+
 	//ゲージ描画(下地)
 	gauge->Render(dc,
-		(screenWidth / 2) - (guageWidth / 2),
-		is1P ? guageY1P : guageYAI,
+		(screenWidth / 2) - (hpGuageWidth / 2),
+		hpGuage_Y,
 		0,
-		guageWidth + frameExpansion,
-		guageHeight + frameExpansion,
+		hpGuageWidth + frameExpansion,
+		hpGuageHeight + frameExpansion,
 		0, 0,
 		static_cast<float>(gauge->GetTextureWidth()),
 		static_cast<float>(gauge->GetTextureHeight()),
@@ -271,17 +281,94 @@ void Player::HPBarRender(const RenderContext& rc, Sprite* gauge, bool is1P)
 	);
 	//ゲージ描画
 	gauge->Render(dc,
-		(screenWidth / 2) - (guageWidth / 2) + frameExpansion / 2,
-		(is1P ? guageY1P : guageYAI) + frameExpansion / 2,
+		(screenWidth / 2) - (hpGuageWidth / 2) + frameExpansion / 2,
+		hpGuage_Y + frameExpansion / 2,
 		0,
-		guageWidth * healthRate,
-		guageHeight,
+		hpGuageWidth * (GetHealthRate() / 100.0f),
+		hpGuageHeight,
 		0, 0,
 		static_cast<float>(gauge->GetTextureWidth()),
 		static_cast<float>(gauge->GetTextureHeight()),
 		0.0f,
-		{ hpWorning ? 0.8f : 0.2f, hpWorning ? 0.2f : (is1P ? 0.8f : 0.6f), 0.2f, 1.0f }
+		{ GetHpWorning() ? 0.8f : 0.2f, GetHpWorning() ? 0.2f : 0.8f , 0.2f, 1.0f}
 	);
+}
+
+// キャラクター名前描画
+void Player::RenderCharacterName(const RenderContext& rc, FontSprite* font)
+{
+	const DirectX::XMFLOAT4X4& view = rc.view;
+	const DirectX::XMFLOAT4X4& projection = rc.projection;
+
+	//ビューポート
+	D3D11_VIEWPORT viewport;
+	UINT numViewports = 1;
+	rc.deviceContext->RSGetViewports(&numViewports, &viewport);
+
+	//変換行列
+	XMMATRIX View = XMLoadFloat4x4(&view);
+	XMMATRIX Projection = XMLoadFloat4x4(&projection);
+	XMMATRIX World = XMMatrixIdentity();
+
+	//Player頭上のワールド座標
+	XMFLOAT3 worldPosition = GetPosition();
+	worldPosition.y += GetHeight() + 0.4f;
+	XMVECTOR WorldPosition = XMLoadFloat3(&worldPosition);
+
+	//ワールドからスクリーンへの変換
+	XMVECTOR ScreenPosition = XMVector3Project(
+		WorldPosition,
+		viewport.TopLeftX,
+		viewport.TopLeftY,
+		viewport.Width,
+		viewport.Height,
+		viewport.MinDepth,
+		viewport.MaxDepth,
+		Projection,
+		View,
+		World
+	);
+
+	XMFLOAT3 screenPosition;
+	XMStoreFloat3(&screenPosition, ScreenPosition);
+	//カメラの背後にいるか、明らかに離れているなら描画しない
+	if (screenPosition.z > 0.0f && screenPosition.z < 1.0f)
+	{
+		font->Textout(rc.deviceContext, characterName,
+			0,
+			screenPosition.y,
+			0,
+			{ screenPosition.x - 12 * 5, 0, 0 },
+			12, 16,
+			32, 32, 16, 16, 0, nameColor);
+	}
+}
+
+void Player::RenderHaveArms(ID3D11DeviceContext* dc, Sprite* frame, Sprite* arm)
+{
+	const DirectX::XMFLOAT2 spriteSize = { 300.0f,300.f };
+
+	//HaveArmFrame
+	for (int i = 0; i < HaveArms.size(); i++)
+	{
+		float spSize_x = 0;
+		if (i == SC_INT(CurrentUseArm)) spSize_x = spriteSize.x;
+		else spSize_x = HaveArms[SC_AT(i)] ? spriteSize.x * 2 : 0;
+
+		frame->Render(dc, { 1000.0f + 65 * i, hpGuage_Y - 10.0f, 0.0f }, { 70, 70 }, { spSize_x, spriteSize.y }, spriteSize, 0, { 1, 1, 1, 1 });
+	}
+	//HaveArm
+	for (int i = 0; i < HaveArms.size(); i++)
+	{
+		float spSize_x = spriteSize.x * (i + 1);
+		float spSize_y = 0;
+		if (SC_AT(i) != CurrentUseArm && SC_AT(i) == GetNextArm()) {
+			spSize_y = spriteSize.y;
+		}
+
+		float color_a = HaveArms[SC_AT(i)] ? 1.0f : 0.5f;
+		arm->Render(dc, { 1013.0f + 65 * i, hpGuage_Y + 2.0f, 0.0f }, { 45, 45 }, { spSize_x, spSize_y }, spriteSize, 0, { 1, 1, 1, color_a });
+	}
 }
 
 void Player::DebugMenu()
@@ -322,28 +409,28 @@ void Player::DebugMenu()
 //着地した時に呼ばれる
 void Player::OnLanding(float elapsedTime)
 {
-	if (currentAttackType != AttackType::None) //攻撃中(主にジャンプ攻撃後)
+	if (isAttacking) //攻撃中(主にジャンプ攻撃後)
 	{
 		// 着地してすぐは何もさせないためここで処理を書かない
 		// 各StateUpdateにてアニメーション終了後にIdleStateへ遷移する
 	}
 	else if (InputMove(elapsedTime))
 	{
-		stateMachine->ChangeState(static_cast<int>(State::Run));
+		ChangeState(State::Run);
 	}
 	else {
-		stateMachine->ChangeState(static_cast<int>(State::JumpEnd));
+		ChangeState(State::JumpEnd);
 	}
 }
 
 void Player::OnDamaged()
 {
-	stateMachine->ChangeState(static_cast<int>(State::Damage));
+	ChangeState(State::Damage);
 }
 
 void Player::OnDead()
 {
-	stateMachine->ChangeState(static_cast<int>(State::Dead));
+	ChangeState(State::Dead);
 }
 
 void Player::UpdateArmPositions(Model* model, Arms& arm)
@@ -459,38 +546,119 @@ bool Player::InputMove(float elapsedTime)
 }
 
 // 攻撃入力処理
-bool Player::InputAttackFromNoneAttack(float elapsedTime)
+bool Player::InputAttackFromNoneAttack()
 {
-	if (InputButtonDown(Player::InputState::Hammer)) {
-		stateMachine->ChangeState(static_cast<int>(State::AttackHammer1));
-	}
-	else if (InputButtonDown(Player::InputState::Sword)) {
-		stateMachine->ChangeState(static_cast<int>(State::AttackSword1));
-	}
-	else if (InputButtonDown(Player::InputState::Spear)) {
-		stateMachine->ChangeState(static_cast<int>(State::AttackSpear1));
-	}
-	else {
-		return false;
+	// 押されていない時はreturn
+	if (!InputButtonDown(Player::InputState::Attack)) return false;
+
+	switch (CurrentUseArm)
+	{
+	case Player::AttackType::Hammer:
+		ChangeState(State::AttackHammer1);
+		break;
+	case Player::AttackType::Spear:
+		ChangeState(State::AttackSpear1);
+		break;
+	case Player::AttackType::Sword:
+		ChangeState(State::AttackSword1);
+		break;
 	}
 
 	return true;
 }
 bool Player::InputAttackFromJump(float elapsedTime)
 {
-	if (InputButtonDown(Player::InputState::Hammer)) {
-		stateMachine->ChangeState(static_cast<int>(State::AttackHammerJump));
-	}
-	else if (InputButtonDown(Player::InputState::Sword)) {
-		stateMachine->ChangeState(static_cast<int>(State::AttackSwordJump));
-	}
-	else if (InputButtonDown(Player::InputState::Spear)) {
-		stateMachine->ChangeState(static_cast<int>(State::AttackSpearJump));
-	}
-	else {
-		return false;
+	// 押されていない時はreturn
+	if (!InputButtonDown(Player::InputState::Attack)) return false;
+
+	switch (CurrentUseArm)
+	{
+	case Player::AttackType::Hammer:
+		ChangeState(State::AttackHammerJump);
+		break;
+	case Player::AttackType::Spear:
+		ChangeState(State::AttackSpearJump);
+		break;
+	case Player::AttackType::Sword:
+		ChangeState(State::AttackSwordJump);
+		break;
 	}
 
+	return true;
+}
+
+// 次の選択武器取得
+Player::AttackType Player::GetNextArm()
+{
+	// 現在の次の番号の武器を選択する
+	for (int i = SC_INT(CurrentUseArm);;)
+	{
+		// 回転
+		if (i == SC_INT(AttackType::MaxCount) - 1) i = 0;
+		else i++;
+		// 全検索したらbreak
+		if (i == SC_INT(CurrentUseArm)) break;
+
+		// 未所持ならcontinue
+		if (!HaveArms[SC_AT(i)]) continue;
+
+		// 次に所持しているものを選択する
+		return SC_AT(i);
+	}
+	// 現在の武器をそのまま返す
+	return CurrentUseArm;
+}
+
+// アイテムゲット
+void Player::AddHaveArm(Player::AttackType arm/* = AttackType::None*/)
+{
+	// 指定されていたらそれを設定する
+	if (arm != AttackType::None) {
+		HaveArms[arm] = true;
+		return;
+	}
+
+	// 現在持っていない武器リスト
+	std::unordered_map<AttackType,bool> remainArm = HaveArms;
+	for (const auto& arm : HaveArms)
+	{
+		if (HaveArms[arm.first])
+		{
+			remainArm.erase(arm.first);
+		}
+	}
+
+	// 全て持っている場合はreturn
+	if (remainArm.size() == 0) return;
+
+	// 乱数
+	int num = rand() % remainArm.size();
+	int i = 0;
+	// 獲得する武器を確定する
+	for (const auto& arm : remainArm)
+	{
+		if (i == num)
+		{
+			HaveArms[arm.first] = true;
+			return;
+		}
+		i++;
+	}
+}
+
+//回復遷移確認処理
+bool Player::EnableRecoverTransition()
+{
+	// 20%以上はfalse
+	if (!targetPlayer->GetHpWorning()) return false;
+
+	XMVECTOR posPlayerthis = XMLoadFloat3(&GetPosition());
+	XMVECTOR posPlayertarget = XMLoadFloat3(&targetPlayer->GetPosition());
+	float distSq = XMVectorGetX(XMVector3LengthSq(XMVectorSubtract(posPlayerthis, posPlayertarget)));
+	// 近く無ければfalse
+	if (distSq > 3.0f * 3.0f) return false;
+
+	// trueで遷移可能
 	return true;
 }
 
@@ -504,31 +672,6 @@ void Player::ForceTurnByAttack(float elapsedTime)
 		Turn(elapsedTime, nearestVec.x, nearestVec.z, turnSpeed);
 	}
 }
-
-//回復遷移確認処理
-bool Player::IsRecoverTransition()
-{
-	Player* targetplayer = this;
-	PlayerManager& playerManager = PlayerManager::Instance();
-	int playerCount = playerManager.GetPlayerCount();
-	for (int i = 0; i < playerCount; i++)
-	{
-		if (playerManager.GetPlayer(i) == this) continue;
-		targetplayer = playerManager.GetPlayer(i);
-	}
-	// 20%以上はfalse
-	if (targetplayer->GetHealthRate() > 20) return false;
-
-	XMVECTOR posPlayerthis = XMLoadFloat3(&GetPosition());
-	XMVECTOR posPlayertarget = XMLoadFloat3(&targetplayer->GetPosition());
-	float distSq = XMVectorGetX(XMVector3LengthSq(XMVectorSubtract(posPlayerthis, posPlayertarget)));
-	// 近く無ければfalse
-	if (distSq > 2.0f * 2.0f) return false;
-
-	// trueで回復遷移
-	return true;
-}
-
 //プレイヤーとエネミーとの衝突処理
 void Player::CollisionPlayerVsEnemies()
 {
@@ -575,7 +718,7 @@ void Player::CollisionArmsVsEnemies(Arms arm)
 			if (attackingEnemyNumber == i && !isAttackJudge) return; //攻撃判定しない場合は処理しない
 
 			//ダメージを与える
-			if (enemy->ApplyDamage(arm.damage, 0))
+			if (enemy->ApplyDamage(arm.damage, 0, this, this == &Player1P::Instance() ? 0 : 1))
 			{
 				//吹き飛ばす
 				if (attackCount >= 4)
@@ -602,7 +745,7 @@ void Player::CollisionArmsVsEnemies(Arms arm)
 				//ヒットエフェクト再生
 				{
 					outPosition.y += enemy->GetHeight() * enemy->GetEffectOffset_Y();
-					EffectArray[(int)EffectNumber::Hit].Play(outPosition);
+					PlayEffect(EffectNumber::Hit, outPosition);
 				}
 				attackingEnemyNumber = i;
 				isAttackJudge = false;

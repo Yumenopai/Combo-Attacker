@@ -9,11 +9,14 @@ EnemySlime::EnemySlime()
 {
 	ID3D11Device* device = Graphics::Instance().GetDevice();
 	model = std::make_unique<Model>(device, "Data/Model/RPG_Slime/SlimePBR.fbx", 0.01f);
+	eyeBallNodeName = "EyeBall";
 
 	angle.y = Math::RandomRange(-360, 360);
-	
 	//radius = 0.5f;
 	height = 1.0f;
+	health = maxHealth = 30;
+
+	damage = 2;
 	//待機ステートへ遷移
 	TransitionState(State::Idle);
 }
@@ -233,7 +236,7 @@ void EnemySlime::CollisionNodeVsPlayer(const char* nodeName, float nodeRadius)
 		))
 		{
 			//ダメージを与える
-			if (player->ApplyDamage(2, 0))
+			if (player->ApplyDamage(damage))
 			{
 				//敵を吹っ飛ばすベクトルを算出
 				XMFLOAT3 vec;
@@ -244,11 +247,11 @@ void EnemySlime::CollisionNodeVsPlayer(const char* nodeName, float nodeRadius)
 				vec.z /= length;
 
 				//XZ平面に吹っ飛ばす力をかける
-				float power = 10.0f;
+				float power = 3.0f;
 				vec.x *= power;
 				vec.z *= power;
 				//Y方向にも力をかける
-				vec.y = 5.0f;
+				vec.y = 4.0f;
 
 				//吹っ飛ばす
 				player->AddImpulse(vec);
@@ -318,7 +321,7 @@ void EnemySlime::UpdateAttackState(float elapsedTime)
 	if (animationTime >= 0.1f && animationTime <= 0.35f)
 	{
 		//目玉ノードとプレイヤーの衝突処理
-		CollisionNodeVsPlayer("EyeBall", 0.2f);
+		CollisionNodeVsPlayer(eyeBallNodeName, 0.2f);
 	}
 
 	//攻撃アニメーションが終わったら戦闘待機ステートへ遷移
@@ -397,32 +400,34 @@ void EnemySlime::TransitionState(State nowState)
 //遷移時アニメーション再生
 void EnemySlime::TransitionPlayAnimation(State nowState)
 {
-	Animation anime = Anim_IdleNormal; //アニメーション設定
+	//アニメーション設定
+	Animation anime = Animation::IdleNormal;
 	bool animeLoop = true;
 
 	switch (nowState)
 	{
 	case State::Idle:
-		anime = Anim_IdleNormal;
+		anime = Animation::IdleNormal;
 		break;
 	case State::Wander:
-		anime = Anim_WalkFWD;
+		anime = Animation::WalkFWD;
 		break;
 	case State::Pursuit:
-		anime = Anim_RunFWD;
+		anime = Animation::RunFWD;
 		break;
 	case State::Attack:
-		anime = Anim_Attack1;
+		anime = Animation::Attack1;
 		animeLoop = false;
 		break;
 	case State::IdleBattle:
-		anime = Anim_IdleBattle;
+		anime = Animation::IdleBattle;
 		break;
 	case State::HitDamage:
-		anime = Anim_GetHit;
+		anime = Animation::GetHit;
 		animeLoop = false;
 		break;
 	}
 
-	model->PlayAnimation(static_cast<int>(anime), animeLoop); //アニメーション再生
+	//アニメーション再生
+	model->PlayAnimation(static_cast<int>(anime), animeLoop);
 }

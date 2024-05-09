@@ -18,7 +18,7 @@ public:
 
 private:
 	std::unique_ptr<Sprite> sprite;
-	std::unique_ptr<Model> model[2];
+	std::unique_ptr<Model> model;
 	std::unique_ptr<Stage> stage;
 	Light* mainDirectionalLight = nullptr;
 

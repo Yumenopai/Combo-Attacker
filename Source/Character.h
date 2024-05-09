@@ -33,7 +33,7 @@ public:
 	//‚‚³æ“¾
 	float GetHeight() const { return height; }
 	//ƒ_ƒ[ƒW‚ğ—^‚¦‚é
-	bool ApplyDamage(int damage, float invincibleTime);
+	bool ApplyDamage(int damage, float invincibleTime = 0);
 	//ÕŒ‚‚ğ—^‚¦‚é
 	void AddImpulse(const XMFLOAT3& impulse);
 

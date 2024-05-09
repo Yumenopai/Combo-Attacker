@@ -16,15 +16,17 @@ public:
 	// 更新
 	void Update(float elapsedTime);
 
-	// 描画
-	void HPBarRender(const RenderContext& rc, Sprite* gauge);
-
 	// ボタン判定(押下時)
 	bool InputButtonDown(InputState button) override;
 	// ボタン判定(入力時)
 	bool InputButton(InputState button) override;
 	// ボタン判定(押上時)
 	bool InputButtonUp(InputState button) override;
+
+	// 武器変更処理
+	void InputChangeArm(AttackType arm = AttackType::None) override;
+	// ターゲット回復処理
+	void InputRecover() override;
 
 private:
 	// 移動ベクトル

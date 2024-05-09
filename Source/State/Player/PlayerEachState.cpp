@@ -10,23 +10,27 @@ void StateIdle::Init()
 {
 	player->SetAttackCount(0);
 	// 攻撃後は必ず待機に戻る為ここで攻撃タイプ リセットを行う
-	player->SetAttackType(Player::AttackType::None);
-	player->GetModel()->PlayAnimation(static_cast<int>(Player::Animation::Idle), true);
+	player->SetAttacking(false);
+	player->PlayAnimation(Player::Animation::Idle, true);
 }
 
 void StateIdle::Update(float elapsedTime)
 {
 	// 移動入力処理
 	if (player->InputMove(elapsedTime)) {
-		player->GetStateMachine()->ChangeState(static_cast<int>(Player::State::IdleToRun));
+		player->ChangeState(Player::State::IdleToRun);
 	}
 	// ジャンプ入力処理
 	if (player->InputButtonDown(Player::InputState::Jump)) {
-		player->GetStateMachine()->ChangeState(static_cast<int>(Player::State::JumpStart));
+		player->ChangeState(Player::State::JumpStart);
 	}
 
 	// 攻撃処理
-	player->InputAttackFromNoneAttack(elapsedTime);
+	player->InputAttackFromNoneAttack();
+	// 武器変更
+	player->InputChangeArm();
+	// 能力処理
+
 }
 
 /************************************
@@ -34,7 +38,7 @@ void StateIdle::Update(float elapsedTime)
 ************************************/
 void StateIdleToRun::Init()
 {
-	player->GetModel()->PlayAnimation(static_cast<int>(Player::Animation::IdleToRun), false);
+	player->PlayAnimation(Player::Animation::IdleToRun, false);
 }
 
 void StateIdleToRun::Update(float elapsedTime)
@@ -42,7 +46,7 @@ void StateIdleToRun::Update(float elapsedTime)
 	player->InputMove(elapsedTime);
 	// アニメーション終了後
 	if (!player->GetModel()->IsPlayAnimation()) {
-		player->GetStateMachine()->ChangeState(static_cast<int>(Player::State::Run));
+		player->ChangeState(Player::State::Run);
 	}
 }
 
@@ -51,26 +55,26 @@ void StateIdleToRun::Update(float elapsedTime)
 ************************************/
 void StateRun::Init()
 {
-	player->GetModel()->PlayAnimation(static_cast<int>(Player::Animation::Running), true);
+	player->PlayAnimation(Player::Animation::Running, true);
 }
 
 void StateRun::Update(float elapsedTime)
 {
 	// 移動入力処理
 	if (!player->InputMove(elapsedTime)) {
-		player->GetStateMachine()->ChangeState(static_cast<int>(Player::State::Idle));
+		player->ChangeState(Player::State::Idle);
 	}
 	// ジャンプ入力処理
 	if (player->InputButtonDown(Player::InputState::Jump)) {
-		player->GetStateMachine()->ChangeState(static_cast<int>(Player::State::JumpStart));
-	}
-	// 回復遷移確認処理
-	if (player->IsRecoverTransition()) {
-		player->GetStateMachine()->ChangeState(static_cast<int>(Player::State::Recover));
+		player->ChangeState(Player::State::JumpStart);
 	}
 
 	// 攻撃処理
-	player->InputAttackFromNoneAttack(elapsedTime);
+	player->InputAttackFromNoneAttack();
+	// 武器変更
+	player->InputChangeArm();
+	// 能力処理
+	player->InputRecover();
 }
 
 /************************************
@@ -78,14 +82,14 @@ void StateRun::Update(float elapsedTime)
 ************************************/
 void StateRunToIdle::Init()
 {
-	player->GetModel()->PlayAnimation(static_cast<int>(Player::Animation::RunToIdle), false);
+	player->PlayAnimation(Player::Animation::RunToIdle, false);
 }
 
 void StateRunToIdle::Update(float elapsedTime)
 {
 	// アニメーション終了後
 	if (!player->GetModel()->IsPlayAnimation()) {
-		player->GetStateMachine()->ChangeState(static_cast<int>(Player::State::Idle));
+		player->ChangeState(Player::State::Idle);
 	}
 }
 
@@ -94,7 +98,7 @@ void StateRunToIdle::Update(float elapsedTime)
 ************************************/
 void StateJumpStart::Init()
 {
-	player->GetModel()->PlayAnimation(static_cast<int>(Player::Animation::JumpStart), false);
+	player->PlayAnimation(Player::Animation::JumpStart, false);
 }
 
 void StateJumpStart::Update(float elapsedTime)
@@ -103,11 +107,11 @@ void StateJumpStart::Update(float elapsedTime)
 	player->InputMove(elapsedTime);
 	// さらにジャンプ入力時の処理
 	if (player->InputButtonDown(Player::InputState::Jump)) {
-		player->GetStateMachine()->ChangeState(static_cast<int>(Player::State::JumpAir));
+		player->ChangeState(Player::State::JumpAir);
 	}
 	// アニメーション終了後
 	if (!player->GetModel()->IsPlayAnimation()) {
-		player->GetStateMachine()->ChangeState(static_cast<int>(Player::State::JumpLoop));
+		player->ChangeState(Player::State::JumpLoop);
 	}
 }
 
@@ -116,7 +120,7 @@ void StateJumpStart::Update(float elapsedTime)
 ************************************/
 void StateJumpLoop::Init()
 {
-	player->GetModel()->PlayAnimation(static_cast<int>(Player::Animation::JumpLoop), false);
+	player->PlayAnimation(Player::Animation::JumpLoop, false);
 }
 
 void StateJumpLoop::Update(float elapsedTime)
@@ -125,7 +129,7 @@ void StateJumpLoop::Update(float elapsedTime)
 	player->InputMove(elapsedTime);
 	// さらにジャンプ入力時の処理
 	if (player->InputButtonDown(Player::InputState::Jump)) {
-		player->GetStateMachine()->ChangeState(static_cast<int>(Player::State::JumpAir));
+		player->ChangeState(Player::State::JumpAir);
 	}
 	// ジャンプ中の攻撃処理はUpdateJumpにて行う
 
@@ -141,7 +145,7 @@ void StateJumpLoop::Update(float elapsedTime)
 ************************************/
 void StateJumpAir::Init()
 {
-	player->GetModel()->PlayAnimation(static_cast<int>(Player::Animation::JumpAir), false);
+	player->PlayAnimation(Player::Animation::JumpAir, false);
 }
 
 void StateJumpAir::Update(float elapsedTime)
@@ -162,7 +166,7 @@ void StateJumpAir::Update(float elapsedTime)
 ************************************/
 void StateJumpEnd::Init()
 {
-	player->GetModel()->PlayAnimation(static_cast<int>(Player::Animation::JumpEnd), false);
+	player->PlayAnimation(Player::Animation::JumpEnd, false);
 }
 
 void StateJumpEnd::Update(float elapsedTime)
@@ -171,11 +175,11 @@ void StateJumpEnd::Update(float elapsedTime)
 
 	// アニメーション中でも次のジャンプは可能
 	if (player->InputButtonDown(Player::InputState::Jump)) {
-		player->GetStateMachine()->ChangeState(static_cast<int>(Player::State::JumpStart));
+		player->ChangeState(Player::State::JumpStart);
 	}
 	// アニメーション終了後
 	if (!player->GetModel()->IsPlayAnimation()) {
-		player->GetStateMachine()->ChangeState(static_cast<int>(Player::State::Idle));
+		player->ChangeState(Player::State::Idle);
 	}
 }
 
@@ -184,7 +188,7 @@ void StateJumpEnd::Update(float elapsedTime)
 ************************************/
 void StateDamage::Init()
 {
-	player->GetModel()->PlayAnimation(static_cast<int>(Player::Animation::Damage), false);
+	player->PlayAnimation(Player::Animation::Damage, false);
 }
 
 void StateDamage::Update(float elapsedTime)
@@ -193,7 +197,7 @@ void StateDamage::Update(float elapsedTime)
 	 
 	// アニメーション終了後
 	if (!player->GetModel()->IsPlayAnimation()) {
-		player->GetStateMachine()->ChangeState(static_cast<int>(Player::State::Idle));
+		player->ChangeState(Player::State::Idle);
 	}
 }
 
@@ -202,7 +206,7 @@ void StateDamage::Update(float elapsedTime)
 ************************************/
 void StateDead::Init()
 {
-	player->GetModel()->PlayAnimation(static_cast<int>(Player::Animation::Death), false);
+	player->PlayAnimation(Player::Animation::Death, false);
 }
 
 void StateDead::Update(float elapsedTime)
@@ -213,7 +217,7 @@ void StateDead::Update(float elapsedTime)
 	{
 		// 現段階は自動的に回復する
 		player->SetHealth(player->GetMaxHealth());
-		player->GetStateMachine()->ChangeState(static_cast<int>(Player::State::Idle));
+		player->ChangeState(Player::State::Idle);
 	}
 }
 
@@ -222,28 +226,18 @@ void StateDead::Update(float elapsedTime)
 ************************************/
 void StateRecover::Init()
 {
-	player->GetModel()->PlayAnimation(static_cast<int>(Player::Animation::JumpEnd), false);
+	player->PlayAnimation(Player::Animation::JumpEnd, false);
+	player->PlayEffect(Player::EffectNumber::Recovery, player->GetTargetPlayer()->GetPosition(), 0.6f);
 }
 
 void StateRecover::Update(float elapsedTime)
 {
-	// アニメーション終了後
-	if (!player->GetModel()->IsPlayAnimation())
-	{
-		//回復処理
-		Player* targetplayer = player;
-		PlayerManager& playerManager = PlayerManager::Instance();
-		int playerCount = playerManager.GetPlayerCount();
-		for (int i = 0; i < playerCount; i++)
-		{
-			if (playerManager.GetPlayer(i) == player) continue;
-			targetplayer = playerManager.GetPlayer(i);
-		}
-		targetplayer->AddHealth(30);
+	if (player->GetModel()->IsPlayAnimation()) return;
 
-		//移行
-		player->GetStateMachine()->ChangeState(static_cast<int>(Player::State::Idle));
-	}
+	// 回復
+	player->GetTargetPlayer()->AddHealth(30);
+	// 移行
+	player->ChangeState(Player::State::Idle);
 }
 
 /************************************
@@ -251,9 +245,9 @@ void StateRecover::Update(float elapsedTime)
 ************************************/
 void StateAttackHammer1::Init()
 {
-	player->SetAttackType(Player::AttackType::Hammer);
+	player->SetAttacking(true);
 	player->SetAttackJadge(true);
-	player->GetModel()->PlayAnimation(static_cast<int>(Player::Animation::AttackHammer1), false);
+	player->PlayAnimation(Player::Animation::AttackHammer1, false);
 }
 
 void StateAttackHammer1::Update(float elapsedTime)
@@ -270,17 +264,17 @@ void StateAttackHammer1::Update(float elapsedTime)
 			player->CollisionArmsVsEnemies(Hammer);
 		}
 		//任意のアニメーション再生区間でのみ次の攻撃技を出すようにする
-		if (player->InputButtonDown(Player::InputState::Hammer)
+		if (player->InputButtonDown(Player::InputState::Attack)
 			&& animationTime >= 0.5f && animationTime <= 0.8f)
 		{
-			player->GetStateMachine()->ChangeState(static_cast<int>(Player::State::AttackHammer2));
+			player->ChangeState(Player::State::AttackHammer2);
 		}
 
 		// 近距離攻撃時の角度矯正
 		player->ForceTurnByAttack(elapsedTime);
 	}
 	else {
-		player->GetStateMachine()->ChangeState(static_cast<int>(Player::State::Idle));
+		player->ChangeState(Player::State::Idle);
 	}
 }
 
@@ -290,7 +284,7 @@ void StateAttackHammer1::Update(float elapsedTime)
 void StateAttackHammer2::Init()
 {
 	player->SetAttackJadge(true);
-	player->GetModel()->PlayAnimation(static_cast<int>(Player::Animation::AttackHammer2), false);
+	player->PlayAnimation(Player::Animation::AttackHammer2, false);
 }
 
 void StateAttackHammer2::Update(float elapsedTime)
@@ -304,7 +298,7 @@ void StateAttackHammer2::Update(float elapsedTime)
 		player->CollisionArmsVsEnemies(Hammer);
 	}
 	else {
-		player->GetStateMachine()->ChangeState(static_cast<int>(Player::State::Idle));
+		player->ChangeState(Player::State::Idle);
 	}
 }
 
@@ -313,10 +307,10 @@ void StateAttackHammer2::Update(float elapsedTime)
 ************************************/
 void StateAttackHammerJump::Init()
 {
-	player->SetAttackType(Player::AttackType::Hammer);
+	player->SetAttacking(true);
 	player->SetAttackJadge(true);
 	player->SetMoveAttack(player->InputMove(0));
-	player->GetModel()->PlayAnimation(static_cast<int>(Player::Animation::AttackHammerJump), false);
+	player->PlayAnimation(Player::Animation::AttackHammerJump, false);
 }
 
 void StateAttackHammerJump::Update(float elapsedTime)
@@ -327,6 +321,7 @@ void StateAttackHammerJump::Update(float elapsedTime)
 	{
 		player->UpdateArmPositions(player->GetModel(), Hammer);
 		player->CollisionArmsVsEnemies(Hammer);
+		player->PlayEffect(Player::EffectNumber::RedVortex, Hammer.position, 0.4f);
 	}
 
 	if (player->GetMoveAttack())
@@ -336,7 +331,7 @@ void StateAttackHammerJump::Update(float elapsedTime)
 	if (!Hammer.flagJump)
 	{
 		player->SetMoveAttack(false);
-		player->GetStateMachine()->ChangeState(static_cast<int>(Player::State::Idle));
+		player->ChangeState(Player::State::Idle);
 	}
 
 	//ジャンプ攻撃中は重力を無視する
@@ -348,9 +343,9 @@ void StateAttackHammerJump::Update(float elapsedTime)
 ************************************/
 void StateAttackSpear1::Init()
 {
-	player->SetAttackType(Player::AttackType::Spear);
+	player->SetAttacking(true);
 	player->SetAttackJadge(true);
-	player->GetModel()->PlayAnimation(static_cast<int>(Player::Animation::AttackSpear1), false);
+	player->PlayAnimation(Player::Animation::AttackSpear1, false);
 }
 
 void StateAttackSpear1::Update(float elapsedTime)
@@ -369,14 +364,14 @@ void StateAttackSpear1::Update(float elapsedTime)
 		{
 			player->HorizontalVelocityByAttack(true, 40, elapsedTime);
 		}
-		else if (Spear.flag1 && player->InputButtonDown(Player::InputState::Spear))
+		else if (Spear.flag1 && player->InputButtonDown(Player::InputState::Attack))
 		{
 			player->AddAttackCount();
-			player->GetStateMachine()->ChangeState(static_cast<int>(Player::State::AttackSpear2));
+			player->ChangeState(Player::State::AttackSpear2);
 		}
 	}
 	else {
-		player->GetStateMachine()->ChangeState(static_cast<int>(Player::State::Idle));
+		player->ChangeState(Player::State::Idle);
 	}
 }
 
@@ -386,7 +381,7 @@ void StateAttackSpear1::Update(float elapsedTime)
 void StateAttackSpear2::Init()
 {
 	player->SetAttackJadge(true);
-	player->GetModel()->PlayAnimation(static_cast<int>(Player::Animation::AttackSpear2), false);
+	player->PlayAnimation(Player::Animation::AttackSpear2, false);
 }
 
 void StateAttackSpear2::Update(float elapsedTime)
@@ -407,19 +402,19 @@ void StateAttackSpear2::Update(float elapsedTime)
 			player->HorizontalVelocityByAttack(true, 60, elapsedTime);
 		}
 		// 武器出現アニメーション再生区間
-		if (animationTime >= 0.37f && animationTime <= 0.6f && player->InputButtonDown(Player::InputState::Spear))
+		if (animationTime >= 0.37f && animationTime <= 0.6f && player->InputButtonDown(Player::InputState::Attack))
 		{
 			player->AddAttackCount();
 			if (player->GetAttackCount() < 4) {
-				player->GetStateMachine()->ChangeState(static_cast<int>(Player::State::AttackSpear1));
+				player->ChangeState(Player::State::AttackSpear1);
 			}
 			else {
-				player->GetStateMachine()->ChangeState(static_cast<int>(Player::State::AttackSpear3));
+				player->ChangeState(Player::State::AttackSpear3);
 			}
 		}
 	}
 	else {
-		player->GetStateMachine()->ChangeState(static_cast<int>(Player::State::Idle));
+		player->ChangeState(Player::State::Idle);
 	}
 }
 
@@ -429,7 +424,7 @@ void StateAttackSpear2::Update(float elapsedTime)
 void StateAttackSpear3::Init()
 {
 	player->SetAttackJadge(true);
-	player->GetModel()->PlayAnimation(static_cast<int>(Player::Animation::AttackSpear3), false);
+	player->PlayAnimation(Player::Animation::AttackSpear3, false);
 }
 
 void StateAttackSpear3::Update(float elapsedTime)
@@ -450,7 +445,7 @@ void StateAttackSpear3::Update(float elapsedTime)
 		}
 	}
 	else {
-		player->GetStateMachine()->ChangeState(static_cast<int>(Player::State::Idle));
+		player->ChangeState(Player::State::Idle);
 	}
 }
 
@@ -459,10 +454,10 @@ void StateAttackSpear3::Update(float elapsedTime)
 ************************************/
 void StateAttackSpearJump::Init()
 {
-	player->SetAttackType(Player::AttackType::Spear);
+	player->SetAttacking(true);
 	player->SetAttackJadge(true);
 	player->SetMoveAttack(player->InputMove(0));
-	player->GetModel()->PlayAnimation(static_cast<int>(Player::Animation::AttackSpearJump), false);
+	player->PlayAnimation(Player::Animation::AttackSpearJump, false);
 }
 
 void StateAttackSpearJump::Update(float elapsedTime)
@@ -479,13 +474,16 @@ void StateAttackSpearJump::Update(float elapsedTime)
 		if (animationTime >= 0.15f && animationTime <= 0.5f)
 		{
 			player->HorizontalVelocityByAttack(false, 800, elapsedTime);
+			player->PlayEffect(Player::EffectNumber::BlueVortex, Spear.position, 0.4f);
 		}
 	}
 	else {
-		player->GetStateMachine()->ChangeState(static_cast<int>(Player::State::Idle));
+		player->ChangeState(Player::State::Idle);
 	}
 
-	// 重力矯正(UpdateVerticalVelocity)
+	/*
+		重力矯正を[UpdateVerticalVelocity]にて行う
+	*/
 }
 
 /************************************
@@ -493,9 +491,9 @@ void StateAttackSpearJump::Update(float elapsedTime)
 ************************************/
 void StateAttackSword1::Init()
 {
-	player->SetAttackType(Player::AttackType::Sword);
+	player->SetAttacking(true);
 	player->SetAttackJadge(true);
-	player->GetModel()->PlayAnimation(static_cast<int>(Player::Animation::AttackSword1), false);
+	player->PlayAnimation(Player::Animation::AttackSword1, false);
 }
 
 void StateAttackSword1::Update(float elapsedTime)
@@ -506,7 +504,7 @@ void StateAttackSword1::Update(float elapsedTime)
 	{
 		player->UpdateArmPositions(player->GetModel(), Sword);
 		player->CollisionArmsVsEnemies(Sword);
-
+		
 		float animationTime = player->GetModel()->GetCurrentAnimationSeconds();
 		// 足を踏ん張る際の前進をここで行う 既に何か進んでいる時はこの処理をしない
 		if (animationTime < 0.2f && !player->InputMove(elapsedTime))
@@ -514,11 +512,11 @@ void StateAttackSword1::Update(float elapsedTime)
 			player->HorizontalVelocityByAttack(true, 43, elapsedTime);
 		}
 		// 任意のアニメーション再生区間でのみ次の攻撃技を出すようにする
-		else if (player->InputButtonDown(Player::InputState::Sword)
+		else if (player->InputButtonDown(Player::InputState::Attack)
 			&& animationTime >= 0.3f && animationTime <= 0.7f)
 		{
 			player->AddAttackCount();
-			player->GetStateMachine()->ChangeState(static_cast<int>(Player::State::AttackSword2));
+			player->ChangeState(Player::State::AttackSword2);
 		}
 		// 足元の動きに合わせた前進 違和感あるので一旦コメント
 		//else if (animationTime >= 0.50f)
@@ -528,7 +526,7 @@ void StateAttackSword1::Update(float elapsedTime)
 		//}
 	}
 	else {
-		player->GetStateMachine()->ChangeState(static_cast<int>(Player::State::Idle));
+		player->ChangeState(Player::State::Idle);
 	}
 }
 
@@ -538,7 +536,7 @@ void StateAttackSword1::Update(float elapsedTime)
 void StateAttackSword2::Init()
 {
 	player->SetAttackJadge(true);
-	player->GetModel()->PlayAnimation(static_cast<int>(Player::Animation::AttackSword2), false);
+	player->PlayAnimation(Player::Animation::AttackSword2, false);
 }
 
 void StateAttackSword2::Update(float elapsedTime)
@@ -558,20 +556,20 @@ void StateAttackSword2::Update(float elapsedTime)
 			player->HorizontalVelocityByAttack(true, 45, elapsedTime);
 		}
 		// 任意のアニメーション再生区間でのみ次の攻撃技を出すようにする
-		else if (player->InputButtonDown(Player::InputState::Sword)
+		else if (player->InputButtonDown(Player::InputState::Attack)
 			&& animationTime >= 0.35f && animationTime <= 0.6f)
 		{
 			player->AddAttackCount();
 			if (player->GetAttackCount() < 4) {
-				player->GetStateMachine()->ChangeState(static_cast<int>(Player::State::AttackSword1));
+				player->ChangeState(Player::State::AttackSword1);
 			}
 			else {
-				player->GetStateMachine()->ChangeState(static_cast<int>(Player::State::AttackSword3));
+				player->ChangeState(Player::State::AttackSword3);
 			}
 		}
 	}
 	else {
-		player->GetStateMachine()->ChangeState(static_cast<int>(Player::State::Idle));
+		player->ChangeState(Player::State::Idle);
 	}
 }
 
@@ -581,7 +579,7 @@ void StateAttackSword2::Update(float elapsedTime)
 void StateAttackSword3::Init()
 {
 	player->SetAttackJadge(true);
-	player->GetModel()->PlayAnimation(static_cast<int>(Player::Animation::AttackSword3), false);
+	player->PlayAnimation(Player::Animation::AttackSword3, false);
 }
 
 void StateAttackSword3::Update(float elapsedTime)
@@ -607,7 +605,7 @@ void StateAttackSword3::Update(float elapsedTime)
 		}
 	}
 	else {
-		player->GetStateMachine()->ChangeState(static_cast<int>(Player::State::Idle));
+		player->ChangeState(Player::State::Idle);
 	}
 }
 
@@ -616,10 +614,10 @@ void StateAttackSword3::Update(float elapsedTime)
 ************************************/
 void StateAttackSwordJump::Init()
 {
-	player->SetAttackType(Player::AttackType::Sword);
+	player->SetAttacking(true);
 	player->SetAttackJadge(true);
 	player->SetMoveAttack(player->InputMove(0));
-	player->GetModel()->PlayAnimation(static_cast<int>(Player::Animation::AttackSwordJump), false);
+	player->PlayAnimation(Player::Animation::AttackSwordJump, false);
 }
 
 void StateAttackSwordJump::Update(float elapsedTime)
@@ -630,6 +628,7 @@ void StateAttackSwordJump::Update(float elapsedTime)
 	{
 		player->UpdateArmPositions(player->GetModel(), Sword);
 		player->CollisionArmsVsEnemies(Sword);
+		player->PlayEffect(Player::EffectNumber::GreenVortex, Sword.position, 0.4f);
 	}
 
 	if (player->GetMoveAttack())
@@ -639,7 +638,7 @@ void StateAttackSwordJump::Update(float elapsedTime)
 	if (!player->GetModel()->IsPlayAnimation())
 	{
 		player->SetMoveAttack(false);
-		player->GetStateMachine()->ChangeState(static_cast<int>(Player::State::Idle));
+		player->ChangeState(Player::State::Idle);
 	}
 
 	//ジャンプ攻撃中は重力を無視する
