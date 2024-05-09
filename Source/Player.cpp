@@ -701,9 +701,7 @@ void Player::CollisionArmsVsEnemies(Arms arm)
 {
 	//指定のノードと全ての敵を総当たりで衝突処理
 	EnemyManager& enemyManager = EnemyManager::Instance();
-	int enemyCount = enemyManager.GetEnemyCount();
-
-	for (int i = 0; i < enemyCount; ++i)
+	for (int i = 0; i < enemyManager.GetEnemyCount(); i++)
 	{
 		Enemy* enemy = enemyManager.GetEnemy(i);
 
@@ -715,41 +713,35 @@ void Player::CollisionArmsVsEnemies(Arms arm)
 			outPosition
 		))
 		{
-			if (attackingEnemyNumber == i && !isAttackJudge) return; //攻撃判定しない場合は処理しない
-
-			//ダメージを与える
-			if (enemy->ApplyDamage(arm.damage, 0, this, this == &Player1P::Instance() ? 0 : 1))
+			// 攻撃判定しない場合はreturn
+			if (attackingEnemyNumber == i && !isAttackJudge) return;
+			// ダメージを与えない場合はreturn
+			if (!enemy->ApplyDamage(arm.damage, 0, this, this == &Player1P::Instance() ? 0 : 1)) return;
+			
+			attackingEnemyNumber = i;
+			isAttackJudge = false;
+			// ヒットエフェクト再生
 			{
-				//吹き飛ばす
-				if (attackCount >= 4)
-				{
-					const float power = 13.0f; //仮の水平の力
-					const XMFLOAT3& ep = enemy->GetPosition();
-
-					//ノックバック方向の算出
-					float vx = ep.x - Player1P::Instance().position.x;
-					float vz = ep.z - Player1P::Instance().position.z;
-					float lengthXZ = sqrtf(vx * vx + vz * vz);
-					vx /= lengthXZ;
-					vz /= lengthXZ;
-
-					//ノックバック力の定義
-					XMFLOAT3 impluse;
-					impluse.x = vx * power;
-					impluse.z = vz * power;
-
-					impluse.y = power * 0.8f;	//上方向にも打ち上げる
-
-					enemy->AddImpulse(impluse);
-				}
-				//ヒットエフェクト再生
-				{
-					outPosition.y += enemy->GetHeight() * enemy->GetEffectOffset_Y();
-					PlayEffect(EffectNumber::Hit, outPosition);
-				}
-				attackingEnemyNumber = i;
-				isAttackJudge = false;
+				outPosition.y += enemy->GetHeight() * enemy->GetEffectOffset_Y();
+				PlayEffect(EffectNumber::Hit, outPosition);
 			}
+
+			// 吹き飛ばしは4回目以上
+			if (attackCount < 4) return;
+
+			// 吹き飛ばし攻撃
+			const float power = 13.0f; //仮の水平の力
+			const XMFLOAT3& ep = enemy->GetPosition();
+
+			// ノックバック方向の算出
+			float vx = ep.x - enemy->GetCurrentAttacker()->position.x;
+			float vz = ep.z - enemy->GetCurrentAttacker()->position.z;
+			float lengthXZ = sqrtf(vx * vx + vz * vz);
+			vx /= lengthXZ;
+			vz /= lengthXZ;
+
+			// ノックバック
+			enemy->AddImpulse({ power * vx , power * 0.8f, power * vz });
 		}
 		else if(attackingEnemyNumber == i)//攻撃中のエネミーと一旦攻撃が外れた時、次回当たった時に判定を行う
 		{

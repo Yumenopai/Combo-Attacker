@@ -53,6 +53,7 @@ float4 main(VS_OUT pin) : SV_TARGET
 	
     //計算結果よりトゥーンシェーダー用のテクスチャから色をフェッチする
     float4 c = toonTex.Sample(linearSampler, float2(p, 0.1f));
+    c = max(c, 0.6);
     color.rgb *= c;
     return color;
 }

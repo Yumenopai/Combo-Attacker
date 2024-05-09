@@ -105,8 +105,9 @@ void SceneGame::Initialize()
 // 終了化
 void SceneGame::Finalize()
 {
-	//エネミー終了化
+	LightManager::Instane().Clear();
 	EnemyManager::Instance().Clear();
+	PlayerManager::Instance().Clear();
 }
 
 void SceneGame::Update(float elapsedTime)

@@ -97,9 +97,9 @@ void EnemyTurtleShell::UpdateEachState(float elapsedTime)
 //追跡ステート更新処理
 void EnemyTurtleShell::UpdatePursuitState(float elapsedTime)
 {
-	if (FirstAttackPlayer != nullptr)
+	if (FirstAttacker != nullptr)
 	{
-		targetPosition = FirstAttackPlayer->GetPosition();
+		targetPosition = FirstAttacker->GetPosition();
 		MoveToTarget(elapsedTime, moveSpeed);
 	}
 
@@ -110,14 +110,16 @@ void EnemyTurtleShell::UpdatePursuitState(float elapsedTime)
 void EnemyTurtleShell::OnDamaged()
 {
 	//ダメージステートへ遷移
-	//TransitionState(State::HitDamage);
+	if (health % 5 == 0) {
+		TransitionState(State::HitDamage);
+	}
 }
 //死亡した時に呼ばれる
 void EnemyTurtleShell::OnDead()
 {
 	// とどめを刺したプレイヤーに武器を与える
 	//LastAttackPlayer->AddHealth(20);
-	LastAttackPlayer->AddHaveArm();
+	LastAttacker->AddHaveArm();
 
 	// 死亡時エフェクト再生
 	PlayEffect(EffectNumber::dead, position, 0.6f);

@@ -21,16 +21,16 @@ void Enemy::DrawDebugPrimitive()
 bool Enemy::ApplyDamage(int damage, float invincibleTime, Player* attacker, int playerNo)
 {
 	// 直近攻撃のプレイヤー
-	CurrentAttackPlayer = attacker;
+	CurrentAttacker = attacker;
 	if (health == maxHealth)
 	{
 		// 一番初めに攻撃したプレイヤー
-		FirstAttackPlayer = attacker;
+		FirstAttacker = attacker;
 	}
 	if (health - damage <= 0)
 	{
 		// とどめを刺したプレイヤー
-		LastAttackPlayer = attacker;
+		LastAttacker = attacker;
 	}
 	bool success = Character::ApplyDamage(damage, invincibleTime);
 	if (success)

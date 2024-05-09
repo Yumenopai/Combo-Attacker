@@ -29,12 +29,15 @@ public:
 
 	//Setter
 	void SetTargetPosition(DirectX::XMFLOAT3& pos) { targetPosition = pos; }
-	void SetFirstAttacker(Player* player) { FirstAttackPlayer = player; }
-	void SetLastAttacker(Player* player) { LastAttackPlayer = player; }
+	void SetFirstAttacker(Player* player) { FirstAttacker = player; }
+	void SetLastAttacker(Player* player) { LastAttacker = player; }
 	void AddAttackedDamage(int playerNo, int addDamage) { attackedDamage[playerNo] += addDamage; }
 
 	//Getter
 	virtual const float GetEffectOffset_Y() = 0;
+	Player* GetFirstAttacker() const { return FirstAttacker; }
+	Player* GetCurrentAttacker() const { return CurrentAttacker; }
+	Player* GetLastAttacker() const { return LastAttacker; }
 
 protected:
 	DirectX::XMFLOAT3 targetPosition = { 0,0,0 };
@@ -42,8 +45,8 @@ protected:
 	int damage;
 
 	// ÉpÉâÉÅÅ[É^
-	Player* FirstAttackPlayer = nullptr;
-	Player* CurrentAttackPlayer = nullptr;
-	Player* LastAttackPlayer = nullptr;
+	Player* FirstAttacker = nullptr;
+	Player* CurrentAttacker = nullptr;
+	Player* LastAttacker = nullptr;
 	int attackedDamage[2] = { 0,0 };
 };
