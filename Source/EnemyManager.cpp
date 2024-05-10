@@ -8,10 +8,6 @@ void EnemyManager::Update(float elapsedTime)
 {
 	for (Enemy* enemy : enemies)
 	{
-		////プレイヤー座標+-25以内の場所のみ更新する
-		//if (enemy->GetPosition().x <= Player::Instance().GetPosition().x + 25
-		//	&& enemy->GetPosition().x >= Player::Instance().GetPosition().x -25)
-			
 		enemy->Update(elapsedTime);
 	}
 
@@ -71,10 +67,11 @@ void EnemyManager::Remove(Enemy* enemy)
 //エネミー全削除
 void EnemyManager::Clear()
 {
-	for (Enemy* enemy : enemies)
-	{
-		delete enemy;
-	}
+	// uniquePointerのためDeleteは不要
+	//for (Enemy* enemy : enemies)
+	//{
+	//	delete enemy;
+	//}
 	enemies.clear();
 }
 

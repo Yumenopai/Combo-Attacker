@@ -70,10 +70,11 @@ void PlayerManager::Remove(Player* player)
 //player‘Síœ
 void PlayerManager::Clear()
 {
-	for (Player* player : players)
-	{
-		delete player;
-	}
+	// uniquePointer‚Ì‚½‚ßDelete‚Í•s—v
+	//for (Player* player : players)
+	//{
+	//	delete player;
+	//}
 	players.clear();
 }
 
