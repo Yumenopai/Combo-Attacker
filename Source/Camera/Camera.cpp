@@ -34,6 +34,15 @@ void Camera::SetLookAt(const DirectX::XMFLOAT3& eye, const DirectX::XMFLOAT3& fo
 	this->focus = focus;
 }
 
+//パースペクティブ設定
+void Camera::SetPerspectiveFov(float fovY, float aspect, float nearZ, float farZ)
+{
+	//画角、画面比率、クリップ距離からプロジェクション行列を作成
+	XMMATRIX Projection = XMMatrixPerspectiveFovLH(fovY, aspect, nearZ, farZ);
+	XMStoreFloat4x4(&projection, Projection);
+}
+
+#pragma region DEBUG_DRAW
 //デバッグメニュー描画
 void Camera::DebugImGui()
 {
@@ -55,13 +64,4 @@ void Camera::DebugImGui()
 		ImGui::End();
 	}
 }
-
-
-
-//パースペクティブ設定
-void Camera::SetPerspectiveFov(float fovY, float aspect, float nearZ, float farZ)
-{
-	//画角、画面比率、クリップ距離からプロジェクション行列を作成
-	XMMATRIX Projection = XMMatrixPerspectiveFovLH(fovY, aspect, nearZ, farZ);
-	XMStoreFloat4x4(&projection, Projection);
-}
+#pragma endregion

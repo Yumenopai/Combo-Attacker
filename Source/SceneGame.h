@@ -39,6 +39,8 @@ private:
 		const DirectX::XMFLOAT4X4& projection
 	);
 
+	//シャドウマップGUI描画
+	void DrawShadowMapGUI();
 	//シーンGUI描画
 	void DrawSceneGUI();
 	//プロパティGUI描画

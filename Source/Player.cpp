@@ -82,17 +82,11 @@ void Player::Init()
 
 void Player::UpdateUtils(float elapsedTime)
 {
-	// 配列ズラし
-	//ShiftTrailPositions();
-
 	// 回復遷移可能か
 	enableRecoverTransition = EnableRecoverTransition();
 
 	// ステート毎に中で処理分け
 	stateMachine->Update(elapsedTime);
-
-	// 剣の軌跡描画更新処理
-	//RenderTrail();
 
 	// ジャンプ処理
 	UpdateJumpState(elapsedTime);
@@ -416,41 +410,6 @@ void Player::RenderHaveArms(ID3D11DeviceContext* dc, Sprite* frame, Sprite* arm)
 	}
 }
 
-void Player::DebugMenu()
-{
-	ImVec2 pos = ImGui::GetMainViewport()->GetWorkPos();
-	ImGui::SetNextWindowPos(ImVec2(pos.x + 10, pos.y + 10), ImGuiCond_FirstUseEver);
-	ImGui::SetNextWindowSize(ImVec2(300, 300), ImGuiCond_FirstUseEver);
-
-	if (ImGui::Begin("Player", nullptr, ImGuiWindowFlags_None))
-	{
-		if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
-		{
-			//位置
-			ImGui::DragFloat3("Position", &position.x, 0.1f);
-
-			//回転
-			XMFLOAT3 a = {};
-			a.x = XMConvertToDegrees(angle.x);
-			a.y = XMConvertToDegrees(angle.y);
-			a.z = XMConvertToDegrees(angle.z);
-			ImGui::DragFloat3("Angle", &a.x, 1.0f);
-			if (a.y > 360) a.y = 0;
-			if (a.y < 0) a.y = 360;
-			angle.x = XMConvertToRadians(a.x);
-			angle.y = XMConvertToRadians(a.y);
-			angle.z = XMConvertToRadians(a.z);
-
-			//スケール
-			ImGui::DragFloat3("Scale", &scale.x, 0.01f);
-		}
-			
-		ImGui::Checkbox("attacking", &isAttackJudge);
-
-		ImGui::End();
-	}
-}
-
 //着地した時に呼ばれる
 void Player::OnLanding(float elapsedTime)
 {
@@ -510,48 +469,6 @@ void Player::HorizontalVelocityByAttack(bool plus, int velo, float elapsedTime)
 	{
 		velocity.x = sinf(angle.y) * velo * elapsedTime;
 		velocity.z = cosf(angle.y) * velo * elapsedTime;
-	}
-}
-
-void Player::ShiftTrailPositions()
-{
-	for (int i = MAX_POLYGON - 1; i > 0; i--)
-	{
-		// 後ろへずらしていく
-		trailPositions[0][i] = trailPositions[0][i - 1];
-		trailPositions[1][i] = trailPositions[1][i - 1];
-	}
-}
-void Player::RenderTrail() const
-{
-	// ポリゴン作成
-	PrimitiveRenderer* primitiveRenderer = Graphics::Instance().GetPrimitiveRenderer();
-	for (int i = 0; i < MAX_POLYGON - 3; ++i)
-	{
-		const int division = 10;
-
-		XMVECTOR RPos1 = XMLoadFloat3(&trailPositions[0][i + 0]);
-		XMVECTOR RPos2 = XMLoadFloat3(&trailPositions[0][i + 1]);
-		XMVECTOR RPos3 = XMLoadFloat3(&trailPositions[0][i + 2]);
-		XMVECTOR RPos4 = XMLoadFloat3(&trailPositions[0][i + 3]);
-		XMVECTOR TPos1 = XMLoadFloat3(&trailPositions[1][i + 0]);
-		XMVECTOR TPos2 = XMLoadFloat3(&trailPositions[1][i + 1]);
-		XMVECTOR TPos3 = XMLoadFloat3(&trailPositions[1][i + 2]);
-		XMVECTOR TPos4 = XMLoadFloat3(&trailPositions[1][i + 3]);
-		for (int j = 1; j < division; ++j)
-		{
-			float t = j / static_cast<float>(division);
-
-			XMFLOAT3 Position[2] = {};
-			DirectX::XMStoreFloat3(&Position[0], XMVectorCatmullRom(RPos1, RPos2, RPos3, RPos4, t));
-			DirectX::XMStoreFloat3(&Position[1], XMVectorCatmullRom(TPos1, TPos2, TPos3, TPos4, t));
-
-			if (isAddVertex)
-			{
-				primitiveRenderer->AddVertex(Position[0], color);
-				primitiveRenderer->AddVertex(Position[1], color);
-			}
-		}
 	}
 }
 
@@ -736,6 +653,7 @@ void Player::ForceTurnByAttack(float elapsedTime)
 		Turn(elapsedTime, nearestVec.x, nearestVec.z, turnSpeed);
 	}
 }
+
 //プレイヤーとエネミーとの衝突処理
 void Player::CollisionPlayerVsEnemies()
 {
@@ -822,6 +740,7 @@ void Player::CollisionArmsVsEnemies(Arms arm)
 	}
 }
 
+#pragma region DEBUG_DRAW
 //デバッグプリミティブ描画
 void Player::DrawDebugPrimitive() const
 {
@@ -869,3 +788,39 @@ void Player::DrawDebugPrimitive() const
 	//描画実行
 	gizmos->Render(rc);
 }
+
+void Player::DebugMenu()
+{
+	ImVec2 pos = ImGui::GetMainViewport()->GetWorkPos();
+	ImGui::SetNextWindowPos(ImVec2(pos.x + 10, pos.y + 10), ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowSize(ImVec2(300, 300), ImGuiCond_FirstUseEver);
+
+	if (ImGui::Begin("Player", nullptr, ImGuiWindowFlags_None))
+	{
+		if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
+		{
+			//位置
+			ImGui::DragFloat3("Position", &position.x, 0.1f);
+
+			//回転
+			XMFLOAT3 a = {};
+			a.x = XMConvertToDegrees(angle.x);
+			a.y = XMConvertToDegrees(angle.y);
+			a.z = XMConvertToDegrees(angle.z);
+			ImGui::DragFloat3("Angle", &a.x, 1.0f);
+			if (a.y > 360) a.y = 0;
+			if (a.y < 0) a.y = 360;
+			angle.x = XMConvertToRadians(a.x);
+			angle.y = XMConvertToRadians(a.y);
+			angle.z = XMConvertToRadians(a.z);
+
+			//スケール
+			ImGui::DragFloat3("Scale", &scale.x, 0.01f);
+		}
+
+		ImGui::Checkbox("attacking", &isAttackJudge);
+
+		ImGui::End();
+	}
+}
+#pragma endregion

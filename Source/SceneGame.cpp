@@ -378,30 +378,15 @@ void SceneGame::Render()
 	}
 
 	//デバッグメニュー描画
-	//DrawSceneGUI();
-	//DrawPropertyGUI();
-	camera.DebugImGui();
-	player1P->DebugMenu();
-	playerAI->DebugMenu();
-	enemyBlue->DebugMenu();
-
-#if 0
-	// shadowMap
 	{
-		ShadowMap* shadowMap = Graphics::Instance().GetShadowMap();
-
-		ImVec2 pos = ImGui::GetMainViewport()->GetWorkPos();
-		ImGui::SetNextWindowPos(ImVec2(pos.x + 10, pos.y + 10), ImGuiCond_FirstUseEver);
-		ImGui::SetNextWindowSize(ImVec2(300, 300), ImGuiCond_FirstUseEver);
-
-		ImGui::Begin("ShadowMap", nullptr, ImGuiWindowFlags_None);
-
-		ImGui::Image(shadowMap->GetShaderResourceView(), ImVec2(200, 200));
-
-		ImGui::End();
+		//DrawSceneGUI();
+		//DrawPropertyGUI();
+		//DrawShadowMapGUI();
+		camera.DebugImGui();
+		player1P->DebugMenu();
+		playerAI->DebugMenu();
+		enemyBlue->DebugMenu();
 	}
-
-#endif
 #endif
 }
 
@@ -505,6 +490,22 @@ void SceneGame::RenderEnemyGauge(ID3D11DeviceContext* dc, const DirectX::XMFLOAT
 	}
 }
 
+#pragma region DEBUG_DRAW
+//シャドウマップGUI描画
+void SceneGame::DrawShadowMapGUI()
+{
+	ShadowMap* shadowMap = Graphics::Instance().GetShadowMap();
+
+	ImVec2 pos = ImGui::GetMainViewport()->GetWorkPos();
+	ImGui::SetNextWindowPos(ImVec2(pos.x + 10, pos.y + 10), ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowSize(ImVec2(300, 300), ImGuiCond_FirstUseEver);
+
+	ImGui::Begin("ShadowMap", nullptr, ImGuiWindowFlags_None);
+
+	ImGui::Image(shadowMap->GetShaderResourceView(), ImVec2(200, 200));
+
+	ImGui::End();
+}
 
 //シーンGUI描画
 void SceneGame::DrawSceneGUI()
@@ -621,3 +622,4 @@ void SceneGame::DrawPropertyGUI()
 
 	ImGui::End();
 }
+#pragma endregion

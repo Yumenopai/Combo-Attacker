@@ -444,6 +444,7 @@ void EnemyBlue::CollisionNodeVsPlayer(const char* nodeName, float nodeRadius)
 	}
 }
 
+#pragma region DEBUG_DRAW
 void EnemyBlue::DebugMenu()
 {
 	ImVec2 pos = ImGui::GetMainViewport()->GetWorkPos();
@@ -507,3 +508,4 @@ void EnemyBlue::DebugMenu()
 		ImGui::End();
 	}
 }
+#pragma endregion
