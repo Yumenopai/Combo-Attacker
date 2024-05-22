@@ -64,9 +64,12 @@ void SceneGame::Initialize()
 	skyBox = std::make_unique<SkyBox>("Data/Texture/incskies_002_8k.png");
 
 	// load sprite
-	spriteFrame = std::make_unique<Sprite>(device, "Data/Sprite/frame.png");
-	spriteArm = std::make_unique<Sprite>(device, "Data/Sprite/arm.png");
-	spriteName = std::make_unique<Sprite>(device, "Data/Sprite/Name.png");
+	spriteButtonFrame = std::make_unique<Sprite>(device, "Data/Sprite/frame.png");
+	spriteArmIcon = std::make_unique<Sprite>(device, "Data/Sprite/arm.png");
+	spriteNameOnButton = std::make_unique<Sprite>(device, "Data/Sprite/Name.png");
+	spriteMissionFrame = std::make_unique<Sprite>(device, "Data/Sprite/missionFrame.png");
+	spriteMissionText = std::make_unique<Sprite>(device, "Data/Sprite/missionText.png");
+	spriteMessageText = std::make_unique<Sprite>(device, "Data/Sprite/message.png");
 	
 	font = std::make_unique<FontSprite>(device, "Data/Font/font6.png", 256);
 	gauge = std::make_unique<Sprite>(device);
@@ -222,7 +225,7 @@ void SceneGame::Render()
 		// エネミーHP
 		RenderEnemyGauge(dc, rc.view, rc.projection);
 		// プレイヤー2DRender
-		PlayerManager::Instance().Render2d(rc, gauge.get(), font.get(), spriteFrame.get(), spriteArm.get());
+		PlayerManager::Instance().Render2d(rc, gauge.get(), font.get(), spriteButtonFrame.get(), spriteArmIcon.get(),spriteMessageText.get());
 	}
 	//2DSprite
 	{
@@ -243,84 +246,112 @@ void SceneGame::Render()
 		//}
 
 		//AttackButton
-		spriteFrame->Render(dc, { 1150.0f, 250.0f, 0.0f }, { 80, 80 }, { 0, 0 }, spriteSize, 0, { 1, 1, 1, 1 });
-		spriteFrame->Render(dc, { 1100.0f, 300.0f, 0.0f }, { 80, 80 }, { 0, 0 }, spriteSize, 0, { 1, 1, 1, 1 });
-		spriteFrame->Render(dc, { 1200.0f, 300.0f, 0.0f }, { 80, 80 }, { 0, 0 }, spriteSize, 0, { 1, 1, 1, 1 });
-		spriteFrame->Render(dc, { 1150.0f, 350.0f, 0.0f }, { 80, 80 }, { spriteSize.x, 0 }, spriteSize, 0, { 1, 1, 1, 1 });
+		spriteButtonFrame->Render(dc, { 1150.0f, 250.0f, 0.0f }, { 80, 80 }, { 0, 0 }, spriteSize, 0, { 1, 1, 1, 1 });
+		spriteButtonFrame->Render(dc, { 1100.0f, 300.0f, 0.0f }, { 80, 80 }, { 0, 0 }, spriteSize, 0, { 1, 1, 1, 1 });
+		spriteButtonFrame->Render(dc, { 1200.0f, 300.0f, 0.0f }, { 80, 80 }, { 0, 0 }, spriteSize, 0, { 1, 1, 1, 1 });
+		spriteButtonFrame->Render(dc, { 1150.0f, 350.0f, 0.0f }, { 80, 80 }, { spriteSize.x, 0 }, spriteSize, 0, { 1, 1, 1, 1 });
 
-		float spSize_x = 0;
+		float spriteOffset_x = 0;
 		//X：左 Player
 		auto next1P = Player1P::Instance().GetNextArm();
 		if (next1P == Player1P::Instance().GetCurrentUseArm())
 		{
-			spSize_x = spriteSize.x * 4;
+			spriteOffset_x = spriteSize.x * 4;
 		}
 		else
 		{
 			switch (next1P)
 			{
 			case Player::AttackType::Sword:
-				spSize_x = spriteSize.x;
+				spriteOffset_x = spriteSize.x;
 				break;
 			case Player::AttackType::Spear:
-				spSize_x = spriteSize.x * 3;
+				spriteOffset_x = spriteSize.x * 3;
 				break;
 			case Player::AttackType::Hammer:
-				spSize_x = spriteSize.x * 2;
+				spriteOffset_x = spriteSize.x * 2;
 				break;
 			}
 
 		}
-		spriteArm->Render(dc, { 1100.0f + 15.0f, 300.0f + 10.0f, 0.0f }, { 50, 50 }, { spSize_x, spriteSize.y }, spriteSize, 0, { 1, 1, 1, 1 });
+		spriteArmIcon->Render(dc, { 1100.0f + 15.0f, 300.0f + 10.0f, 0.0f }, { 50, 50 }, { spriteOffset_x, spriteSize.y }, spriteSize, 0, { 1, 1, 1, 1 });
 		//Y：上 Buddy
 		if (Player1P::Instance().GetEnableRecoverTransition())
 		{
-			spSize_x = 0;
+			spriteOffset_x = 0;
 		}
 		else
 		{
 			auto nextAI = PlayerAI::Instance().GetNextArm();
 			if (nextAI == PlayerAI::Instance().GetCurrentUseArm())
 			{
-				spSize_x = spriteSize.x * 4;
+				spriteOffset_x = spriteSize.x * 4;
 			}
 			else
 			{
 				switch (nextAI)
 				{
 				case Player::AttackType::Sword:
-					spSize_x = spriteSize.x;
+					spriteOffset_x = spriteSize.x;
 					break;
 				case Player::AttackType::Spear:
-					spSize_x = spriteSize.x * 3;
+					spriteOffset_x = spriteSize.x * 3;
 					break;
 				case Player::AttackType::Hammer:
-					spSize_x = spriteSize.x * 2;
+					spriteOffset_x = spriteSize.x * 2;
 					break;
 				}
 			}
 		}
-		spriteArm->Render(dc, { 1150.0f + 15.0f, 250.0f + 10.0f, 0.0f }, { 50, 50 }, { spSize_x, spriteSize.y }, spriteSize, 0, { 1, 1, 1, 1 });
+		spriteArmIcon->Render(dc, { 1150.0f + 15.0f, 250.0f + 10.0f, 0.0f }, { 50, 50 }, { spriteOffset_x, spriteSize.y }, spriteSize, 0, { 1, 1, 1, 1 });
 		//B：右 Attack
 		switch (Player1P::Instance().GetCurrentUseArm())
 		{
 		case Player::AttackType::Sword:
-			spSize_x = spriteSize.x;
+			spriteOffset_x = spriteSize.x;
 			break;
 		case Player::AttackType::Spear:
-			spSize_x = spriteSize.x * 3;
+			spriteOffset_x = spriteSize.x * 3;
 			break;
 		case Player::AttackType::Hammer:
-			spSize_x = spriteSize.x * 2;
+			spriteOffset_x = spriteSize.x * 2;
 			break;
 		}
-		spriteArm->Render(dc, { 1200.0f + 15.0f, 300.0f + 10.0f, 0.0f }, { 50, 50 }, { spSize_x, 0 }, spriteSize, 0, { 1, 1, 1, 1 });
+		spriteArmIcon->Render(dc, { 1200.0f + 15.0f, 300.0f + 10.0f, 0.0f }, { 50, 50 }, { spriteOffset_x, 0 }, spriteSize, 0, { 1, 1, 1, 1 });
 		//A：下 Jump
-		spriteArm->Render(dc, { 1150.0f + 15.0f, 350.0f + 10.0f, 0.0f }, { 50, 50 }, { 0, 0 }, spriteSize, 0, { 1, 1, 1, 1 });
+		spriteArmIcon->Render(dc, { 1150.0f + 15.0f, 350.0f + 10.0f, 0.0f }, { 50, 50 }, { 0, 0 }, spriteSize, 0, { 1, 1, 1, 1 });
 
 		// 名前
-		spriteName->Render(dc, { 1100.0f + 15.0f, 300.0f + 10.0f, 0.0f }, { 50, 25 }, { 0, 0 }, { spriteSize.x,spriteSize.y / 2 }, 0, { 1, 1, 1, 1 });
-		spriteName->Render(dc, { 1150.0f + 15.0f, 250.0f + 10.0f, 0.0f }, { 50, 25 }, { 0, 150 }, { spriteSize.x,spriteSize.y / 2 }, 0, { 1, 1, 1, 1 });
+		spriteNameOnButton->Render(dc, { 1100.0f + 15.0f, 300.0f + 10.0f, 0.0f }, { 50, 25 }, { 0, 0 }, { spriteSize.x, spriteSize.y / 2 }, 0, { 1, 1, 1, 1 });
+		spriteNameOnButton->Render(dc, { 1150.0f + 15.0f, 250.0f + 10.0f, 0.0f }, { 50, 25 }, { 0, 150 }, { spriteSize.x, spriteSize.y / 2 }, 0, { 1, 1, 1, 1 });
+	}
+
+	// mission
+	{
+		spriteMissionFrame->Render(dc, { 1040.0f, 10.0f, 0.0f }, { 225, 150 }, { 0, 0 }, missionSpriteSize, 0, { 1, 1, 1, 1 });
+		
+		spriteTimer++;
+		if (spriteTimer > 180)
+		{
+			spriteTimer = 0;
+			if (PlayerAI::Instance().GetHpWorning())
+			{
+				missionSpriteNumber = 3;
+			}
+			else
+			{
+				missionSpriteNumber++;
+
+				bool have = PlayersHaveAnySameArm();
+				if ((have && missionSpriteNumber == 3) ||
+					(!have && missionSpriteNumber == 2))
+				{
+					missionSpriteNumber = 0;
+				}
+			}
+		}
+		
+		spriteMissionText->Render(dc, { 1040.0f, 10.0f, 0.0f }, { 225, 150 }, missionSpriteOffset[missionSpriteNumber], missionSpriteSize, 0, {1, 1, 1, 1});
 	}
 	
 	//gizmos
@@ -336,7 +367,7 @@ void SceneGame::Render()
 	UINT sampleMask = 0xFFFFFFFF;
 	dc->OMSetBlendState(renderState->GetBlendState(BlendState::Transparency), blendFactor, sampleMask);
 
-#if showDebug//def _DEBUG
+#if _DEBUG
 	// 3Dデバッグ描画
 	{
 		//プレイヤーデバッグプリミティブ描画
@@ -372,6 +403,19 @@ void SceneGame::Render()
 
 #endif
 #endif
+}
+
+bool SceneGame::PlayersHaveAnySameArm()
+{
+	for (int i = 0; i < SC_INT(Player::AttackType::MaxCount); i++)
+	{
+		if (Player1P::Instance().GetHaveEachArm(SC_AT(i))
+			&& PlayerAI::Instance().GetHaveEachArm(SC_AT(i)))
+		{
+			return true;
+		}
+	}
+	return false;
 }
 
 // エネミーHPゲージ描画
@@ -461,6 +505,7 @@ void SceneGame::RenderEnemyGauge(ID3D11DeviceContext* dc, const DirectX::XMFLOAT
 	}
 }
 
+
 //シーンGUI描画
 void SceneGame::DrawSceneGUI()
 {
@@ -476,7 +521,7 @@ void SceneGame::DrawSceneGUI()
 			ImGui::DragFloat3("Position", &position.x, 0.1f);
 
 			//回転
-			XMFLOAT3 a;
+			XMFLOAT3 a = {};
 			a.x = XMConvertToDegrees(angle.x);
 			a.y = XMConvertToDegrees(angle.y);
 			a.z = XMConvertToDegrees(angle.z);
@@ -555,7 +600,7 @@ void SceneGame::DrawPropertyGUI()
 			ImGui::DragFloat3("Position", &selectionNode->position.x, 0.1f);
 
 			//回転
-			XMFLOAT3 angle;
+			XMFLOAT3 angle = {};
 			TransformUtils::QuaternionToRollPitchYaw(selectionNode->rotation, angle.x, angle.y, angle.z);
 			angle.x = XMConvertToDegrees(angle.x);
 			angle.y = XMConvertToDegrees(angle.y);

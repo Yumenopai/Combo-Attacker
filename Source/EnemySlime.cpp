@@ -16,7 +16,7 @@ EnemySlime::EnemySlime()
 	height = 1.0f;
 	health = maxHealth = 30;
 
-	damage = 2;
+	attackDamage = 2;
 	//待機ステートへ遷移
 	TransitionState(State::Idle);
 }
@@ -103,6 +103,18 @@ void EnemySlime::OnDamaged()
 //死亡した時に呼ばれる
 void EnemySlime::OnDead()
 {
+	int i = 0;
+	// 与えたダメージ量が少なすぎるとLevelをあげない
+	for (Player* player : PlayerManager::Instance().players)
+	{
+		if (attackedDamage[i] > (maxHealth / 5)) {
+			player->AddLevel(1);
+		}
+		i++;
+	}
+	// 最もダメージを与えたプレイヤーはさらにLevelUp
+	GetMostAttackPlayer()->AddLevel(1);
+
 	//自身を破棄
 	Destroy();
 }
@@ -220,7 +232,7 @@ void EnemySlime::CollisionNodeVsPlayer(const char* nodeName, float nodeRadius)
 	if (node == nullptr) return;
 
 	//ノード位置取得
-	XMFLOAT3 nodePosition;
+	XMFLOAT3 nodePosition = {};
 	nodePosition.x = node->worldTransform._41;
 	nodePosition.y = node->worldTransform._42;
 	nodePosition.z = node->worldTransform._43;
@@ -236,10 +248,10 @@ void EnemySlime::CollisionNodeVsPlayer(const char* nodeName, float nodeRadius)
 		))
 		{
 			//ダメージを与える
-			if (player->ApplyDamage(damage))
+			if (player->ApplyDamage(attackDamage))
 			{
 				//敵を吹っ飛ばすベクトルを算出
-				XMFLOAT3 vec;
+				XMFLOAT3 vec = {};
 				vec.x = outPosition.x - nodePosition.x;
 				vec.z = outPosition.z - nodePosition.z;
 				float length = sqrtf(vec.x * vec.x + vec.z * vec.z);

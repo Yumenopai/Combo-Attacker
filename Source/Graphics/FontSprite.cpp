@@ -14,7 +14,7 @@ FontSprite::FontSprite(ID3D11Device* device, const char* filename, size_t max_sp
 	{
 		//頂点バッファを作成するための設定オプション
 		D3D11_BUFFER_DESC buffer_desc = {};
-		buffer_desc.ByteWidth = sizeof(Vertex) * max_vertices;
+		buffer_desc.ByteWidth = static_cast<int>(sizeof(Vertex) * max_vertices);
 		//USAGE_DYNAMIC,CPU_ACCESS_WRITEを指定することで毎フレーム頂点を編集できるようになる
 		buffer_desc.Usage = D3D11_USAGE_DYNAMIC;
 		buffer_desc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
@@ -68,7 +68,7 @@ FontSprite::FontSprite(ID3D11Device* device, const char* filename, size_t max_sp
 			//テクスチャファイル読み込み
 			D3D11_TEXTURE2D_DESC desc;
 			hr = GpuResourceUtils::LoadTexture(device, filename, shaderResourceView.GetAddressOf(), &desc); //テクスチャ読み込み時にテクスチャサイズを取得
-			_ASSERT(SUCCEEDED(hr), HRTrace(hr));
+			_ASSERT_EXPR(SUCCEEDED(hr), HRTrace(hr));
 
 			textureWidth = static_cast<float>(desc.Width);
 			textureHeight = static_cast<float>(desc.Height);

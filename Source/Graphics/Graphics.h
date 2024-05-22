@@ -107,8 +107,8 @@ private:
 	Microsoft::WRL::ComPtr<ID3D11Texture2D>			depthStencilBuffer;
 	Microsoft::WRL::ComPtr<ID3D11DepthStencilView>	depthStencilView;
 
-	float screenWidth;
-	float screenHeight;
+	float screenWidth = 0.0f;
+	float screenHeight = 0.0f;
 
 	std::unique_ptr<FrameBuffer> frameBuffers[static_cast<int>(FrameBufferId::EnumCount)];
 	std::unique_ptr<RenderState> renderState;

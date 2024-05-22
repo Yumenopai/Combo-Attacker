@@ -28,6 +28,5 @@ private:
 	Input					input;
 
 	bool isSlow = false;
-	bool showDebug = false;
 };
 

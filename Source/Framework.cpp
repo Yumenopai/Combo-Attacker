@@ -85,7 +85,7 @@ void Framework::Render(float elapsedTime)
 	ImGui::ShowDemoWindow();
 
 #endif
-#if showDebug//def _DEBUG 
+#if _DEBUG 
 
 	ImGui::Checkbox("slow", &isSlow);
 	

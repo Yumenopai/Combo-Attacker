@@ -154,9 +154,13 @@ void Player::UpdateEnemyDistance(float elapsedTime)
 		}
 
 		/***********************/
-		// 最近エネミーの登録
 		if (dist < nearestDist) 
 		{
+			// secondEnemyの登録
+			secondDist = nearestDist;
+			secondDistEnemyVec = nearestVec;
+
+			// 最近エネミーの登録
 			nearestEnemy = enemy;
 			nearestDist = dist;
 			currentEnemySearch = enemySearch[enemy];
@@ -254,17 +258,20 @@ void Player::PrimitiveRender(const RenderContext& rc)
 }
 
 // HP描画
-void Player::RenderHPBar(ID3D11DeviceContext* dc, Sprite* gauge, FontSprite* font)
+void Player::RenderHPBar(ID3D11DeviceContext* dc, Sprite* gauge, FontSprite* font) const
 {
-	const int frameExpansion = 6;
+	const float frameExpansion = 6;
 	Graphics& graphics = Graphics::Instance();
 	const float screenWidth = static_cast<float>(graphics.GetScreenWidth());
 
 	// 名前表示
 	font->Textout(dc, characterName, 200, hpGuage_Y - 7.0f, 1.0f, { -10, 10, 0 }, 12, 16, 32, 32, 16, 16, 0, nameColor);
+	// Lv表示
+	std::string levelStr = "Lv:" + std::to_string(currentLevel);
+	font->Textout(dc, levelStr, 800, hpGuage_Y + 12.0f, 1.0f, { -10, 10, 0 }, 12, 16, 32, 32, 16, 16, 0, nameColor);
 	// HP表示
-	std::string hpDisplay = std::to_string(GetHealth()) + '/' + std::to_string(GetMaxHealth());
-	font->Textout(dc, hpDisplay, 900, hpGuage_Y + 12.0f, 1.0f, { -10, 10, 0 }, 12, 16, 32, 32, 16, 16, 0, nameColor);
+	std::string hpStr = std::to_string(GetHealth()) + '/' + std::to_string(GetMaxHealth());
+	font->Textout(dc, hpStr, 900, hpGuage_Y + 12.0f, 1.0f, { -10, 10, 0 }, 12, 16, 32, 32, 16, 16, 0, nameColor);
 
 	//ゲージ描画(下地)
 	gauge->Render(dc,
@@ -295,7 +302,7 @@ void Player::RenderHPBar(ID3D11DeviceContext* dc, Sprite* gauge, FontSprite* fon
 }
 
 // キャラクター名前描画
-void Player::RenderCharacterName(const RenderContext& rc, FontSprite* font)
+void Player::RenderCharacterOverHead(const RenderContext& rc, FontSprite* font, Sprite* message)
 {
 	const DirectX::XMFLOAT4X4& view = rc.view;
 	const DirectX::XMFLOAT4X4& projection = rc.projection;
@@ -334,6 +341,7 @@ void Player::RenderCharacterName(const RenderContext& rc, FontSprite* font)
 	//カメラの背後にいるか、明らかに離れているなら描画しない
 	if (screenPosition.z > 0.0f && screenPosition.z < 1.0f)
 	{
+		// 名前
 		font->Textout(rc.deviceContext, characterName,
 			0,
 			screenPosition.y,
@@ -341,6 +349,42 @@ void Player::RenderCharacterName(const RenderContext& rc, FontSprite* font)
 			{ screenPosition.x - 12 * 5, 0, 0 },
 			12, 16,
 			32, 32, 16, 16, 0, nameColor);
+
+		// メッセージ
+		if (messageNumber == 0 || messageNumber == 1)
+		{
+			const DirectX::XMFLOAT2 spriteSize = { 600.0f,100.f };
+			messageYTimer += 0.2f;
+			message->Render(rc.deviceContext, { screenPosition.x - 60, screenPosition.y - 5.0f - messageYTimer, 0 }, { 180, 30 }, { spriteSize.x, spriteSize.y * messageNumber }, spriteSize, 0, { 1, 1, 1, 1 });
+			
+			if (messageYTimer > 10.0f)
+			{
+				enableShowMessage[messageNumber] = false;
+				messageNumber = -1;
+			}
+		}
+		else if (enableShowMessage[0])
+		{
+			messageNumber = 0;
+			messageYTimer = 0.0;
+		}
+		else if (enableShowMessage[1])
+		{
+			messageNumber = 1;
+			messageYTimer = 0.0;
+		}
+		else
+		{
+			for (int i = SC_INT(MessageNotification::Attack); i < SC_INT(MessageNotification::MaxCount); i++)
+			{
+				if (enableShowMessage[i])
+				{
+					const DirectX::XMFLOAT2 spriteSize = { 600.0f,100.f };
+					message->Render(rc.deviceContext, { screenPosition.x - 60, screenPosition.y - 5.0f, 0 }, { 180, 30 }, { spriteSize.x, spriteSize.y * i }, spriteSize, 0, { 1, 1, 1, 1 });
+					break;
+				}
+			}
+		}
 	}
 }
 
@@ -351,23 +395,24 @@ void Player::RenderHaveArms(ID3D11DeviceContext* dc, Sprite* frame, Sprite* arm)
 	//HaveArmFrame
 	for (int i = 0; i < HaveArms.size(); i++)
 	{
-		float spSize_x = 0;
-		if (i == SC_INT(CurrentUseArm)) spSize_x = spriteSize.x;
-		else spSize_x = HaveArms[SC_AT(i)] ? spriteSize.x * 2 : 0;
+		float spriteOffset_x = 0;
+		if (i == SC_INT(CurrentUseArm)) spriteOffset_x = spriteSize.x;
+		else spriteOffset_x = HaveArms[SC_AT(i)] ? spriteSize.x * 2 : 0;
 
-		frame->Render(dc, { 1000.0f + 65 * i, hpGuage_Y - 10.0f, 0.0f }, { 70, 70 }, { spSize_x, spriteSize.y }, spriteSize, 0, { 1, 1, 1, 1 });
+		frame->Render(dc, { 1000.0f + 65 * i, hpGuage_Y - 10.0f, 0.0f }, { 70, 70 }, { spriteOffset_x, spriteSize.y }, spriteSize, 0, { 1, 1, 1, 1 });
 	}
 	//HaveArm
 	for (int i = 0; i < HaveArms.size(); i++)
 	{
-		float spSize_x = spriteSize.x * (i + 1);
-		float spSize_y = 0;
-		if (SC_AT(i) != CurrentUseArm && SC_AT(i) == GetNextArm()) {
-			spSize_y = spriteSize.y;
-		}
+		float spriteOffset_x = spriteSize.x * (i + 1);
+		float spriteOffset_y = 0;
+		//if (SC_AT(i) != CurrentUseArm && SC_AT(i) == GetNextArm()) {
+		//	spriteOffset_y = spriteSize.y;
+		//}
 
-		float color_a = HaveArms[SC_AT(i)] ? 1.0f : 0.5f;
-		arm->Render(dc, { 1013.0f + 65 * i, hpGuage_Y + 2.0f, 0.0f }, { 45, 45 }, { spSize_x, spSize_y }, spriteSize, 0, { 1, 1, 1, color_a });
+		float color_a = HaveArms[SC_AT(i)] ? 1.0f : 0.3f;
+		float color_rb = (SC_AT(i) == CurrentUseArm) ? 0.4f : 1.0f;
+		arm->Render(dc, { 1013.0f + 65 * i, hpGuage_Y + 2.0f, 0.0f }, { 45, 45 }, { spriteOffset_x, spriteOffset_y }, spriteSize, 0, { color_rb, 1, color_rb, color_a });
 	}
 }
 
@@ -385,7 +430,7 @@ void Player::DebugMenu()
 			ImGui::DragFloat3("Position", &position.x, 0.1f);
 
 			//回転
-			XMFLOAT3 a;
+			XMFLOAT3 a = {};
 			a.x = XMConvertToDegrees(angle.x);
 			a.y = XMConvertToDegrees(angle.y);
 			a.z = XMConvertToDegrees(angle.z);
@@ -477,7 +522,7 @@ void Player::ShiftTrailPositions()
 		trailPositions[1][i] = trailPositions[1][i - 1];
 	}
 }
-void Player::RenderTrail()
+void Player::RenderTrail() const
 {
 	// ポリゴン作成
 	PrimitiveRenderer* primitiveRenderer = Graphics::Instance().GetPrimitiveRenderer();
@@ -497,7 +542,7 @@ void Player::RenderTrail()
 		{
 			float t = j / static_cast<float>(division);
 
-			XMFLOAT3 Position[2];
+			XMFLOAT3 Position[2] = {};
 			DirectX::XMStoreFloat3(&Position[0], XMVectorCatmullRom(RPos1, RPos2, RPos3, RPos4, t));
 			DirectX::XMStoreFloat3(&Position[1], XMVectorCatmullRom(TPos1, TPos2, TPos3, TPos4, t));
 
@@ -550,20 +595,39 @@ bool Player::InputAttackFromNoneAttack()
 {
 	// 押されていない時はreturn
 	if (!InputButtonDown(Player::InputState::Attack)) return false;
+	enableSpecialAttack = true;
 
-	switch (CurrentUseArm)
-	{
-	case Player::AttackType::Hammer:
-		ChangeState(State::AttackHammer1);
-		break;
-	case Player::AttackType::Spear:
-		ChangeState(State::AttackSpear1);
-		break;
-	case Player::AttackType::Sword:
-		ChangeState(State::AttackSword1);
-		break;
+	if (targetPlayer->enableSpecialAttack
+		&& targetPlayer->CurrentUseArm == this->CurrentUseArm
+		) {
+		switch (CurrentUseArm)
+		{
+		case Player::AttackType::Hammer:
+			ChangeState(State::AttackHammerJump);
+			break;
+		case Player::AttackType::Spear:
+			ChangeState(State::AttackSpearJump);
+			break;
+		case Player::AttackType::Sword:
+			ChangeState(State::AttackSwordJump);
+			break;
+		}
 	}
-
+	else
+	{
+		switch (CurrentUseArm)
+		{
+		case Player::AttackType::Hammer:
+			ChangeState(State::AttackHammer1);
+			break;
+		case Player::AttackType::Spear:
+			ChangeState(State::AttackSpear1);
+			break;
+		case Player::AttackType::Sword:
+			ChangeState(State::AttackSword1);
+			break;
+		}
+	}
 	return true;
 }
 bool Player::InputAttackFromJump(float elapsedTime)
@@ -713,13 +777,20 @@ void Player::CollisionArmsVsEnemies(Arms arm)
 			outPosition
 		))
 		{
+			// スペシャル技false
+			enableSpecialAttack = false;
+
 			// 攻撃判定しない場合はreturn
 			if (attackingEnemyNumber == i && !isAttackJudge) return;
+
+			int damage = arm.damage + static_cast<int>(currentLevel * 0.2f);
 			// ダメージを与えない場合はreturn
-			if (!enemy->ApplyDamage(arm.damage, 0, this, this == &Player1P::Instance() ? 0 : 1)) return;
-			
+			if (!enemy->ApplyDamage(damage, 0, this, this == &Player1P::Instance() ? 0 : 1)) return;
+
+			currentAttackEnemy = enemy;
 			attackingEnemyNumber = i;
 			isAttackJudge = false;
+			allDamage += damage;
 			// ヒットエフェクト再生
 			{
 				outPosition.y += enemy->GetHeight() * enemy->GetEffectOffset_Y();
@@ -727,21 +798,22 @@ void Player::CollisionArmsVsEnemies(Arms arm)
 			}
 
 			// 吹き飛ばしは4回目以上
-			if (attackCount < 4) return;
+			if (attackCount >= 4)
+			{
+				// 吹き飛ばし攻撃
+				const float power = 13.0f; //仮の水平の力
+				const XMFLOAT3& ep = enemy->GetPosition();
 
-			// 吹き飛ばし攻撃
-			const float power = 13.0f; //仮の水平の力
-			const XMFLOAT3& ep = enemy->GetPosition();
+				// ノックバック方向の算出
+				float vx = ep.x - enemy->GetCurrentAttacker()->position.x;
+				float vz = ep.z - enemy->GetCurrentAttacker()->position.z;
+				float lengthXZ = sqrtf(vx * vx + vz * vz);
+				vx /= lengthXZ;
+				vz /= lengthXZ;
 
-			// ノックバック方向の算出
-			float vx = ep.x - enemy->GetCurrentAttacker()->position.x;
-			float vz = ep.z - enemy->GetCurrentAttacker()->position.z;
-			float lengthXZ = sqrtf(vx * vx + vz * vz);
-			vx /= lengthXZ;
-			vz /= lengthXZ;
-
-			// ノックバック
-			enemy->AddImpulse({ power * vx , power * 0.8f, power * vz });
+				// ノックバック
+				enemy->AddImpulse({ power * vx , power * 0.8f, power * vz });
+			}
 		}
 		else if(attackingEnemyNumber == i)//攻撃中のエネミーと一旦攻撃が外れた時、次回当たった時に判定を行う
 		{
@@ -751,7 +823,7 @@ void Player::CollisionArmsVsEnemies(Arms arm)
 }
 
 //デバッグプリミティブ描画
-void Player::DrawDebugPrimitive()
+void Player::DrawDebugPrimitive() const
 {
 	Gizmos* gizmos = Graphics::Instance().GetGizmos();
 	//衝突判定用のデバッグ円柱を描画

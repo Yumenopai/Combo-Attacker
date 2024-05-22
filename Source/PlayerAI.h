@@ -8,6 +8,13 @@ private:
 	InputState nowInput = InputState::None;
 	InputState oldInput, nextInput;
 
+	// 逃避
+	Enemy* avoidEnemy = nullptr;
+	bool ranAwayFromEnemy = false;
+	bool ranAwayFromPlayer1P = false;
+
+	int waitTimer = 0;
+
 public:
 	PlayerAI();
 	~PlayerAI() override;
@@ -17,6 +24,8 @@ public:
 
 	// 更新
 	void Update(float elapsedTime);
+	// 攻撃時の更新処理
+	void AttackUpdate();
 
 	// ボタン判定(押下時)
 	bool InputButtonDown(InputState button) override;

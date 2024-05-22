@@ -50,13 +50,13 @@ public:
 	void DebugImGui();
 
 private:
-	XMFLOAT4X4 view;
-	XMFLOAT4X4 projection;
+	XMFLOAT4X4 view = {};
+	XMFLOAT4X4 projection = {};
 
-	XMFLOAT3 eye;
-	XMFLOAT3 focus;
+	XMFLOAT3 eye = {};
+	XMFLOAT3 focus = {};
 
-	XMFLOAT3 up;
-	XMFLOAT3 front;
-	XMFLOAT3 right;
+	XMFLOAT3 up = {};
+	XMFLOAT3 front = {};
+	XMFLOAT3 right = {};
 };

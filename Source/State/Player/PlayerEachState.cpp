@@ -30,7 +30,7 @@ void StateIdle::Update(float elapsedTime)
 	// •Ší•ÏX
 	player->InputChangeArm();
 	// ”\—Íˆ—
-
+	player->InputRecover();
 }
 
 /************************************
@@ -295,7 +295,9 @@ void StateAttackHammer2::Update(float elapsedTime)
 	if (Hammer.flag2)
 	{
 		player->UpdateArmPositions(player->GetModel(), Hammer);
-		player->CollisionArmsVsEnemies(Hammer);
+		if (player->GetModel()->GetCurrentAnimationSeconds() <= 0.7f) {
+			player->CollisionArmsVsEnemies(Hammer);
+		}
 	}
 	else {
 		player->ChangeState(Player::State::Idle);
@@ -599,8 +601,9 @@ void StateAttackSword3::Update(float elapsedTime)
 		if (animationTime >= 0.25f && animationTime <= 0.5f)
 		{
 			player->HorizontalVelocityByAttack(true, 48, elapsedTime);
+			// YŽ²•ûŒü‚Ö’µ‚Ë‚é
 			if (animationTime <= 0.4f) {
-				player->AddVelocity({ 0, 150 * elapsedTime, 0 });
+				player->AddVelocity({ 0, 120 * elapsedTime, 0 });
 			}
 		}
 	}

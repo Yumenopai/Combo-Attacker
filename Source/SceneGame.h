@@ -29,6 +29,8 @@ public:
 	//描画処理
 	void Render() override;
 
+	bool PlayersHaveAnySameArm();
+
 private:
 	//エネミーHPゲージ描画
 	void RenderEnemyGauge(
@@ -42,25 +44,27 @@ private:
 	//プロパティGUI描画
 	void DrawPropertyGUI();
 
-
-private:
-	enum class SpriteName
-	{
-		frame,
-		arm,
-
-		MaxCount,
-	};
-
 private:
 	static const int enemySlimeCount = 4;
 	static const int enemyTurtleShellCount = 4;
 
-	std::unique_ptr<Sprite> spriteFrame;
-	std::unique_ptr<Sprite> spriteArm;
-	std::unique_ptr<Sprite> spriteName;
-	std::unique_ptr<SkyBox> skyBox;
+	std::unique_ptr<Sprite> spriteButtonFrame;
+	std::unique_ptr<Sprite> spriteArmIcon;
+	std::unique_ptr<Sprite> spriteNameOnButton;
+	std::unique_ptr<Sprite> spriteMissionFrame;
+	std::unique_ptr<Sprite> spriteMissionText;
+	std::unique_ptr<Sprite> spriteMessageText;
+	int spriteTimer = 0;
+	int missionSpriteNumber = 0;
+	const DirectX::XMFLOAT2 missionSpriteSize = { 900.0f, 600.f };
+	XMFLOAT2 missionSpriteOffset[4] = {
+		{ 0,					0 },
+		{ missionSpriteSize.x,	missionSpriteSize.y },
+		{ missionSpriteSize.x,	0 },
+		{ 0,					missionSpriteSize.y },
+	};
 
+	std::unique_ptr<SkyBox> skyBox;
 	std::unique_ptr<Stage> stage;
 	std::unique_ptr<Player1P> player1P;
 	std::unique_ptr<PlayerAI> playerAI;
@@ -78,10 +82,6 @@ private:
 	XMFLOAT3	ViewPosition = { 0,0,0 };
 
 	float gameTimer = 60.0f;
-
-	float timer = 0.0f;
-	float grav = 20.0f;
-
 	float waterTimer = 0.0f;
 
 	Model::Node* selectionNode = nullptr;

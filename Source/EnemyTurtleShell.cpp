@@ -16,7 +16,7 @@ EnemyTurtleShell::EnemyTurtleShell()
 	height = 1.0f;
 	health = maxHealth = 40;
 
-	damage = 1;
+	attackDamage = 1;
 	//待機ステートへ遷移
 	TransitionState(State::Idle);
 }
@@ -118,8 +118,20 @@ void EnemyTurtleShell::OnDamaged()
 void EnemyTurtleShell::OnDead()
 {
 	// とどめを刺したプレイヤーに武器を与える
-	//LastAttackPlayer->AddHealth(20);
 	LastAttacker->AddHaveArm();
+	LastAttacker->SetEnableShowMessage(Player::MessageNotification::WeaponGet, true);
+
+	int i = 0;
+	// 与えたダメージ量が少なすぎるとLevelをあげない
+	for (Player* player : PlayerManager::Instance().players)
+	{
+		if (attackedDamage[i] > (maxHealth / 5)) {
+			player->AddLevel(2);
+		}
+		i++;
+	}
+	// 最もダメージを与えたプレイヤーはさらにLevelUp
+	GetMostAttackPlayer()->AddLevel(1);
 
 	// 死亡時エフェクト再生
 	PlayEffect(EffectNumber::dead, position, 0.6f);

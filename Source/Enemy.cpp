@@ -2,6 +2,9 @@
 #include "Graphics/Graphics.h"
 #include "EnemyManager.h"
 #include "Player.h"
+#include "PlayerManager.h"
+#include "Player1P.h"
+#include "PlayerAI.h"
 
 //”jŠü
 void Enemy::Destroy()
@@ -31,6 +34,8 @@ bool Enemy::ApplyDamage(int damage, float invincibleTime, Player* attacker, int 
 	{
 		// ‚Æ‚Ç‚ß‚ğh‚µ‚½ƒvƒŒƒCƒ„[
 		LastAttacker = attacker;
+		// Œ»İ‚ÌUŒ‚‘ÎÛƒŠƒZƒbƒg
+		attacker->SetCurrentAttackEnemy(nullptr);
 	}
 	bool success = Character::ApplyDamage(damage, invincibleTime);
 	if (success)
@@ -38,4 +43,19 @@ bool Enemy::ApplyDamage(int damage, float invincibleTime, Player* attacker, int 
 		AddAttackedDamage(playerNo, damage);
 	}
 	return success;
+}
+
+Player* Enemy::GetMostAttackPlayer() const
+{
+	Player* attackManager = nullptr;
+	int mostDamage = 0;
+	int i = 0;
+	for (Player* player : PlayerManager::Instance().players)
+	{
+		if (attackedDamage[i] > mostDamage) {
+			attackManager = player;
+		}
+		i++;
+	}
+	return attackManager;
 }

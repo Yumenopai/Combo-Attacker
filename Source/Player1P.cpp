@@ -23,6 +23,7 @@ Player1P::Player1P()
 	Player::Init();
 
 	position = { -7,5,-66 };
+	turnSpeed = XMConvertToRadians(1200);
 
 	characterName = "PLAYER";
 	nameColor = { 0.1f, 0.65f, 0.9f, 1.0f };
@@ -86,10 +87,9 @@ XMFLOAT3 Player1P::GetMoveVec() const
 
 	//スティックの水平入力値をカメラ右方向に反映し、
 	//スティックの垂直入力値をカメラ前方向に反映し、進行ベクトルを計算する
-	XMFLOAT3 vec;
+	XMFLOAT3 vec = {};
 	vec.x = cameraFrontX * ay + cameraRightX * ax;
 	vec.z = cameraFrontZ * ay + cameraRightZ * ax;
-
 	//Y軸方向には移動しない
 	vec.y = 0.0f;
 

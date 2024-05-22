@@ -14,7 +14,7 @@ EnemyBlue::EnemyBlue()
 	radius = 1.8f;
 	health = maxHealth = 100;
 	isHalfHP = false;
-	damage = 2;
+	attackDamage = 2;
 
 	//待機ステートへ遷移
 	TransitionState(State::Idle);
@@ -170,12 +170,26 @@ void EnemyBlue::OnDamaged()
 //死亡した時に呼ばれる
 void EnemyBlue::OnDead()
 {
-	if (!isDead)
+	if (isDead) return;
+
+	int i = 0;
+	// 与えたダメージ量が少なすぎるとLevelをあげない
+	for (Player* player : PlayerManager::Instance().players)
 	{
-		//死亡ステートへ遷移
-		TransitionState(State::Die);
-		isDead = true;
+		if (attackedDamage[i] > (maxHealth / 3)) {
+			player->AddLevel(3);
+		}
+		else if (attackedDamage[i] > (maxHealth / 5)) {
+			player->AddLevel(2);
+		}
+		i++;
 	}
+	// 最もダメージを与えたプレイヤーはさらにLevelUp
+	GetMostAttackPlayer()->AddLevel(2);
+
+	//死亡ステートへ遷移
+	TransitionState(State::Die);
+	isDead = true;
 }
 
 Player::EnemySearch EnemyBlue::GetNearestPlayerES()
@@ -393,7 +407,7 @@ void EnemyBlue::CollisionNodeVsPlayer(const char* nodeName, float nodeRadius)
 	if (node == nullptr) return;
 
 	//ノード位置取得
-	XMFLOAT3 nodePosition;
+	XMFLOAT3 nodePosition = {};
 	nodePosition.x = node->worldTransform._41;
 	nodePosition.y = node->worldTransform._42;
 	nodePosition.z = node->worldTransform._43;
@@ -402,34 +416,31 @@ void EnemyBlue::CollisionNodeVsPlayer(const char* nodeName, float nodeRadius)
 	for (Player* player : PlayerManager::Instance().players)
 	{
 		XMFLOAT3 outPosition;
-		if (Collision::IntersectSphereVsCylinder(
+		// 当たっていない場合リターン
+		if (!Collision::IntersectSphereVsCylinder(
 			nodePosition, nodeRadius,
 			player->GetPosition(), player->GetRadius(), player->GetHeight(),
-			outPosition
-		))
-		{
-			//ダメージを与える
-			if (player->ApplyDamage(damage))
-			{
-				//敵を吹っ飛ばすベクトルを算出
-				XMFLOAT3 vec;
-				vec.x = outPosition.x - nodePosition.x;
-				vec.z = outPosition.z - nodePosition.z;
-				float length = sqrtf(vec.x * vec.x + vec.z * vec.z);
-				vec.x /= length;
-				vec.z /= length;
+			outPosition)) return;
+		// ダメージを与えない場合リターン
+		if (!player->ApplyDamage(attackDamage)) return;
 
-				//XZ平面に吹っ飛ばす力をかける
-				float power = 10.0f;
-				vec.x *= power;
-				vec.z *= power;
-				//Y方向にも力をかける
-				vec.y = 5.0f;
+		// 敵を吹っ飛ばすベクトルを算出
+		XMFLOAT3 vec = {};
+		vec.x = outPosition.x - nodePosition.x;
+		vec.z = outPosition.z - nodePosition.z;
+		float length = sqrtf(vec.x * vec.x + vec.z * vec.z);
+		vec.x /= length;
+		vec.z /= length;
 
-				//吹っ飛ばす
-				player->AddImpulse(vec);
-			}
-		}
+		// XZ平面に吹っ飛ばす力をかける
+		float power = 10.0f;
+		vec.x *= power;
+		vec.z *= power;
+		// Y方向にも力をかける
+		vec.y = 5.0f;
+
+		// 吹っ飛ばす
+		player->AddImpulse(vec);
 	}
 }
 
@@ -438,7 +449,6 @@ void EnemyBlue::DebugMenu()
 	ImVec2 pos = ImGui::GetMainViewport()->GetWorkPos();
 	ImGui::SetNextWindowPos(ImVec2(pos.x + 10, pos.y + 10), ImGuiCond_FirstUseEver);
 	ImGui::SetNextWindowSize(ImVec2(300, 300), ImGuiCond_FirstUseEver);
-
 
 	// デバッグ文字列表示の変更
 	std::string str = "";
@@ -475,7 +485,7 @@ void EnemyBlue::DebugMenu()
 			ImGui::DragFloat3("Position", &position.x, 0.1f);
 
 			//回転
-			XMFLOAT3 a;
+			XMFLOAT3 a = {};
 			a.x = XMConvertToDegrees(angle.x);
 			a.y = XMConvertToDegrees(angle.y);
 			a.z = XMConvertToDegrees(angle.z);
@@ -493,10 +503,7 @@ void EnemyBlue::DebugMenu()
 			ImGui::Text(u8"nearestPlayer　%s", nearestPlayerStr.c_str());
 			ImGui::Text(u8"minLen　%f", minLen);
 			ImGui::Text(u8"nowLen　%f", nowLen);
-
-
 		}
-
 		ImGui::End();
 	}
 }

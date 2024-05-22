@@ -124,6 +124,17 @@ public:
 
 		MaxCount
 	};
+	// 通知メッセージ
+	enum class MessageNotification
+	{
+		WeaponGet = 0,
+		LevelUp,
+		Attack,
+		RanAway,
+		Indifference,
+
+		MaxCount
+	};
 
 	// 武器
 	struct Arms
@@ -159,6 +170,8 @@ private:
 	/// </summary>
 	std::unordered_map<AttackType, bool> HaveArms;
 
+	int currentLevel = 1;
+
 	// 現在攻撃しているか
 	bool isAttacking = false;
 	// 現在の連続攻撃回数
@@ -167,11 +180,17 @@ private:
 	int attackingEnemyNumber = -1;
 	// 攻撃判定 同一の敵の連続判定
 	bool isAttackJudge = true;
+	// スペシャル技
+	bool enableSpecialAttack = false;
 
 	// ジャンプ遷移状態
 	JumpState jumpTrg = JumpState::CanJump;
 	// ジャンプ攻撃が動くか
 	bool isMoveAttack = false;
+
+	// UI
+	int messageNumber = -1; // -1は非表示
+	float messageYTimer = 0.0f;
 
 	// SwordAttack
 	static const int MAX_POLYGON = 32;
@@ -202,7 +221,6 @@ private:
 	const int playerMaxHealth = 100;
 
 	const float moveSpeed = 8.0f;
-	const float turnSpeed = XMConvertToRadians(1200);
 	
 	// UI
 	const float hpGuageWidth = 700.0f;
@@ -223,15 +241,29 @@ protected:
 	float nearestDist = FLT_MAX;
 	// 最も近い敵とのベクトル
 	XMFLOAT3 nearestVec = {};
+	// 二番目に近い敵との距離
+	float secondDist = FLT_MAX;
+	// 二番目に近い敵とのベクトル
+	XMFLOAT3 secondDistEnemyVec = {};
+	// 攻撃中の敵
+	Enemy* currentAttackEnemy;
+	// 与えた総ダメージ
+	int allDamage = 0;
 
 	// 回復遷移可能か
 	bool enableRecoverTransition = false;
+
+	// メッセージ
+	bool enableShowMessage[(int)MessageNotification::MaxCount] = {};
 
 	// ***************** const *****************
 	
 	Player* targetPlayer;
 	std::string characterName;
 	XMFLOAT4 nameColor;
+
+	float turnSpeed;
+
 	// UI //1P & AI
 	float hpGuage_Y;
 	XMFLOAT4 hpColorNormal;
@@ -262,12 +294,7 @@ protected:
 	// 軌跡配列ズラし
 	void ShiftTrailPositions();
 	// 軌跡描画
-	void RenderTrail();
-
-	// デバッグプリミティブ描画
-	void DrawDebugPrimitive();
-	// デバッグ
-	void DebugMenu();
+	void RenderTrail() const;
 
 	// 移動ベクトル
 	virtual XMFLOAT3 GetMoveVec() const = 0;
@@ -305,9 +332,9 @@ public:
 	// 攻撃の軌跡描画
 	void PrimitiveRender(const RenderContext& rc);
 	// HPバー描画
-	void RenderHPBar(ID3D11DeviceContext* dc, Sprite* gauge, FontSprite* font);
+	void RenderHPBar(ID3D11DeviceContext* dc, Sprite* gauge, FontSprite* font) const;
 	//キャラクター名前描画
-	void RenderCharacterName(const RenderContext& rc, FontSprite* font);
+	void RenderCharacterOverHead(const RenderContext& rc, FontSprite* font, Sprite* message);
 	// 所持武器描画
 	void RenderHaveArms(ID3D11DeviceContext* dc, Sprite* frame, Sprite* ArmSprite);
 
@@ -342,6 +369,11 @@ public:
 		EffectArray[SC_INT(num)].Play(position, scale);
 	}
 
+	// デバッグプリミティブ描画
+	void DrawDebugPrimitive() const;
+	// デバッグ
+	void DebugMenu();
+
 #pragma region GETTER & SETTER
 	// ***************** GETTER & SETTER *****************
 
@@ -350,6 +382,8 @@ public:
 	Model* GetModel() const { return model.get(); }
 
 	Player* GetTargetPlayer() const { return targetPlayer; }
+	Enemy* GetCurrentAttackEnemy() const { return currentAttackEnemy; }
+	void SetCurrentAttackEnemy(Enemy* enemy) { currentAttackEnemy = enemy; }
 
 	Enemy* GetNearestEnemy() { return nearestEnemy; }
 	EnemySearch GetEachEnemySearch(Enemy* enemy) { return enemySearch[enemy]; }
@@ -358,9 +392,27 @@ public:
 	int GetAttackCount() const { return attackCount; }
 	void SetAttackCount(int count) { attackCount = count; }
 	void AddAttackCount() { attackCount++; }
+	
+	int GetAllDamage() const { return allDamage; }
 
 	bool GetAttacking() const { return isAttacking; }
 	void SetAttacking(bool _isAttacking) { isAttacking = _isAttacking; }
+
+	int GetLevel() const { return currentLevel; }
+	void SetLevel(int lv) { currentLevel = lv; }
+	void AddLevel(int lv) { currentLevel += lv; SetEnableShowMessage(Player::MessageNotification::LevelUp, true); }
+
+	bool GetHaveEachArm(AttackType arm) { return HaveArms[arm]; }
+	int GetHaveArmCount() {
+		int haveCount = 0;
+		for (int i = 0; i < HaveArms.size(); i++)
+		{
+			if (HaveArms[SC_AT(i)]) haveCount++;
+		}
+		return haveCount;
+	}
+
+	void SetEnableShowMessage(MessageNotification number, bool isShow) { enableShowMessage[static_cast<int>(number)] = isShow; }
 
 	bool GetEnableRecoverTransition() const { return enableRecoverTransition; }
 
@@ -402,7 +454,7 @@ protected:
 		{0,0,0},
 		{0,35,0},
 		0.5f,
-		3,
+		2,
 		false,
 		false,
 		false,
@@ -427,7 +479,7 @@ protected:
 		{0,0,0},
 		{0,0,0},
 		{0,30,0},
-		0.4f,
+		0.6f,
 		1,
 		false,
 		false,

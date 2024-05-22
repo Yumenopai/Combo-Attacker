@@ -3,6 +3,9 @@
 #include "Shader/Shader.h"
 #include "Character.h"
 
+#define PL1P 0
+#define PLAI 1
+
 class Player;
 
 class Enemy :public Character
@@ -38,11 +41,17 @@ public:
 	Player* GetFirstAttacker() const { return FirstAttacker; }
 	Player* GetCurrentAttacker() const { return CurrentAttacker; }
 	Player* GetLastAttacker() const { return LastAttacker; }
+	int GetAttackedDamage(int playerNo) const {	return attackedDamage[playerNo]; }
+	int GetAttackedDamagePersent(int playerNo) const {
+		return 100 * attackedDamage[playerNo] / (attackedDamage[PL1P] + attackedDamage[PLAI]);
+	}
+	// 攻撃されていない場合はnullptrで返す
+	Player* GetMostAttackPlayer() const;
 
 protected:
 	DirectX::XMFLOAT3 targetPosition = { 0,0,0 };
 
-	int damage;
+	int attackDamage = 0; // 与えるダメージ
 
 	// パラメータ
 	Player* FirstAttacker = nullptr;
