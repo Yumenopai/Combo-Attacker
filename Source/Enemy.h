@@ -25,7 +25,7 @@ protected:
 	// とどめをさすプレイヤー
 	Player* LastAttacker = nullptr;
 	// 自身がダメージを受けた量(プレイヤー毎)
-	int attackedDamage[PLAYER_Count] = { 0,0 };
+	int attackedDamage[PLAYER_count] = { 0,0 };
 
 public:
 	Enemy(){}

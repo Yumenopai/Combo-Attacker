@@ -245,63 +245,53 @@ void Player::Render(const RenderContext& rc, ModelShader* shader)
 }
 
 // HP描画
-void Player::RenderHPBar(ID3D11DeviceContext* dc, Sprite* gauge, FontSprite* font) const
+void Player::RenderHPBar(ID3D11DeviceContext* dc, Sprite* gauge, FontSprite* font)
 {
 	Graphics& graphics = Graphics::Instance();
 	static const float screenWidth = static_cast<float>(graphics.GetScreenWidth());
 
 	// 名前表示
-	font->Textout(dc, playerName, 
-		hp_gauge_name_position.x,
-		hpGaugePosition_Y + hp_gauge_name_position.y, 
-		TEXT_Depth_Default,
-		TEXT_SizeWidge_Default, TEXT_SizeHeight_Default,
-		TEXT_CutPositionX_Default, TEXT_CutPositionY_Default, TEXT_CutWidge_Default, TEXT_CutHeight_Default,
-		TEXT_Angle_Default, nameColor);
+	StringRender(dc, font, playerName,
+		{ hp_gauge_name_position.x, hpGaugePosition_Y + hp_gauge_name_position.y },
+		nameColor);
+
 	// Lv表示
 	std::string levelStr = "Lv:" + std::to_string(currentLevel);
-	font->Textout(dc, levelStr,
-		lv_display_position_x,
-		hpGaugePosition_Y + display_under_text_offset_y,
-		TEXT_Depth_Default,
-		TEXT_SizeWidge_Default, TEXT_SizeHeight_Default,
-		TEXT_CutPositionX_Default, TEXT_CutPositionY_Default, TEXT_CutWidge_Default, TEXT_CutHeight_Default,
-		TEXT_Angle_Default, nameColor);
+	StringRender(dc, font, levelStr,
+		{ lv_display_position_x, hpGaugePosition_Y + display_under_text_offset_y },
+		nameColor);
+
 	// HP表示;
 	std::ostringstream ss;
-	ss << std::setw(hp_display_digit) << std::setfill('0') << GetHealth();
+	ss << std::setw(hp_display_digit) << std::setfill('0') << GetHealth(); // 桁数指定
 	std::string hp(ss.str());
 	std::string hpStr = hp + '/' + std::to_string(GetMaxHealth());
-	font->Textout(dc, hpStr,
-		hp_display_position_x,
-		hpGaugePosition_Y + display_under_text_offset_y,
-		TEXT_Depth_Default,
-		TEXT_SizeWidge_Default, TEXT_SizeHeight_Default,
-		TEXT_CutPositionX_Default, TEXT_CutPositionY_Default, TEXT_CutWidge_Default, TEXT_CutHeight_Default,
-		TEXT_Angle_Default, nameColor);
+	StringRender(dc, font, hpStr,
+		{ hp_display_position_x, hpGaugePosition_Y + display_under_text_offset_y },
+		nameColor);
 
 	//ゲージ描画(下地)
 	gauge->Render(dc,
 		(screenWidth / 2) - (hp_gauge_size.x / 2), // X_中央に配置するため幅の半分とゲージ長さの半分で求める
 		hpGaugePosition_Y, // Y
-		Sprite_Position_Z_Default, // Z
+		SPRITE_position_default_z, // Z
 		hp_gauge_size.x + hp_gauge_frame_expansion,
 		hp_gauge_size.y + hp_gauge_frame_expansion,
-		Sprite_NoneTexture, Sprite_NoneTexture, // 元textureはない
-		Sprite_NoneTexture,	Sprite_NoneTexture, // 元textureはない
-		Sprite_Angle_Default,
+		SPRITE_none_texture, SPRITE_none_texture, // 元textureはない
+		SPRITE_none_texture,	SPRITE_none_texture, // 元textureはない
+		SPRITE_angle_default,
 		hp_gauge_frame_color // 背景カラー
 	);
 	//ゲージ描画
 	gauge->Render(dc,
 		(screenWidth / 2) - (hp_gauge_size.x / 2) + hp_gauge_frame_expansion / 2, // X_中央に配置するため幅の半分とゲージ長さの半分で求める
 		hpGaugePosition_Y + hp_gauge_frame_expansion / 2, // Y_上下の拡張を合わせたサイズ分で足しているため半分足す
-		Sprite_Position_Z_Default, // Z
+		SPRITE_position_default_z, // Z
 		hp_gauge_size.x * (GetHealthRate() / 100.0f), //百分率を小数に変換
 		hp_gauge_size.y,
-		Sprite_NoneTexture, Sprite_NoneTexture, // 元textureはない
-		Sprite_NoneTexture,	Sprite_NoneTexture, // 元textureはない
-		Sprite_Angle_Default,
+		SPRITE_none_texture, SPRITE_none_texture, // 元textureはない
+		SPRITE_none_texture,	SPRITE_none_texture, // 元textureはない
+		SPRITE_angle_default,
 		GetHpWorning() ? hp_gauge_color_wornimg : hp_gauge_color_normal // ゲージカラー/HP減ると色を変える
 	);
 }
@@ -341,14 +331,8 @@ void Player::RenderCharacterOverHead(const RenderContext& rc, FontSprite* font, 
 	if (screenPosition.z > 0.0f && screenPosition.z < 1.0f) //0.0f～1.0fの間
 	{
 		// 名前
-		font->Textout(rc.deviceContext, playerName,
-			screenPosition.x + name_offset.x,
-			screenPosition.y + name_offset.y,
-			TEXT_Depth_Default,
-			TEXT_SizeWidge_Default, TEXT_SizeHeight_Default,
-			TEXT_CutPositionX_Default, TEXT_CutPositionY_Default,
-			TEXT_CutWidge_Default, TEXT_CutHeight_Default,
-			TEXT_Angle_Default,
+		StringRender(rc.deviceContext, font, playerName,
+			{ screenPosition.x + name_offset.x, screenPosition.y + name_offset.y },
 			nameColor);
 
 		// メッセージ
@@ -357,12 +341,12 @@ void Player::RenderCharacterOverHead(const RenderContext& rc, FontSprite* font, 
 			// タイマー増加
 			messageYTimer += message_timer_increase;
 			message->Render(rc.deviceContext,
-				{ screenPosition.x + message_offset.x, screenPosition.y + message_offset.y - messageYTimer, Sprite_Position_Z_Default },
+				{ screenPosition.x + message_offset.x, screenPosition.y + message_offset.y - messageYTimer, SPRITE_position_default_z },
 				message_size,
 				{ message_sprite_size.x, message_sprite_size.y * SC_INT(messageNumber)  },
 				message_sprite_size,
-				Sprite_Angle_Default,
-				Sprite_Color_Default);
+				SPRITE_angle_default,
+				SPRITE_color_default);
 			
 			if (messageYTimer > message_timer_max)
 			{
@@ -387,12 +371,12 @@ void Player::RenderCharacterOverHead(const RenderContext& rc, FontSprite* font, 
 				if (enableShowMessage[SC_INT(mes)])
 				{
 					message->Render(rc.deviceContext,
-						{ screenPosition.x + message_offset.x, screenPosition.y + message_offset.y - messageYTimer, Sprite_Position_Z_Default },
+						{ screenPosition.x + message_offset.x, screenPosition.y + message_offset.y - messageYTimer, SPRITE_position_default_z },
 						message_size,
 						{ message_sprite_size.x, message_sprite_size.y * SC_INT(mes) },
 						message_sprite_size,
-						Sprite_Angle_Default,
-						Sprite_Color_Default);
+						SPRITE_angle_default,
+						SPRITE_color_default);
 					break;
 				}
 			}
@@ -400,6 +384,7 @@ void Player::RenderCharacterOverHead(const RenderContext& rc, FontSprite* font, 
 	}
 }
 
+// 所持武器描画
 void Player::RenderHaveWeapons(ID3D11DeviceContext* dc, Sprite* frame, Sprite* weapon)
 {
 	//HaveWeaponFrame
@@ -408,35 +393,49 @@ void Player::RenderHaveWeapons(ID3D11DeviceContext* dc, Sprite* frame, Sprite* w
 		float textureCutPosition_x = 0;
 		// 現在使用中の武器
 		if (i == SC_INT(CurrentUseWeapon)) {
-			textureCutPosition_x = WeaponIcon_SpriteSize.x;
+			textureCutPosition_x = WeaponIcon_sprite_size.x;
 		}
 		else {
 			// 所持している武器かどうかでセットする
-			textureCutPosition_x = HaveWeapons[SC_AT(i)] ? WeaponIcon_SpriteSize.x * 2 : 0; // 2倍座標部分・0倍座標部分
+			textureCutPosition_x = HaveWeapons[SC_AT(i)] ? WeaponIcon_sprite_size.x * 2 : 0; // 2倍座標部分・0倍座標部分
 		}
 		frame->Render(dc,
-			{ WeaponFrame_Position_X + WeaponFrame_Offset_X * i, hpGaugePosition_Y + WeaponFrame_Offset_Y, Sprite_Position_Z_Default },
-			WeaponFrame_Size,
-			{ textureCutPosition_x, WeaponIcon_SpriteSize.y }, 
-			WeaponIcon_SpriteSize,
-			Sprite_Angle_Default,
-			Sprite_Color_Default);
+			{ WeaponFrame_position_x + WeaponFrame_offset.x * i, hpGaugePosition_Y + WeaponFrame_offset.y, SPRITE_position_default_z },
+			WeaponFrame_render_size,
+			{ textureCutPosition_x, WeaponIcon_sprite_size.y }, 
+			WeaponIcon_sprite_size,
+			SPRITE_angle_default,
+			SPRITE_color_default);
 	}
 	//HaveWeapon
 	for (int i = 0; i < HaveWeapons.size(); i++)
 	{
-		float textureCutPosition_x = WeaponIcon_SpriteSize.x * (i + 1); // i+1倍座標部分
+		float textureCutPosition_x = WeaponIcon_sprite_size.x * (i + 1); // i+1倍座標部分
 		float textureCutPosition_y = 0;
-		float color_a = HaveWeapons[SC_AT(i)] ? Sprite_Color_Default.z : WeaponIcon_ColorTranslucent_a; // 未所持武器を半透明にする
-		float color_rb = (SC_AT(i) == CurrentUseWeapon) ? WeaponIcon_ColorDecrease_rb : Sprite_Color_Default.y; // 使用中の武器に緑色を付ける
+		float color_a = HaveWeapons[SC_AT(i)] ? SPRITE_color_default.z : WeaponIcon_color_translucent_a; // 未所持武器を半透明にする
+		float color_rb = (SC_AT(i) == CurrentUseWeapon) ? WeaponIcon_color_decrease_rb : SPRITE_color_default.y; // 使用中の武器に緑色を付ける
 		weapon->Render(dc,
-			{ WeaponIcon_Position_X + WeaponFrame_Offset_X * i, hpGaugePosition_Y + WeaponIcon_Offset_Y, Sprite_Position_Z_Default },
-			WeaponIcon_Size,
+			{ WeaponIcon_position_x + WeaponFrame_offset.x * i, hpGaugePosition_Y + WeaponIcon_offset_y, SPRITE_position_default_z },
+			WeaponIcon_size,
 			{ textureCutPosition_x, textureCutPosition_y },
-			WeaponIcon_SpriteSize,
-			Sprite_Angle_Default,
-			{ color_rb, Sprite_Color_Default.y, color_rb, color_a });
+			WeaponIcon_sprite_size,
+			SPRITE_angle_default,
+			{ color_rb, SPRITE_color_default.y, color_rb, color_a });
 	}
+}
+// 文字描画/プレイヤーUI用
+void Player::StringRender(ID3D11DeviceContext* dc, FontSprite* font,
+	std::string str,			// テキスト
+	DirectX::XMFLOAT2 position,	// 位置
+	DirectX::XMFLOAT4 color)	// 色
+{
+	font->Textout(dc, str,
+		{ position.x, position.y, TEXT_depth_default },
+		TEXT_display_size_default,
+		TEXT_cut_position_default,
+		TEXT_cut_size_default,
+		TEXT_angle_default,
+		color);
 }
 
 //着地した時に呼ばれる
@@ -761,15 +760,15 @@ void Player::DrawDebugPrimitive() const
 		position,		//位置
 		radius,			//半径
 		height,			//高さ
-		GIZMOS_CylinderAngle_Default,		//角度
-		GIZMOS_Color_Red);	//色
+		GIZMOS_cylinder_angle_default,		//角度
+		GIZMOS_color_red);	//色
 
 	if (Hammer.flag1 || Hammer.flag2 || Hammer.flagJump)
 	{
 		gizmos->DrawSphere(
 			Hammer.position,
 			Hammer.radius,
-			GIZMOS_Color_Blue
+			GIZMOS_color_blue
 		);
 	}
 	if (Spear.flag1 || Spear.flag2 || Spear.flag3 || Spear.flagJump)
@@ -777,7 +776,7 @@ void Player::DrawDebugPrimitive() const
 		gizmos->DrawSphere(
 			Spear.position,
 			Spear.radius,
-			GIZMOS_Color_Blue
+			GIZMOS_color_blue
 		);
 	}
 	if (Sword.flag1 || Sword.flag2 || Sword.flag3 || Sword.flagJump)
@@ -785,7 +784,7 @@ void Player::DrawDebugPrimitive() const
 		gizmos->DrawSphere(
 			Sword.position,
 			Sword.radius,
-			GIZMOS_Color_Blue
+			GIZMOS_color_blue
 		);
 	}
 

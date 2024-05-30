@@ -49,10 +49,10 @@ private:
 	Mission missionSpriteNumber = Mission::GetWeapon;
 	// ミッションスプライト/カット位置
 	XMFLOAT2 missionSpriteCutPosition[SC_INT(Mission::MaxCount)] = {
-		{ Sprite_CutPosition_Default.x, Sprite_CutPosition_Default.y },
-		{ Mission_SpriteSize.x,			Mission_SpriteSize.y },
-		{ Mission_SpriteSize.x,			Sprite_CutPosition_Default.y },
-		{ Sprite_CutPosition_Default.x, Mission_SpriteSize.y },
+		{ SPRITE_cut_position_default.x, SPRITE_cut_position_default.y },
+		{ Mission_sprite_size.x,			Mission_sprite_size.y },
+		{ Mission_sprite_size.x,			SPRITE_cut_position_default.y },
+		{ SPRITE_cut_position_default.x, Mission_sprite_size.y },
 	};
 
 	// カメラコントローラー

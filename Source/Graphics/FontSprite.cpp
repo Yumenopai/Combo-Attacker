@@ -219,6 +219,7 @@ void FontSprite::End(ID3D11DeviceContext* dc)
 	}
 }
 
+// テキスト表示
 void FontSprite::Textout(ID3D11DeviceContext* dc, std::string str,
 	float dx, float dy,					 //左上位置
 	float dz,							 //奥行
@@ -240,4 +241,23 @@ void FontSprite::Textout(ID3D11DeviceContext* dc, std::string str,
 		++i;
 	}
 	End(dc);
+}
+
+// テキスト表示/オーバーロード
+void FontSprite::Textout(ID3D11DeviceContext* dc, std::string str,
+	DirectX::XMFLOAT3 position,			 //位置
+	DirectX::XMFLOAT2 size,				 //幅、高さ
+	DirectX::XMFLOAT2 cutPosition,		 //画像切り抜き位置
+	DirectX::XMFLOAT2 cutSize,			 //画像切り抜きサイズ
+	float angle,						 //角度
+	DirectX::XMFLOAT4 color)			 //色
+{
+	Textout(dc, str,
+		position.x, position.y,			 //左上位置
+		position.z,						 //奥行
+		size.x, size.y,					 //幅、高さ
+		cutPosition.x, cutPosition.y,	 //画像切り抜き位置
+		cutSize.x, cutSize.y,			 //画像切り抜きサイズ
+		angle,							 //角度
+		color);							 //色
 }

@@ -117,7 +117,7 @@ void SceneGame::Update(float elapsedTime)
 {
 	//カメラコントローラー更新処理
 	XMFLOAT3 target = player1P->GetPosition();
-	target.y += SCENEGAME_Camera_Y;
+	target.y += SCENEGAME_camera_y;
 	cameraController->SetTarget(target);
 	cameraController->Update(elapsedTime);
 
@@ -149,7 +149,7 @@ void SceneGame::Render()
 	rc.renderState = Graphics::Instance().GetRenderState();
 	LightManager::Instane().PushRenderContext(rc); // ライトの情報を詰め込む
 	rc.shadowMap = shadowMap;
-	rc.shadowColor = SCENEGAME_ShadowColor;
+	rc.shadowColor = SCENEGAME_shadow_color;
 
 	// シャドウマップ描画
 	shadowMap->Begin(rc, camera.GetFocus());
@@ -316,24 +316,24 @@ void SceneGame::RenderEnemyGauge(ID3D11DeviceContext* dc, const DirectX::XMFLOAT
 		gauge->Render(dc,
 			screenPosition.x - enemy_hp_gauge_size.x / 2 - enemy_hp_gauge_frame_expansion / 2, // X_中央に配置するため幅の半分とゲージ長さの半分で求める
 			screenPosition.y - enemy_hp_gauge_size.y - enemy_hp_gauge_frame_expansion / 2, // Y_上下の拡張を合わせたサイズ分で足しているため半分引く
-			Sprite_Position_Z_Default,
+			SPRITE_position_default_z,
 			enemy_hp_gauge_size.x + enemy_hp_gauge_frame_expansion,
 			enemy_hp_gauge_size.y + enemy_hp_gauge_frame_expansion,
-			Sprite_NoneTexture, Sprite_NoneTexture,
-			Sprite_NoneTexture,	Sprite_NoneTexture,
-			Sprite_Angle_Default,
+			SPRITE_none_texture, SPRITE_none_texture,
+			SPRITE_none_texture,	SPRITE_none_texture,
+			SPRITE_angle_default,
 			enemy_hp_gauge_frame_color
 		);
 		//ゲージ描画
 		gauge->Render(dc,
 			screenPosition.x - enemy_hp_gauge_size.x / 2,
 			screenPosition.y - enemy_hp_gauge_size.y,
-			Sprite_Position_Z_Default,
+			SPRITE_position_default_z,
 			enemy_hp_gauge_size.x * healthRate,
 			enemy_hp_gauge_size.y,
-			Sprite_NoneTexture, Sprite_NoneTexture,
-			Sprite_NoneTexture, Sprite_NoneTexture,
-			Sprite_Angle_Default,
+			SPRITE_none_texture, SPRITE_none_texture,
+			SPRITE_none_texture, SPRITE_none_texture,
+			SPRITE_angle_default,
 			enemy_hp_gauge_color_normal
 		);
 	}
@@ -349,10 +349,10 @@ void SceneGame::RenderButtonUI(ID3D11DeviceContext* dc)
 	{
 		// ボタンフレーム描画
 		spriteButtonFrame->Render(dc,
-			{ ButtonFrame_ButtonX_Position_X, ButtonFrame_ButtonXB_Position_Y, Sprite_Position_Z_Default },
-			ButtonFrame_Size,
-			Sprite_CutPosition_Default, ButtonFrame_SpriteSize,
-			Sprite_Angle_Default, Sprite_Color_Default);
+			{ ButtonFrame_button_X_position_x, ButtonFrame_button_XB_position_y, SPRITE_position_default_z },
+			ButtonFrame_size,
+			SPRITE_cut_position_default, ButtonFrame_sprite_size,
+			SPRITE_angle_default, SPRITE_color_default);
 
 		if (nextWeapon1P != Player1P::Instance().GetCurrentUseWeapon()) // 次が現在の武器＝武器が一つだけしかもっていない時は表示しない
 		{
@@ -361,37 +361,37 @@ void SceneGame::RenderButtonUI(ID3D11DeviceContext* dc)
 
 			// ボタンアイコン描画
 			spriteWeaponIcon->Render(dc,
-				{ ButtonFrame_ButtonX_Position_X + ButtonIcon_FrameToIconOffset_X, ButtonFrame_ButtonXB_Position_Y + ButtonIcon_FrameToIconOffset_Y, Sprite_Position_Z_Default },
-				ButtonIcon_Size,
-				{ spriteCutPosition_x, ButtonFrame_SpriteSize.y },
-				ButtonFrame_SpriteSize,
-				Sprite_Angle_Default,
-				Sprite_Color_Default);
+				{ ButtonFrame_button_X_position_x + ButtonIcon_frame_to_icon_offset.x, ButtonFrame_button_XB_position_y + ButtonIcon_frame_to_icon_offset.y, SPRITE_position_default_z },
+				ButtonIcon_render_size,
+				{ spriteCutPosition_x, ButtonFrame_sprite_size.y },
+				ButtonFrame_sprite_size,
+				SPRITE_angle_default,
+				SPRITE_color_default);
 		}
 		// 名前描画
 		spriteNameOnButton->Render(dc,
-			{ ButtonFrame_ButtonX_Position_X + ButtonIcon_FrameToIconOffset_X, ButtonFrame_ButtonXB_Position_Y + ButtonIcon_FrameToIconOffset_Y, Sprite_Position_Z_Default },
-			ButtonName_Size,
-			Sprite_CutPosition_Default,
-			ButtonName_SpriteSize,
-			Sprite_Angle_Default,
-			Sprite_Color_Default);
+			{ ButtonFrame_button_X_position_x + ButtonIcon_frame_to_icon_offset.x, ButtonFrame_button_XB_position_y + ButtonIcon_frame_to_icon_offset.y, SPRITE_position_default_z },
+			ButtonName_render_size,
+			SPRITE_cut_position_default,
+			ButtonName_sprite_size,
+			SPRITE_angle_default,
+			SPRITE_color_default);
 
 	}
 	// Y：上 Buddy
 	{
 		// ボタンフレーム描画
 		spriteButtonFrame->Render(dc,
-			{ ButtonFrame_ButtonYA_Position_X, ButtonFrame_ButtonY_Position_Y, Sprite_Position_Z_Default },
-			ButtonFrame_Size,
-			Sprite_CutPosition_Default, ButtonFrame_SpriteSize,
-			Sprite_Angle_Default, Sprite_Color_Default);
+			{ ButtonFrame_button_YA_position_x, ButtonFrame_button_Y_position_y, SPRITE_position_default_z },
+			ButtonFrame_size,
+			SPRITE_cut_position_default, ButtonFrame_sprite_size,
+			SPRITE_angle_default, SPRITE_color_default);
 
 		bool enable_show = true;
 		// 回復遷移可能な場合
 		if (Player1P::Instance().GetEnableRecoverTransition())
 		{
-			spriteCutPosition_x = ButtonFrame_SpriteSize.x * ButtonIcon_CutRate_Recover;
+			spriteCutPosition_x = ButtonFrame_sprite_size.x * ButtonIcon_cut_rate_recover;
 		}
 		// 武器変更
 		else
@@ -412,59 +412,59 @@ void SceneGame::RenderButtonUI(ID3D11DeviceContext* dc)
 		{
 			// ボタンアイコン描画
 			spriteWeaponIcon->Render(dc,
-				{ ButtonFrame_ButtonYA_Position_X + ButtonIcon_FrameToIconOffset_X, ButtonFrame_ButtonY_Position_Y + ButtonIcon_FrameToIconOffset_Y, Sprite_Position_Z_Default },
-				ButtonIcon_Size,
-				{ spriteCutPosition_x, ButtonFrame_SpriteSize.y },
-				ButtonFrame_SpriteSize,
-				Sprite_Angle_Default,
-				Sprite_Color_Default);
+				{ ButtonFrame_button_YA_position_x + ButtonIcon_frame_to_icon_offset.x, ButtonFrame_button_Y_position_y + ButtonIcon_frame_to_icon_offset.y, SPRITE_position_default_z },
+				ButtonIcon_render_size,
+				{ spriteCutPosition_x, ButtonFrame_sprite_size.y },
+				ButtonFrame_sprite_size,
+				SPRITE_angle_default,
+				SPRITE_color_default);
 		}
 		// 名前描画
 		spriteNameOnButton->Render(dc,
-			{ ButtonFrame_ButtonYA_Position_X + ButtonIcon_FrameToIconOffset_X, ButtonFrame_ButtonY_Position_Y + ButtonIcon_FrameToIconOffset_Y, Sprite_Position_Z_Default },
-			ButtonName_Size,
-			{ Sprite_CutPosition_Default.x, ButtonName_SpriteSize.y },
-			ButtonName_SpriteSize,
-			Sprite_Angle_Default,
-			Sprite_Color_Default);
+			{ ButtonFrame_button_YA_position_x + ButtonIcon_frame_to_icon_offset.x, ButtonFrame_button_Y_position_y + ButtonIcon_frame_to_icon_offset.y, SPRITE_position_default_z },
+			ButtonName_render_size,
+			{ SPRITE_cut_position_default.x, ButtonName_sprite_size.y },
+			ButtonName_sprite_size,
+			SPRITE_angle_default,
+			SPRITE_color_default);
 	}
 	// B：右 Attack
 	{
 		// ボタンフレーム描画
 		spriteButtonFrame->Render(dc,
-			{ ButtonFrame_ButtonB_Position_X, ButtonFrame_ButtonXB_Position_Y, Sprite_Position_Z_Default },
-			ButtonFrame_Size,
-			Sprite_CutPosition_Default, ButtonFrame_SpriteSize,
-			Sprite_Angle_Default, Sprite_Color_Default);
+			{ ButtonFrame_button_B_position_x, ButtonFrame_button_XB_position_y, SPRITE_position_default_z },
+			ButtonFrame_size,
+			SPRITE_cut_position_default, ButtonFrame_sprite_size,
+			SPRITE_angle_default, SPRITE_color_default);
 
 		// 武器に対応するカット位置
 		spriteCutPosition_x = SpriteCutPositionX(Player1P::Instance().GetCurrentUseWeapon());
 		// ボタンアイコン描画
 		spriteWeaponIcon->Render(dc,
-			{ ButtonFrame_ButtonB_Position_X + ButtonIcon_FrameToIconOffset_X, ButtonFrame_ButtonXB_Position_Y + ButtonIcon_FrameToIconOffset_Y, Sprite_Position_Z_Default },
-			ButtonIcon_Size,
-			{ spriteCutPosition_x, Sprite_CutPosition_Default.y },
-			ButtonFrame_SpriteSize,
-			Sprite_Angle_Default,
-			Sprite_Color_Default);
+			{ ButtonFrame_button_B_position_x + ButtonIcon_frame_to_icon_offset.x, ButtonFrame_button_XB_position_y + ButtonIcon_frame_to_icon_offset.y, SPRITE_position_default_z },
+			ButtonIcon_render_size,
+			{ spriteCutPosition_x, SPRITE_cut_position_default.y },
+			ButtonFrame_sprite_size,
+			SPRITE_angle_default,
+			SPRITE_color_default);
 	}
 	// A：下 Jump
 	{
 		// ボタンフレーム描画
 		spriteButtonFrame->Render(dc,
-			{ ButtonFrame_ButtonYA_Position_X, ButtonFrame_ButtonA_Position_Y, Sprite_Position_Z_Default },
-			ButtonFrame_Size,
-			{ ButtonFrame_SpriteSize.x, Sprite_CutPosition_Default.y }, ButtonFrame_SpriteSize,
-			Sprite_Angle_Default, Sprite_Color_Default);
+			{ ButtonFrame_button_YA_position_x, ButtonFrame_button_A_position_y, SPRITE_position_default_z },
+			ButtonFrame_size,
+			{ ButtonFrame_sprite_size.x, SPRITE_cut_position_default.y }, ButtonFrame_sprite_size,
+			SPRITE_angle_default, SPRITE_color_default);
 
 		// ボタンアイコン描画
 		spriteWeaponIcon->Render(dc,
-			{ ButtonFrame_ButtonYA_Position_X + ButtonIcon_FrameToIconOffset_X, ButtonFrame_ButtonA_Position_Y + ButtonIcon_FrameToIconOffset_Y, Sprite_Position_Z_Default },
-			ButtonIcon_Size,
-			Sprite_CutPosition_Default,
-			ButtonFrame_SpriteSize,
-			Sprite_Angle_Default,
-			Sprite_Color_Default);
+			{ ButtonFrame_button_YA_position_x + ButtonIcon_frame_to_icon_offset.x, ButtonFrame_button_A_position_y + ButtonIcon_frame_to_icon_offset.y, SPRITE_position_default_z },
+			ButtonIcon_render_size,
+			SPRITE_cut_position_default,
+			ButtonFrame_sprite_size,
+			SPRITE_angle_default,
+			SPRITE_color_default);
 	}
 }
 // 武器に対応するX座標スプライトカット位置を返す
@@ -474,13 +474,13 @@ float SceneGame::SpriteCutPositionX(Player::AttackType at)
 	switch (at)
 	{
 	case Player::AttackType::Sword:
-		position = ButtonFrame_SpriteSize.x * ButtonIcon_CutRate_Sword;
+		position = ButtonFrame_sprite_size.x * ButtonIcon_cut_rate_sword;
 		break;
 	case Player::AttackType::Spear:
-		position = ButtonFrame_SpriteSize.x * ButtonIcon_CutRate_Spear;
+		position = ButtonFrame_sprite_size.x * ButtonIcon_cut_rate_spear;
 		break;
 	case Player::AttackType::Hammer:
-		position = ButtonFrame_SpriteSize.x * ButtonIcon_CutRate_Hammer;
+		position = ButtonFrame_sprite_size.x * ButtonIcon_cut_rate_hammer;
 		break;
 	}
 	return position;
@@ -491,14 +491,14 @@ void SceneGame::RenderMissionUI(ID3D11DeviceContext* dc)
 {
 	// ミッションフレーム描画
 	spriteMissionFrame->Render(dc,
-		Mission_Position,
-		Mission_Size,
-		Sprite_CutPosition_Default, 
-		Mission_SpriteSize,
-		Sprite_Angle_Default, Sprite_Color_Default);
+		Mission_position,
+		Mission_render_size,
+		SPRITE_cut_position_default, 
+		Mission_sprite_size,
+		SPRITE_angle_default, SPRITE_color_default);
 
 	missionSpriteTimer++;
-	if (missionSpriteTimer > Mission_DisplayTimerMax)
+	if (missionSpriteTimer > Mission_display_timer_max)
 	{
 		// タイマーリセット
 		missionSpriteTimer = 0;
@@ -528,11 +528,11 @@ void SceneGame::RenderMissionUI(ID3D11DeviceContext* dc)
 
 	// ミッションテキスト描画
 	spriteMissionText->Render(dc,
-		Mission_Position,
-		Mission_Size,
+		Mission_position,
+		Mission_render_size,
 		missionSpriteCutPosition[SC_INT(missionSpriteNumber)],
-		Mission_SpriteSize,
-		Sprite_Angle_Default, Sprite_Color_Default);
+		Mission_sprite_size,
+		SPRITE_angle_default, SPRITE_color_default);
 }
 
 #pragma region DEBUG_DRAW

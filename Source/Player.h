@@ -351,11 +351,16 @@ public:
 	// 描画
 	void Render(const RenderContext& rc, ModelShader* shader);
 	// HPバー描画
-	void RenderHPBar(ID3D11DeviceContext* dc, Sprite* gauge, FontSprite* font) const;
+	void RenderHPBar(ID3D11DeviceContext* dc, Sprite* gauge, FontSprite* font);
 	// キャラクター名前描画
 	void RenderCharacterOverHead(const RenderContext& rc, FontSprite* font, Sprite* message);
 	// 所持武器描画
 	void RenderHaveWeapons(ID3D11DeviceContext* dc, Sprite* frame, Sprite* weaponSprite);
+	// 文字描画/プレイヤーUI用
+	void StringRender(ID3D11DeviceContext* dc, FontSprite* font, 
+		std::string str,			// テキスト
+		DirectX::XMFLOAT2 position,	// 位置
+		DirectX::XMFLOAT4 color);	// 色
 
 	// 移動入力処理
 	bool InputMove(float elapsedTime);
