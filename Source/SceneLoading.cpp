@@ -8,7 +8,7 @@
 void SceneLoading::Initialize()
 {
 	ID3D11Device* device = Graphics::Instance().GetDevice();
-	sprite = std::make_unique<Sprite>(device, "Data/Sprite/LoadingIcon.png");
+	sprite = std::make_unique<Sprite>(device, "Data/Sprite/loadingIcon.png");
 
 	font = std::make_unique<FontSprite>(device, "Data/Font/font6.png", 256);
 
@@ -76,7 +76,8 @@ void SceneLoading::Render()
 
 		if (remain != loadingOnly)
 		{
-			font->Textout(dc, "STAGE Mont & Ocean", 16, 0, 1.0f, { screenWidth / 2 - 340, screenHeight / 2 - 100, 0 }, 32, 32, 32, 32, 16, 16, 0, { 1, 1, 1, 1 });
+			// ローディングじゃない時、表示できる
+
 		}
 	}
 }

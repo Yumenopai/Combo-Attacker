@@ -16,20 +16,19 @@ PlayerAI::PlayerAI()
 	instance = this;
 
 	//初期装備
-	InitialArm = AttackType::Spear;
+	InitialWeapon = AttackType::Spear;
 
 	// 初期化
 	Player::Init();
 
-	position = { -7,5,-60 };
-	turnSpeed = XMConvertToRadians(360);
+	position = ai_initial_position;
+	turnSpeed = ai_turn_speed;
 
-	characterName = " BUDDY";
-	nameColor = { 1.0f, 1.0f, 1.0f, 1.0f };
+	playerName = ai_Name;
+	serialNumber = ai_serial_number;
+	nameColor = ai_name_color;
 	//UI
-	hpGuage_Y = 620.0f;
-	hpColorNormal = { 0.2f, 0.6f , 0.2f, 1.0f };
-	hpColorWorning = { 0.6f, 0.2f, 0.2f, 1.0f };
+	hpGaugePosition_Y = ai_hp_gauge_position_y;
 
 	// ボタンステート初期化
 	oldInput = nowInput = nextInput = InputState::None;
@@ -64,11 +63,12 @@ void PlayerAI::AttackUpdate()
 	if (waitTimer > 0)
 	{
 		waitTimer++;
-		if (waitTimer > 80)
+		if (waitTimer > ai_wait_timer_max)
 		{
 			waitTimer = 0;
-			avoidEnemy = nullptr;
-			SetEnableShowMessage(Player::MessageNotification::Attack, false);
+			lastAvoidEnemy = currentAvoidEnemy;
+			currentAvoidEnemy = nullptr;
+			SetEnableShowMessage(Player::PlayerMessage::Attack, false);
 		}
 	}
 
@@ -76,30 +76,30 @@ void PlayerAI::AttackUpdate()
 	if (currentEnemySearch != EnemySearch::Attack) return;
 
 	// 50ダメージ以上与えたかつ、80%以上が自身の攻撃している
-	ranAwayFromPlayer1P = (allDamage > 50
-		&& (100 * allDamage / (Player1P::Instance().GetAllDamage() + allDamage)) > 80/*%*/);
-	SetEnableShowMessage(Player::MessageNotification::Indifference, ranAwayFromPlayer1P);
+	ranAwayFromPlayer1P = (allDamage > ai_ran_away_min_damage
+		&& (100 * allDamage / (Player1P::Instance().GetAllDamage() + allDamage)) > ai_ran_away_damage_rate/*%*/); // 自身が与えた全ダメージ量(%で示すため100を掛ける)/全員で与えた全ダメージ量
+	SetEnableShowMessage(Player::PlayerMessage::Indifference, ranAwayFromPlayer1P);
 
 	// 自身のダメージが残り僅か
 	ranAwayFromEnemy = GetHpWorning();
-	SetEnableShowMessage(Player::MessageNotification::RanAway, ranAwayFromEnemy);
+	SetEnableShowMessage(Player::PlayerMessage::RanAway, ranAwayFromEnemy);
 
-	// 敵ダメージが残り僅かで、1Pの武器獲得がまだの時
-	if (currentAttackEnemy != nullptr
-		&& currentAttackEnemy->GetHealthRate() < (maxHealth / 5)
-		&& currentAttackEnemy->GetAttackedDamagePersent(0) > 20/*%*/
-		&& Player1P::Instance().GetHaveArmCount() <= this->GetHaveArmCount()
-		&& waitTimer == 0)
+	// とどめを1Pに譲る
+	if (currentAttackEnemy != nullptr // 現在攻撃中
+		&& currentAttackEnemy->GetHealthRate() < ai_enemy_few_remain_damage_rate // 敵のダメージがわずか
+		&& currentAttackEnemy->GetAttackedDamagePersent(Player1P::Instance().GetSerialNumber()) > ai_concede_finish_min_damage_rate // 1Pが最低限攻撃している
+		&& Player1P::Instance().GetHaveWeaponCount() <= this->GetHaveWeaponCount() // 1Pの武器所持数がAIの武器数より少ない
+		&& lastAvoidEnemy != currentAttackEnemy && waitTimer == 0) // 重複処理防止/タイマーが動いていない
 	{
-		avoidEnemy = currentAttackEnemy;
-		SetEnableShowMessage(Player::MessageNotification::Attack,true);
+		currentAvoidEnemy = currentAttackEnemy;
+		SetEnableShowMessage(Player::PlayerMessage::Attack,true);
 		waitTimer++;
 		return;
 	}
 
 	// 攻撃入力
 	if (!ranAwayFromEnemy 
-		&& nearestEnemy != avoidEnemy
+		&& nearestEnemy != currentAvoidEnemy
 		&& nowInput != InputState::Attack) //長押しでないので今が攻撃の場合を除く
 	{
 		nextInput = InputState::Attack;
@@ -109,21 +109,18 @@ void PlayerAI::AttackUpdate()
 // 移動ベクトル
 XMFLOAT3 PlayerAI::GetMoveVec() const
 {
-	const float playerFollowRange = 2.5f;	// 味方についていく判定距離
 	XMFLOAT3 moveVec = {};		// 移動ベクトル(return値)
 
 	XMFLOAT3 playerPos = Player1P::Instance().GetPosition();
-	XMFLOAT3 playerAng = Player1P::Instance().GetAngle();
-
 	// プレイヤーへのベクトル
 	XMVECTOR playerVec = XMVectorSubtract(XMLoadFloat3(&playerPos), XMLoadFloat3(&position));
-	float playerDist = XMVectorGetX(XMVector3LengthSq(playerVec));
+	float playerDistSq = XMVectorGetX(XMVector3LengthSq(playerVec));
 
 	// プレイヤーからの逃避
 	if (ranAwayFromPlayer1P)
 	{
 		// プレイヤー近い時
-		if (playerDist < 10.0f)
+		if (playerDistSq < ai_ran_away_from_p1_dist * ai_ran_away_from_p1_dist)
 		{
 			// 一番近いプレイヤーから逃げるように動く
 			XMStoreFloat3(&moveVec, playerVec);
@@ -146,12 +143,13 @@ XMFLOAT3 PlayerAI::GetMoveVec() const
 	// 回復に向かう
 	bool readyRecover = targetPlayer->GetHpWorning();
 	// 一定距離から離れている場合 or ターゲット回復が必要な時
-	if (playerDist > playerFollowRange * playerFollowRange || readyRecover)
+	if (playerDistSq > ai_player_follow_dist * ai_player_follow_dist || readyRecover)
 	{
 		// 移動時はプレイヤーの斜め後ろ辺りに付かせる
-		playerPos.x -= sinf(playerAng.y - 45) * 2;
-		playerPos.z -= cosf(playerAng.y - 45) * 2;
-		playerPos.y = position.y; //Y方向は自身の高さで良い
+		XMFLOAT3 playerAng = Player1P::Instance().GetAngle();
+		playerPos.x -= sinf(playerAng.y - 45/*°*/) * 2; // 45度後ろの2倍距離
+		playerPos.z -= cosf(playerAng.y - 45/*°*/) * 2; // 45度後ろの2倍距離
+		playerPos.y = position.y; // Y方向は自身の高さで良い
 		// 目標位置へのベクトル
 		playerVec = XMVectorSubtract(XMLoadFloat3(&playerPos), XMLoadFloat3(&position));
 		// 移動ベクトルを更新
@@ -164,7 +162,7 @@ XMFLOAT3 PlayerAI::GetMoveVec() const
 	// 敵から逃げる
 	if (ranAwayFromEnemy)
 	{
-		if (nearestDist < 4.0f)
+		if (nearestDist < ai_ran_away_from_enemy_dist)
 		{
 			// 一番近い敵から逃げるように動く
 			moveVec = nearestVec;
@@ -177,15 +175,15 @@ XMFLOAT3 PlayerAI::GetMoveVec() const
 		}
 	}
 	// 攻撃を任せる敵がいる場合
-	else if (avoidEnemy != nullptr && nearestEnemy == avoidEnemy)
+	else if (currentAvoidEnemy != nullptr && nearestEnemy == currentAvoidEnemy)
 	{
-		if (secondDist < 10.0f)
+		if (secondDist < ai_go_toward_enemy_dist)
 		{
 			moveVec = secondDistEnemyVec;
 		}
 	}
 	// 最近エネミーとの距離が近距離の場合、進行ベクトルを更新
-	else if (nearestDist < 10.0f)
+	else if (nearestDist < ai_go_toward_enemy_dist)
 	{
 		moveVec = nearestVec;
 	}
@@ -214,11 +212,11 @@ bool PlayerAI::InputButtonUp(InputState button)
 }
 
 // 武器変更処理
-void PlayerAI::InputChangeArm(AttackType arm/* = AttackType::None*/)
+void PlayerAI::InputChangeWeapon(AttackType weapon/* = AttackType::None*/)
 {
 	// 指定されていたらそれを設定する
-	if (arm != AttackType::None) {
-		CurrentUseArm = arm;
+	if (weapon != AttackType::None) {
+		CurrentUseWeapon = weapon;
 		return;
 	}
 
@@ -227,7 +225,7 @@ void PlayerAI::InputChangeArm(AttackType arm/* = AttackType::None*/)
 	if (!Player1P::Instance().InputButtonDown(Player::InputState::Buddy)) return;
 
 	// 次に所持しているものを選択する
-	CurrentUseArm = GetNextArm();
+	CurrentUseWeapon = GetNextWeapon();
 }
 
 // ターゲット回復処理

@@ -1,6 +1,9 @@
 #pragma once
 
 #include <memory>
+#include <iostream>
+#include "UtilsDefineConst.h"
+#include "PlayerConst.h"
 #include "Shader/Shader.h"
 #include "Graphics/Model.h"
 #include "Graphics/Graphics.h"
@@ -9,9 +12,6 @@
 #include "State/Player/PlayerStateMachine.h"
 #include "Effect.h"
 #include "Input/GamePad.h"
-
-#define SC_INT static_cast<int>
-#define SC_AT static_cast<Player::AttackType>
 
 class Enemy;
 
@@ -90,9 +90,9 @@ public:
 	// 敵探知ステート
 	enum class EnemySearch
 	{
-		None = -1,
-		Find,
-		Attack,
+		None = -1,	// なし
+		Find = 0,	// 発見
+		Attack,		// 攻撃
 
 		Max,
 	};
@@ -109,35 +109,36 @@ public:
 	// ジャンプステート
 	enum class JumpState
 	{
-		CanJump,
-		CanDoubleJump,
-		CannotJump
+		CanJump,		// ジャンプ可能
+		CanDoubleJump,	// 二段階目ジャンプ可能
+		CannotJump		// ジャンプ不可能
 	};
 	// エフェクト番号
 	enum class EffectNumber
 	{
-		Hit,
-		BlueVortex,
-		GreenVortex,
-		RedVortex,
-		Recovery,
+		Hit,		// ヒット
+		BlueVortex,	// 青渦
+		GreenVortex,// 緑渦
+		RedVortex,	// 赤渦
+		Recovery,	// 回復
 
 		MaxCount
 	};
 	// 通知メッセージ
-	enum class MessageNotification
+	enum class PlayerMessage
 	{
-		WeaponGet = 0,
-		LevelUp,
-		Attack,
-		RanAway,
-		Indifference,
+		None = -1,		// なし
+		WeaponGet = 0,	// 武器獲得
+		LevelUp,		// レベルアップ
+		Attack,			// とどめして
+		RanAway,		// 逃げる
+		Indifference,	// もう知らない
 
 		MaxCount
 	};
 
 	// 武器
-	struct Arms
+	struct Weapon
 	{
 		const char*		nodeName;	// 武器ノードの名前
 		XMFLOAT3		position;	// 位置
@@ -151,55 +152,92 @@ public:
 		bool			flagJump;	// ジャンプ攻撃が攻撃中か
 	};
 
+protected:
+	Weapon Hammer
+	{
+		"Hammer",
+		WEAPON_initial_position,
+		WEAPON_initial_root_offset,
+		WEAPON_hammer_initial_tip_offset,
+		WEAPON_hammer_radius,
+		WEAPON_hammer_damage,
+		false,
+		false,
+		false,
+		false,
+	};
+	Weapon Spear
+	{
+		"Spear",
+		WEAPON_initial_position,
+		WEAPON_initial_root_offset,
+		WEAPON_spear_initial_tip_offset,
+		WEAPON_spear_radius,
+		WEAPON_spear_damage,
+		false,
+		false,
+		false,
+		false,
+	};
+	Weapon Sword
+	{
+		"Sword",
+		WEAPON_initial_position,
+		WEAPON_initial_root_offset,
+		WEAPON_sword_initial_tip_offset,
+		WEAPON_sword_radius,
+		WEAPON_sword_damage,
+		false,
+		false,
+		false,
+		false,
+	};
 private:
 	// キャラクターモデル
 	std::unique_ptr<Model> model;
-
 	// ステートマシン
 	PlayerStateMachine* stateMachine = nullptr;
-
-	// 敵毎の距離
-	std::unordered_map<Enemy*, float> enemyDist;
-	// 敵毎の敵探索ステート
-	std::unordered_map<Enemy*, EnemySearch> enemySearch;
-
+	// 現在のプレイヤーレベル
+	int currentLevel = initial_level;
 	/// <summary>
 	/// 所持武器の登録
 	///		first:所持できる武器
 	///		second : 所持しているか
 	/// </summary>
-	std::unordered_map<AttackType, bool> HaveArms;
-
-	int currentLevel = 1;
-
-	// 現在攻撃しているか
-	bool isAttacking = false;
-	// 現在の連続攻撃回数
-	int attackCount = 0;
-	// 攻撃中の敵ナンバー
-	int attackingEnemyNumber = -1;
-	// 攻撃判定 同一の敵の連続判定
-	bool isAttackJudge = true;
-	// スペシャル技
-	bool enableSpecialAttack = false;
-
+	std::unordered_map<AttackType, bool> HaveWeapons;
 	// ジャンプ遷移状態
 	JumpState jumpTrg = JumpState::CanJump;
 	// ジャンプ攻撃が動くか
 	bool isMoveAttack = false;
 
-	// UI
-	int messageNumber = -1; // -1は非表示
-	float messageYTimer = 0.0f;
+	/****** ATTACK ******/
+	// 現在攻撃しているか
+	bool isAttacking = false;
+	// 現在の連続攻撃回数
+	int attackCount = 0;
+	// 攻撃中の敵ナンバー
+	int attackingEnemyNumber = none_attacking;
+	// 攻撃判定 同一の敵の連続判定
+	bool isAttackJudge = true;
+	// スペシャル技
+	bool enableSpecialAttack = false;
 
-	// SwordAttack
-	static const int MAX_POLYGON = 32;
-	XMFLOAT3 trailPositions[2][MAX_POLYGON];
-	XMFLOAT4 color = { 1, 1, 1, 1 };
-	bool isAddVertex = true;
+	/****** VS ENEMY ******/
+	// 敵毎の距離
+	std::unordered_map<Enemy*, float> enemyDist;
+	// 敵毎の敵探索ステート
+	std::unordered_map<Enemy*, EnemySearch> enemySearch;
+
+	/****** UI ******/
+	// メッセージ
+	PlayerMessage messageNumber = PlayerMessage::None;
+	// メッセージ表示用タイマー
+	float messageYTimer = 0.0f;
+	// メッセージ
+	bool enableShowMessage[SC_INT(PlayerMessage::MaxCount)] = {};
 
 	// Effect
-	Effect EffectArray[(int)EffectNumber::MaxCount] = 
+	Effect EffectArray[SC_INT(EffectNumber::MaxCount)] =
 	{
 		 "Data/Effect/hit.efk",
 		 "Data/Effect/blueVortex.efk",
@@ -208,66 +246,49 @@ private:
 		 "Data/Effect/recovery.efk"
 	};
 
-	// ***************** const *****************
-
-	// プレイヤーと敵の判定距離
-	static inline const float playerVSenemyJudgeDist[(int)EnemySearch::Max] =
-	{
-		6.5f,	// Find
-		2.5f,	// Attack
-	};
-
-	const float playerModelSize = 0.02f;
-	const int playerMaxHealth = 100;
-
-	const float moveSpeed = 8.0f;
-	
-	// UI
-	const float hpGuageWidth = 700.0f;
-	const float hpGuageHeight = 15.0f;
-	const XMFLOAT4 hpGuageBack = { 0.3f, 0.3f, 0.3f, 0.8f };
-
 protected:
-	// 初期装備
-	AttackType InitialArm;
-	// 使用中の武器
-	AttackType CurrentUseArm = AttackType::None;
+	// 与えた総ダメージ
+	int allDamage = 0;
 
+	// 使用中の武器
+	AttackType CurrentUseWeapon = AttackType::None;
 	// 現在の敵探索ステート
 	EnemySearch currentEnemySearch = EnemySearch::None;
+	// 攻撃中の敵
+	Enemy* currentAttackEnemy;
+
+	// 最も近い敵とのベクトル
+	XMFLOAT3 nearestVec = {};
 	// 最も近い敵
 	Enemy* nearestEnemy = nullptr;
 	// 最も近い敵との距離
 	float nearestDist = FLT_MAX;
-	// 最も近い敵とのベクトル
-	XMFLOAT3 nearestVec = {};
+
 	// 二番目に近い敵との距離
 	float secondDist = FLT_MAX;
 	// 二番目に近い敵とのベクトル
 	XMFLOAT3 secondDistEnemyVec = {};
-	// 攻撃中の敵
-	Enemy* currentAttackEnemy;
-	// 与えた総ダメージ
-	int allDamage = 0;
 
 	// 回復遷移可能か
 	bool enableRecoverTransition = false;
 
-	// メッセージ
-	bool enableShowMessage[(int)MessageNotification::MaxCount] = {};
-
-	// ***************** const *****************
-	
+	// ***************** 派生クラスInitで登録 *****************
+	// プレイヤーの名前
+	std::string playerName;
+	// プレイヤーのシリアルナンバー
+	int serialNumber;
+	// 対象のプレイヤー//TODO:味方を増やす際に要改修
 	Player* targetPlayer;
-	std::string characterName;
+	// 名前の表示色
 	XMFLOAT4 nameColor;
 
+	// 回転スピード
 	float turnSpeed;
+	// 初期装備
+	AttackType InitialWeapon;
 
-	// UI //1P & AI
-	float hpGuage_Y;
-	XMFLOAT4 hpColorNormal;
-	XMFLOAT4 hpColorWorning;
+	// HPゲージ/Y座標
+	float hpGaugePosition_Y;
 
 protected:
 	// 更新
@@ -313,43 +334,41 @@ public:
 	void OnLanding(float elapsedTime) override;
 
 	// 次の選択武器取得
-	Player::AttackType GetNextArm();
+	Player::AttackType GetNextWeapon();
 
 	// 近距離攻撃時の角度矯正
 	void ForceTurnByAttack(float elapsedTime);
 	// 武器当たり判定位置の更新
-	void UpdateArmPositions(Model* model, Arms& arm);
+	void UpdateWeaponPositions(Model* model, Weapon& weapon);
 	// 攻撃中の水平加速度更新
 	void HorizontalVelocityByAttack(bool plus, int velo, float elapsedTime);
 
 	// 武器とエネミーの衝突処理
-	void CollisionArmsVsEnemies(Arms arm);
+	void CollisionWeaponsVsEnemies(Weapon weapon);
 
 	// シャドウマップ用描画
 	void ShadowRender(const RenderContext& rc, ShadowMap* shadowMap);
 	// 描画
 	void Render(const RenderContext& rc, ModelShader* shader);
-	// 攻撃の軌跡描画
-	void PrimitiveRender(const RenderContext& rc);
 	// HPバー描画
 	void RenderHPBar(ID3D11DeviceContext* dc, Sprite* gauge, FontSprite* font) const;
-	//キャラクター名前描画
+	// キャラクター名前描画
 	void RenderCharacterOverHead(const RenderContext& rc, FontSprite* font, Sprite* message);
 	// 所持武器描画
-	void RenderHaveArms(ID3D11DeviceContext* dc, Sprite* frame, Sprite* ArmSprite);
+	void RenderHaveWeapons(ID3D11DeviceContext* dc, Sprite* frame, Sprite* weaponSprite);
 
 	// 移動入力処理
 	bool InputMove(float elapsedTime);
 	// 攻撃入力処理
 	bool InputAttackFromNoneAttack();
 	// ジャンプ中の攻撃入力処理
-	bool InputAttackFromJump(float elapsedTime);
+	bool InputAttackFromJump();
 	// 武器変更処理
-	virtual void InputChangeArm(AttackType arm = AttackType::None) = 0;
+	virtual void InputChangeWeapon(AttackType weapon = AttackType::None) = 0;
 	// ターゲット回復処理
 	virtual void InputRecover() = 0;
 	// 武器を使用可能にする
-	void AddHaveArm(AttackType arm = AttackType::None);
+	void AddHaveWeapon(AttackType weapon = AttackType::None);
 
 	// ボタン判定(押下時)
 	virtual bool InputButtonDown(InputState button) = 0;
@@ -359,12 +378,15 @@ public:
 	virtual bool InputButtonUp(InputState button) = 0;
 
 	// 簡略化関数
+	// ステート変更
 	void ChangeState(State newState) {
 		stateMachine->ChangeState(SC_INT(newState));
 	}
+	// アニメーション再生
 	void PlayAnimation(Animation anim, bool loop) {
 		model->PlayAnimation(SC_INT(anim), loop);
 	}
+	// エフェクト再生
 	void PlayEffect(EffectNumber num, const XMFLOAT3& position, float scale = 1.0f) {
 		EffectArray[SC_INT(num)].Play(position, scale);
 	}
@@ -381,6 +403,7 @@ public:
 
 	Model* GetModel() const { return model.get(); }
 
+	int GetSerialNumber() const { return serialNumber; }
 	Player* GetTargetPlayer() const { return targetPlayer; }
 	Enemy* GetCurrentAttackEnemy() const { return currentAttackEnemy; }
 	void SetCurrentAttackEnemy(Enemy* enemy) { currentAttackEnemy = enemy; }
@@ -400,23 +423,23 @@ public:
 
 	int GetLevel() const { return currentLevel; }
 	void SetLevel(int lv) { currentLevel = lv; }
-	void AddLevel(int lv) { currentLevel += lv; SetEnableShowMessage(Player::MessageNotification::LevelUp, true); }
+	void AddLevel(int lv) { currentLevel += lv; SetEnableShowMessage(Player::PlayerMessage::LevelUp, true); }
 
-	bool GetHaveEachArm(AttackType arm) { return HaveArms[arm]; }
-	int GetHaveArmCount() {
+	bool GetHaveEachWeapon(AttackType weapon) { return HaveWeapons[weapon]; }
+	int GetHaveWeaponCount() {
 		int haveCount = 0;
-		for (int i = 0; i < HaveArms.size(); i++)
+		for (int i = 0; i < HaveWeapons.size(); i++)
 		{
-			if (HaveArms[SC_AT(i)]) haveCount++;
+			if (HaveWeapons[SC_AT(i)]) haveCount++;
 		}
 		return haveCount;
 	}
 
-	void SetEnableShowMessage(MessageNotification number, bool isShow) { enableShowMessage[static_cast<int>(number)] = isShow; }
+	void SetEnableShowMessage(PlayerMessage number, bool isShow) { enableShowMessage[SC_INT(number)] = isShow; }
 
 	bool GetEnableRecoverTransition() const { return enableRecoverTransition; }
 
-	AttackType GetCurrentUseArm() const { return CurrentUseArm; }
+	AttackType GetCurrentUseWeapon() const { return CurrentUseWeapon; }
 	bool GetHpWorning() const { return GetHealthRate() <= 20; }
 
 	EnemySearch GetEnemySearch() const { return currentEnemySearch; }
@@ -441,49 +464,8 @@ public:
 		velocity.z += velo.z;
 	}
 
-	Arms GetHammer() const { return Hammer; }
-	Arms GetSpear() const { return Spear; }
-	Arms GetSword() const { return Sword; }
+	Weapon GetHammer() const { return Hammer; }
+	Weapon GetSpear() const { return Spear; }
+	Weapon GetSword() const { return Sword; }
 #pragma endregion
-
-protected:
-	Arms Hammer
-	{
-		"Hammer",
-		{0,0,0},
-		{0,0,0},
-		{0,35,0},
-		0.5f,
-		2,
-		false,
-		false,
-		false,
-		false,
-	};
-	Arms Spear
-	{
-		"Spear",
-		{0,0,0},
-		{0,0,0},
-		{0,90,0},
-		0.4f,
-		1,
-		false,
-		false,
-		false,
-		false,
-	};
-	Arms Sword
-	{
-		"Sword",
-		{0,0,0},
-		{0,0,0},
-		{0,30,0},
-		0.6f,
-		1,
-		false,
-		false,
-		false,
-		false,
-	};
 };

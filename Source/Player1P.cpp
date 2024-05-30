@@ -17,20 +17,19 @@ Player1P::Player1P()
 	instance = this;
 
 	//初期装備
-	InitialArm = AttackType::Sword;
+	InitialWeapon = AttackType::Sword;
 
 	// 初期化
 	Player::Init();
 
-	position = { -7,5,-66 };
-	turnSpeed = XMConvertToRadians(1200);
+	position = p1_initial_position;
+	turnSpeed = p1_turn_speed;
 
-	characterName = "PLAYER";
-	nameColor = { 0.1f, 0.65f, 0.9f, 1.0f };
+	playerName = p1_name;
+	serialNumber = p1_serial_number;
+	nameColor = p1_name_color;
 	//UI
-	hpGuage_Y = 555.0f;
-	hpColorNormal = { 0.2f, 0.8f , 0.2f, 1.0f };
-	hpColorWorning = { 0.8f, 0.2f, 0.2f, 1.0f };
+	hpGaugePosition_Y = p1_hp_gauge_position_y;
 }
 
 Player1P::~Player1P()
@@ -125,20 +124,21 @@ bool Player1P::InputButtonUp(InputState button)
 }
 
 // 武器変更処理
-void Player1P::InputChangeArm(AttackType arm/* = AttackType::None*/)
+void Player1P::InputChangeWeapon(AttackType weapon/* = AttackType::None*/)
 {
+	// 回復処理が出来る場合、武器は変更できない
 	if (enableRecoverTransition) return;
 	// 押されていない時はreturn
 	if (!InputButtonDown(Player::InputState::Player)) return;
 
 	// 指定されていたらそれを設定する
-	if (arm != AttackType::None) {
-		CurrentUseArm = arm;
+	if (weapon != AttackType::None) {
+		CurrentUseWeapon = weapon;
 		return;
 	}
 
 	// 次に所持しているものを選択する
-	CurrentUseArm = GetNextArm();
+	CurrentUseWeapon = GetNextWeapon();
 }
 
 // ターゲット回復処理

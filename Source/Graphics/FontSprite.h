@@ -28,7 +28,6 @@ public:
 	void Render(ID3D11DeviceContext* dc,
 		float dx, float dy,					 //左上位置
 		float dz,							 //奥行
-		DirectX::XMFLOAT3 offset,
 		float dw, float dh,					 //幅、高さ
 		float sx, float sy,					 //画像切り抜き位置
 		float sw, float sh,					 //画像切り抜きサイズ
@@ -41,7 +40,6 @@ public:
 	void Textout(ID3D11DeviceContext* dc, std::string str,
 		float dx, float dy,					 //左上位置
 		float dz,							 //奥行
-		DirectX::XMFLOAT3 offset,
 		float dw, float dh,					 //幅、高さ
 		float sx, float sy,					 //画像切り抜き位置
 		float sw, float sh,					 //画像切り抜きサイズ

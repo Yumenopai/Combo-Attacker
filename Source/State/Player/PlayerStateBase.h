@@ -3,6 +3,9 @@
 class Player;
 class PlayerStateBase
 {
+protected:
+	Player* player;
+
 public:
 	PlayerStateBase(Player* pl) : player(pl){}
 	virtual ~PlayerStateBase() {}
@@ -12,7 +15,4 @@ public:
 
 	// ステート更新
 	virtual void Update(float elapsedTime) = 0;
-
-protected:
-	Player* player;
 };

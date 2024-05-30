@@ -9,7 +9,7 @@
 #include "EnemyManager.h"
 #include "EnemySlime.h"
 #include "EnemyTurtleShell.h"
-#include "EnemyBlue.h"
+#include "EnemyDragon.h"
 #include "TransformUtils.h"
 #include "Light/LightManager.h"
 #include "EffectManager.h"
@@ -37,7 +37,6 @@ void SceneGame::Initialize()
 		XMFLOAT3(0, 0, 0),		//注視点
 		XMFLOAT3(0, 1, 0)		//上ベクトル
 	);
-	//freeCameraController.SyncCameraToController(camera);
 
 	cameraController = std::make_unique<CameraController>();
 
@@ -46,15 +45,15 @@ void SceneGame::Initialize()
 	player1P = std::make_unique<Player1P>();
 	playerAI = std::make_unique<PlayerAI>();
 
-	for (int i = 0; i < enemySlimeCount; i++)
+	for (int i = 0; i < enemy_slime_count; i++)
 	{
 		enemySlime[i] = std::make_unique<EnemySlime>();
 	}
-	for (int i = 0; i < enemyTurtleShellCount; i++)
+	for (int i = 0; i < enemy_turtleShell_count; i++)
 	{
 		enemyTurtleShell[i] = std::make_unique<EnemyTurtleShell>();
 	}
-	enemyBlue = std::make_unique<EnemyBlue>();
+	enemyDragon = std::make_unique<EnemyDragon>();
 
 	PlayerManager& playerManager = PlayerManager::Instance();
 	playerManager.Register(player1P.get());
@@ -65,8 +64,8 @@ void SceneGame::Initialize()
 
 	// load sprite
 	spriteButtonFrame = std::make_unique<Sprite>(device, "Data/Sprite/frame.png");
-	spriteArmIcon = std::make_unique<Sprite>(device, "Data/Sprite/arm.png");
-	spriteNameOnButton = std::make_unique<Sprite>(device, "Data/Sprite/Name.png");
+	spriteWeaponIcon = std::make_unique<Sprite>(device, "Data/Sprite/weapon.png");
+	spriteNameOnButton = std::make_unique<Sprite>(device, "Data/Sprite/name.png");
 	spriteMissionFrame = std::make_unique<Sprite>(device, "Data/Sprite/missionFrame.png");
 	spriteMissionText = std::make_unique<Sprite>(device, "Data/Sprite/missionText.png");
 	spriteMessageText = std::make_unique<Sprite>(device, "Data/Sprite/message.png");
@@ -85,19 +84,19 @@ void SceneGame::Initialize()
 	enemyTurtleShell[2]->SetPosition(DirectX::XMFLOAT3(-7, 5, -36));
 	enemyTurtleShell[3]->SetPosition(DirectX::XMFLOAT3(-12, 5, -40));
 
-	enemyBlue->SetPosition(DirectX::XMFLOAT3(-28, 5, -12));
+	enemyDragon->SetPosition(DirectX::XMFLOAT3(-28, 5, -12));
 
 	EnemyManager& enemyManager = EnemyManager::Instance();
-	for (int i = 0; i < enemySlimeCount; i++)
+	for (int i = 0; i < enemy_slime_count; i++)
 	{
 		enemyManager.Register(enemySlime[i].get());
 	}
-	for (int i = 0; i < enemyTurtleShellCount; i++)
+	for (int i = 0; i < enemy_turtleShell_count; i++)
 	{
 		enemyManager.Register(enemyTurtleShell[i].get());
 	}
 
-	enemyManager.Register(enemyBlue.get());
+	enemyManager.Register(enemyDragon.get());
 
 	// 平行光源を追加
 	Light* mainDirectionalLight = new Light(LightType::Directional);
@@ -113,34 +112,25 @@ void SceneGame::Finalize()
 	PlayerManager::Instance().Clear();
 }
 
+// 更新処理
 void SceneGame::Update(float elapsedTime)
 {
 	//カメラコントローラー更新処理
 	XMFLOAT3 target = player1P->GetPosition();
-	target.y += 0.5f;
+	target.y += SCENEGAME_Camera_Y;
 	cameraController->SetTarget(target);
 	cameraController->Update(elapsedTime);
-
-	//カメラ更新処理
-	//Camera& camera = Camera::Instance();
-	//freeCameraController.Update();
-	//freeCameraController.SyncControllerToCamera(camera);
 
 	// マネージャーによる更新
 	PlayerManager::Instance().Update(elapsedTime);
 	EnemyManager::Instance().Update(elapsedTime);
 	stage->Update(elapsedTime);
+
 	//エフェクト更新処理
 	EffectManager::Instance().Update(elapsedTime);
-
-	GamePad& gamePad = Input::Instance().GetGamePad();
-
-	//if (gamePad.GetButtonDown() & GamePad::BTN_START)
-	//{
-	//	SceneManager::Instance().ChangeScene(new SceneTitle());
-	//}
 }
 
+// 描画処理
 void SceneGame::Render()
 {
 	Camera& camera = Camera::Instance();
@@ -149,26 +139,25 @@ void SceneGame::Render()
 	RenderContext rc;
 	rc.timer = ++waterTimer;
 
-	//カメラ更新処理
+	// カメラ更新処理
 	rc.view = camera.GetView();
 	rc.projection = camera.GetProjection();
 
-	//描画コンテキスト設定
+	// 描画コンテキスト設定
 	rc.camera = &camera;
 	rc.deviceContext = Graphics::Instance().GetDeviceContext();
 	rc.renderState = Graphics::Instance().GetRenderState();
-	LightManager::Instane().PushRenderContext(rc);// ライトの情報を詰め込む
+	LightManager::Instane().PushRenderContext(rc); // ライトの情報を詰め込む
 	rc.shadowMap = shadowMap;
-	rc.shadowColor = { 0.5f,0.5f,0.5f };
+	rc.shadowColor = SCENEGAME_ShadowColor;
 
-	//シャドウマップ描画
+	// シャドウマップ描画
 	shadowMap->Begin(rc, camera.GetFocus());
 	stage->ShadowRender(rc, shadowMap);
 	PlayerManager::Instance().ShadowRender(rc, shadowMap);
 	EnemyManager::Instance().ShadowRender(rc, shadowMap);
 	shadowMap->End(rc);
 
-	//2d
 	Graphics& graphics = Graphics::Instance();
 	ID3D11DeviceContext* dc = rc.deviceContext;
 	RenderState* renderState = Graphics::Instance().GetRenderState();
@@ -204,6 +193,7 @@ void SceneGame::Render()
 	// スカイボックスの描画
 	skyBox->Render(rc);
 
+	// 3Dモデル描画
 	ModelShader* shader = Graphics::Instance().GetShader(ShaderId::Toon);
 	shader->Begin(rc);
 	PlayerManager::Instance().Render(rc, shader);
@@ -211,7 +201,7 @@ void SceneGame::Render()
 	EnemyManager::Instance().Render(rc, shader);
 	shader->End(rc);
 
-
+	// 水面描画
 	ModelShader* waterShader = Graphics::Instance().GetShader(ShaderId::WaterSurface);
 	waterShader->Begin(rc);
 	stage->WaterRender(rc, waterShader);
@@ -220,154 +210,30 @@ void SceneGame::Render()
 	//3Dエフェクト描画
 	EffectManager::Instance().Render(rc.view, rc.projection);
 
+	// ブレンドステート設定
+	FLOAT blendFactor[4] = { 1.0f,1.0f,1.0f,1.0f };
+	UINT sampleMask = 0xFFFFFFFF;
+	dc->OMSetBlendState(renderState->GetBlendState(BlendState::Transparency), blendFactor, sampleMask);
+
 	// 2Dスプライト描画
 	{
 		// エネミーHP
 		RenderEnemyGauge(dc, rc.view, rc.projection);
 		// プレイヤー2DRender
-		PlayerManager::Instance().Render2d(rc, gauge.get(), font.get(), spriteButtonFrame.get(), spriteArmIcon.get(),spriteMessageText.get());
-	}
-	//2DSprite
-	{
-		const float screenWidth = static_cast<float>(graphics.GetScreenWidth());
-		const float screenHeight = static_cast<float>(graphics.GetScreenHeight());
-		const DirectX::XMFLOAT2 spriteSize = { 300.0f,300.f };
-
-		FLOAT blendFactor[4] = { 1.0f,1.0f,1.0f,1.0f };
-		UINT sampleMask = 0xFFFFFFFF;
-
-		//titleSprite
-		dc->OMSetBlendState(renderState->GetBlendState(BlendState::Transparency), blendFactor, sampleMask);
-
-		//Item枠
-		//for (int i = 0; i < 6; i++)
-		//{
-		//	sprites[2]->Render(dc, 300.0f + 115 * i, 610.0f, 0.0f, 100, 100, 0, 0, textureWidth, textureWidth, 0, { 1, 1, 1, 1 });
-		//}
-
-		//AttackButton
-		spriteButtonFrame->Render(dc, { 1150.0f, 250.0f, 0.0f }, { 80, 80 }, { 0, 0 }, spriteSize, 0, { 1, 1, 1, 1 });
-		spriteButtonFrame->Render(dc, { 1100.0f, 300.0f, 0.0f }, { 80, 80 }, { 0, 0 }, spriteSize, 0, { 1, 1, 1, 1 });
-		spriteButtonFrame->Render(dc, { 1200.0f, 300.0f, 0.0f }, { 80, 80 }, { 0, 0 }, spriteSize, 0, { 1, 1, 1, 1 });
-		spriteButtonFrame->Render(dc, { 1150.0f, 350.0f, 0.0f }, { 80, 80 }, { spriteSize.x, 0 }, spriteSize, 0, { 1, 1, 1, 1 });
-
-		float spriteOffset_x = 0;
-		//X：左 Player
-		auto next1P = Player1P::Instance().GetNextArm();
-		if (next1P == Player1P::Instance().GetCurrentUseArm())
-		{
-			spriteOffset_x = spriteSize.x * 4;
-		}
-		else
-		{
-			switch (next1P)
-			{
-			case Player::AttackType::Sword:
-				spriteOffset_x = spriteSize.x;
-				break;
-			case Player::AttackType::Spear:
-				spriteOffset_x = spriteSize.x * 3;
-				break;
-			case Player::AttackType::Hammer:
-				spriteOffset_x = spriteSize.x * 2;
-				break;
-			}
-
-		}
-		spriteArmIcon->Render(dc, { 1100.0f + 15.0f, 300.0f + 10.0f, 0.0f }, { 50, 50 }, { spriteOffset_x, spriteSize.y }, spriteSize, 0, { 1, 1, 1, 1 });
-		//Y：上 Buddy
-		if (Player1P::Instance().GetEnableRecoverTransition())
-		{
-			spriteOffset_x = 0;
-		}
-		else
-		{
-			auto nextAI = PlayerAI::Instance().GetNextArm();
-			if (nextAI == PlayerAI::Instance().GetCurrentUseArm())
-			{
-				spriteOffset_x = spriteSize.x * 4;
-			}
-			else
-			{
-				switch (nextAI)
-				{
-				case Player::AttackType::Sword:
-					spriteOffset_x = spriteSize.x;
-					break;
-				case Player::AttackType::Spear:
-					spriteOffset_x = spriteSize.x * 3;
-					break;
-				case Player::AttackType::Hammer:
-					spriteOffset_x = spriteSize.x * 2;
-					break;
-				}
-			}
-		}
-		spriteArmIcon->Render(dc, { 1150.0f + 15.0f, 250.0f + 10.0f, 0.0f }, { 50, 50 }, { spriteOffset_x, spriteSize.y }, spriteSize, 0, { 1, 1, 1, 1 });
-		//B：右 Attack
-		switch (Player1P::Instance().GetCurrentUseArm())
-		{
-		case Player::AttackType::Sword:
-			spriteOffset_x = spriteSize.x;
-			break;
-		case Player::AttackType::Spear:
-			spriteOffset_x = spriteSize.x * 3;
-			break;
-		case Player::AttackType::Hammer:
-			spriteOffset_x = spriteSize.x * 2;
-			break;
-		}
-		spriteArmIcon->Render(dc, { 1200.0f + 15.0f, 300.0f + 10.0f, 0.0f }, { 50, 50 }, { spriteOffset_x, 0 }, spriteSize, 0, { 1, 1, 1, 1 });
-		//A：下 Jump
-		spriteArmIcon->Render(dc, { 1150.0f + 15.0f, 350.0f + 10.0f, 0.0f }, { 50, 50 }, { 0, 0 }, spriteSize, 0, { 1, 1, 1, 1 });
-
-		// 名前
-		spriteNameOnButton->Render(dc, { 1100.0f + 15.0f, 300.0f + 10.0f, 0.0f }, { 50, 25 }, { 0, 0 }, { spriteSize.x, spriteSize.y / 2 }, 0, { 1, 1, 1, 1 });
-		spriteNameOnButton->Render(dc, { 1150.0f + 15.0f, 250.0f + 10.0f, 0.0f }, { 50, 25 }, { 0, 150 }, { spriteSize.x, spriteSize.y / 2 }, 0, { 1, 1, 1, 1 });
-	}
-
-	// mission
-	{
-		spriteMissionFrame->Render(dc, { 1040.0f, 10.0f, 0.0f }, { 225, 150 }, { 0, 0 }, missionSpriteSize, 0, { 1, 1, 1, 1 });
-		
-		spriteTimer++;
-		if (spriteTimer > 180)
-		{
-			spriteTimer = 0;
-			if (PlayerAI::Instance().GetHpWorning())
-			{
-				missionSpriteNumber = 3;
-			}
-			else
-			{
-				missionSpriteNumber++;
-
-				bool have = PlayersHaveAnySameArm();
-				if ((have && missionSpriteNumber == 3) ||
-					(!have && missionSpriteNumber == 2))
-				{
-					missionSpriteNumber = 0;
-				}
-			}
-		}
-		
-		spriteMissionText->Render(dc, { 1040.0f, 10.0f, 0.0f }, { 225, 150 }, missionSpriteOffset[missionSpriteNumber], missionSpriteSize, 0, {1, 1, 1, 1});
-	}
+		PlayerManager::Instance().Render2d(rc, gauge.get(), font.get(), spriteButtonFrame.get(), spriteWeaponIcon.get(),spriteMessageText.get());
 	
-	//gizmos
-	Gizmos* gizmos = Graphics::Instance().GetGizmos();
-	rc.camera = &camera;
-	rc.deviceContext = Graphics::Instance().GetDeviceContext();
-	rc.renderState = Graphics::Instance().GetRenderState();
-	//描画実行
-	gizmos->Render(rc);
-
-	//Loadingの為ここでブレンドステート変更
-	FLOAT blendFactor[4] = { 1.0f,1.0f,1.0f,1.0f };
-	UINT sampleMask = 0xFFFFFFFF;
-	dc->OMSetBlendState(renderState->GetBlendState(BlendState::Transparency), blendFactor, sampleMask);
+		// ボタンUI
+		RenderButtonUI(dc);
+		// ミッションUI
+		RenderMissionUI(dc);
+	}
 
 #if _DEBUG
+	// gizmos
+	Gizmos* gizmos = Graphics::Instance().GetGizmos();
+	// 描画実行
+	gizmos->Render(rc);
+
 	// 3Dデバッグ描画
 	{
 		//プレイヤーデバッグプリミティブ描画
@@ -390,12 +256,12 @@ void SceneGame::Render()
 #endif
 }
 
-bool SceneGame::PlayersHaveAnySameArm()
+bool SceneGame::PlayersHaveAnySameWeapon()
 {
 	for (int i = 0; i < SC_INT(Player::AttackType::MaxCount); i++)
 	{
-		if (Player1P::Instance().GetHaveEachArm(SC_AT(i))
-			&& PlayerAI::Instance().GetHaveEachArm(SC_AT(i)))
+		if (Player1P::Instance().GetHaveEachWeapon(SC_AT(i))
+			&& PlayerAI::Instance().GetHaveEachWeapon(SC_AT(i)))
 		{
 			return true;
 		}
@@ -423,12 +289,8 @@ void SceneGame::RenderEnemyGauge(ID3D11DeviceContext* dc, const DirectX::XMFLOAT
 	for (int i = 0; i < enemyCount; ++i)
 	{
 		Enemy* enemy = enemyManager.GetEnemy(i);
-
 		//距離が遠い時はcontinue
-		if (Player1P::Instance().GetEachEnemyDist(enemy) > 12.0f)
-		{
-			continue;
-		}
+		if (Player1P::Instance().GetEachEnemyDist(enemy) > enemy_hp_gauge_display_dist) continue;
 
 		//エネミー頭上のワールド座標
 		DirectX::XMFLOAT3 worldPosition = enemy->GetPosition();
@@ -438,56 +300,239 @@ void SceneGame::RenderEnemyGauge(ID3D11DeviceContext* dc, const DirectX::XMFLOAT
 		//ワールドからスクリーンへの変換
 		DirectX::XMVECTOR ScreenPosition = XMVector3Project(
 			WorldPosition,
-			viewport.TopLeftX,
-			viewport.TopLeftY,
-			viewport.Width,
-			viewport.Height,
-			viewport.MinDepth,
-			viewport.MaxDepth,
-			Projection,
-			View,
-			World
-		);
+			viewport.TopLeftX, viewport.TopLeftY,
+			viewport.Width, viewport.Height,
+			viewport.MinDepth, viewport.MaxDepth,
+			Projection, View, World);
 
 		DirectX::XMFLOAT3 screenPosition;
 		DirectX::XMStoreFloat3(&screenPosition, ScreenPosition);
-
 		//カメラの背後にいるか、明らかに離れているなら描画しない
 		if (screenPosition.z < 0.0f || screenPosition.z > 1.0f) continue;
 
-		//HPゲージの長さ
-		const float guageWidth = 60.0f;
-		const float guageHeight = 8.0f;
-
-		float healthRate = enemy->GetHealth() / static_cast<float>(enemy->GetMaxHealth());
+		float healthRate = enemy->GetHealthRate() / 100.0f; //百分率から小数に変換
 
 		//ゲージ描画(下地)
 		gauge->Render(dc,
-			screenPosition.x - guageWidth * 0.5f - 2,
-			screenPosition.y - guageHeight - 2,
-			0,
-			guageWidth + 4,
-			guageHeight + 4,
-			0, 0,
-			static_cast<float>(gauge->GetTextureWidth()),
-			static_cast<float>(gauge->GetTextureHeight()),
-			0.0f,
-			{ 0.5f, 0.5f, 0.5f, 0.5f }
+			screenPosition.x - enemy_hp_gauge_size.x / 2 - enemy_hp_gauge_frame_expansion / 2, // X_中央に配置するため幅の半分とゲージ長さの半分で求める
+			screenPosition.y - enemy_hp_gauge_size.y - enemy_hp_gauge_frame_expansion / 2, // Y_上下の拡張を合わせたサイズ分で足しているため半分引く
+			Sprite_Position_Z_Default,
+			enemy_hp_gauge_size.x + enemy_hp_gauge_frame_expansion,
+			enemy_hp_gauge_size.y + enemy_hp_gauge_frame_expansion,
+			Sprite_NoneTexture, Sprite_NoneTexture,
+			Sprite_NoneTexture,	Sprite_NoneTexture,
+			Sprite_Angle_Default,
+			enemy_hp_gauge_frame_color
 		);
 		//ゲージ描画
 		gauge->Render(dc,
-			screenPosition.x - guageWidth * 0.5f,
-			screenPosition.y - guageHeight,
-			0,
-			guageWidth * healthRate,
-			guageHeight,
-			0, 0,
-			static_cast<float>(gauge->GetTextureWidth()),
-			static_cast<float>(gauge->GetTextureHeight()),
-			0.0f,
-			{ 1.0f, 0.0f, 0.0f, 1.0f }
+			screenPosition.x - enemy_hp_gauge_size.x / 2,
+			screenPosition.y - enemy_hp_gauge_size.y,
+			Sprite_Position_Z_Default,
+			enemy_hp_gauge_size.x * healthRate,
+			enemy_hp_gauge_size.y,
+			Sprite_NoneTexture, Sprite_NoneTexture,
+			Sprite_NoneTexture, Sprite_NoneTexture,
+			Sprite_Angle_Default,
+			enemy_hp_gauge_color_normal
 		);
 	}
+}
+
+// ボタンUI描画
+void SceneGame::RenderButtonUI(ID3D11DeviceContext* dc)
+{
+	float spriteCutPosition_x = 0;
+	auto nextWeapon1P = Player1P::Instance().GetNextWeapon();
+
+	// X：左 Player
+	{
+		// ボタンフレーム描画
+		spriteButtonFrame->Render(dc,
+			{ ButtonFrame_ButtonX_Position_X, ButtonFrame_ButtonXB_Position_Y, Sprite_Position_Z_Default },
+			ButtonFrame_Size,
+			Sprite_CutPosition_Default, ButtonFrame_SpriteSize,
+			Sprite_Angle_Default, Sprite_Color_Default);
+
+		if (nextWeapon1P != Player1P::Instance().GetCurrentUseWeapon()) // 次が現在の武器＝武器が一つだけしかもっていない時は表示しない
+		{
+			// 武器に対応するカット位置
+			spriteCutPosition_x = SpriteCutPositionX(nextWeapon1P);
+
+			// ボタンアイコン描画
+			spriteWeaponIcon->Render(dc,
+				{ ButtonFrame_ButtonX_Position_X + ButtonIcon_FrameToIconOffset_X, ButtonFrame_ButtonXB_Position_Y + ButtonIcon_FrameToIconOffset_Y, Sprite_Position_Z_Default },
+				ButtonIcon_Size,
+				{ spriteCutPosition_x, ButtonFrame_SpriteSize.y },
+				ButtonFrame_SpriteSize,
+				Sprite_Angle_Default,
+				Sprite_Color_Default);
+		}
+		// 名前描画
+		spriteNameOnButton->Render(dc,
+			{ ButtonFrame_ButtonX_Position_X + ButtonIcon_FrameToIconOffset_X, ButtonFrame_ButtonXB_Position_Y + ButtonIcon_FrameToIconOffset_Y, Sprite_Position_Z_Default },
+			ButtonName_Size,
+			Sprite_CutPosition_Default,
+			ButtonName_SpriteSize,
+			Sprite_Angle_Default,
+			Sprite_Color_Default);
+
+	}
+	// Y：上 Buddy
+	{
+		// ボタンフレーム描画
+		spriteButtonFrame->Render(dc,
+			{ ButtonFrame_ButtonYA_Position_X, ButtonFrame_ButtonY_Position_Y, Sprite_Position_Z_Default },
+			ButtonFrame_Size,
+			Sprite_CutPosition_Default, ButtonFrame_SpriteSize,
+			Sprite_Angle_Default, Sprite_Color_Default);
+
+		bool enable_show = true;
+		// 回復遷移可能な場合
+		if (Player1P::Instance().GetEnableRecoverTransition())
+		{
+			spriteCutPosition_x = ButtonFrame_SpriteSize.x * ButtonIcon_CutRate_Recover;
+		}
+		// 武器変更
+		else
+		{
+			auto nextAI = PlayerAI::Instance().GetNextWeapon();
+			if (nextAI == PlayerAI::Instance().GetCurrentUseWeapon())
+			{
+				// 次が現在の武器＝武器が一つだけしかもっていない時は表示しない
+				enable_show = false;
+			}
+			else
+			{
+				// 武器に対応するカット位置
+				spriteCutPosition_x = SpriteCutPositionX(nextWeapon1P);
+			}
+		}
+		if (enable_show)
+		{
+			// ボタンアイコン描画
+			spriteWeaponIcon->Render(dc,
+				{ ButtonFrame_ButtonYA_Position_X + ButtonIcon_FrameToIconOffset_X, ButtonFrame_ButtonY_Position_Y + ButtonIcon_FrameToIconOffset_Y, Sprite_Position_Z_Default },
+				ButtonIcon_Size,
+				{ spriteCutPosition_x, ButtonFrame_SpriteSize.y },
+				ButtonFrame_SpriteSize,
+				Sprite_Angle_Default,
+				Sprite_Color_Default);
+		}
+		// 名前描画
+		spriteNameOnButton->Render(dc,
+			{ ButtonFrame_ButtonYA_Position_X + ButtonIcon_FrameToIconOffset_X, ButtonFrame_ButtonY_Position_Y + ButtonIcon_FrameToIconOffset_Y, Sprite_Position_Z_Default },
+			ButtonName_Size,
+			{ Sprite_CutPosition_Default.x, ButtonName_SpriteSize.y },
+			ButtonName_SpriteSize,
+			Sprite_Angle_Default,
+			Sprite_Color_Default);
+	}
+	// B：右 Attack
+	{
+		// ボタンフレーム描画
+		spriteButtonFrame->Render(dc,
+			{ ButtonFrame_ButtonB_Position_X, ButtonFrame_ButtonXB_Position_Y, Sprite_Position_Z_Default },
+			ButtonFrame_Size,
+			Sprite_CutPosition_Default, ButtonFrame_SpriteSize,
+			Sprite_Angle_Default, Sprite_Color_Default);
+
+		// 武器に対応するカット位置
+		spriteCutPosition_x = SpriteCutPositionX(Player1P::Instance().GetCurrentUseWeapon());
+		// ボタンアイコン描画
+		spriteWeaponIcon->Render(dc,
+			{ ButtonFrame_ButtonB_Position_X + ButtonIcon_FrameToIconOffset_X, ButtonFrame_ButtonXB_Position_Y + ButtonIcon_FrameToIconOffset_Y, Sprite_Position_Z_Default },
+			ButtonIcon_Size,
+			{ spriteCutPosition_x, Sprite_CutPosition_Default.y },
+			ButtonFrame_SpriteSize,
+			Sprite_Angle_Default,
+			Sprite_Color_Default);
+	}
+	// A：下 Jump
+	{
+		// ボタンフレーム描画
+		spriteButtonFrame->Render(dc,
+			{ ButtonFrame_ButtonYA_Position_X, ButtonFrame_ButtonA_Position_Y, Sprite_Position_Z_Default },
+			ButtonFrame_Size,
+			{ ButtonFrame_SpriteSize.x, Sprite_CutPosition_Default.y }, ButtonFrame_SpriteSize,
+			Sprite_Angle_Default, Sprite_Color_Default);
+
+		// ボタンアイコン描画
+		spriteWeaponIcon->Render(dc,
+			{ ButtonFrame_ButtonYA_Position_X + ButtonIcon_FrameToIconOffset_X, ButtonFrame_ButtonA_Position_Y + ButtonIcon_FrameToIconOffset_Y, Sprite_Position_Z_Default },
+			ButtonIcon_Size,
+			Sprite_CutPosition_Default,
+			ButtonFrame_SpriteSize,
+			Sprite_Angle_Default,
+			Sprite_Color_Default);
+	}
+}
+// 武器に対応するX座標スプライトカット位置を返す
+float SceneGame::SpriteCutPositionX(Player::AttackType at)
+{
+	float position = 0.0f;
+	switch (at)
+	{
+	case Player::AttackType::Sword:
+		position = ButtonFrame_SpriteSize.x * ButtonIcon_CutRate_Sword;
+		break;
+	case Player::AttackType::Spear:
+		position = ButtonFrame_SpriteSize.x * ButtonIcon_CutRate_Spear;
+		break;
+	case Player::AttackType::Hammer:
+		position = ButtonFrame_SpriteSize.x * ButtonIcon_CutRate_Hammer;
+		break;
+	}
+	return position;
+}
+
+// ミッションUI描画
+void SceneGame::RenderMissionUI(ID3D11DeviceContext* dc)
+{
+	// ミッションフレーム描画
+	spriteMissionFrame->Render(dc,
+		Mission_Position,
+		Mission_Size,
+		Sprite_CutPosition_Default, 
+		Mission_SpriteSize,
+		Sprite_Angle_Default, Sprite_Color_Default);
+
+	missionSpriteTimer++;
+	if (missionSpriteTimer > Mission_DisplayTimerMax)
+	{
+		// タイマーリセット
+		missionSpriteTimer = 0;
+		// AIのHPが危うければ
+		if (PlayerAI::Instance().GetHpWorning())
+		{
+			missionSpriteNumber = Mission::Recover;
+		}
+		else
+		{
+			// 1PとAIが同じ武器を持っているか
+			bool have = PlayersHaveAnySameWeapon();
+			// 表示できる最後の番号まで来ていたら
+			if ((have && missionSpriteNumber == Mission::SpecialAttack) ||
+				(!have && missionSpriteNumber == Mission::UpperAttack))
+			{
+				// 初めの番号に戻す
+				missionSpriteNumber = Mission::GetWeapon;
+			}
+			else
+			{
+				// 次の番号にする
+				missionSpriteNumber = static_cast<Mission>(SC_INT(missionSpriteNumber) + 1);
+			}
+		}
+	}
+
+	// ミッションテキスト描画
+	spriteMissionText->Render(dc,
+		Mission_Position,
+		Mission_Size,
+		missionSpriteCutPosition[SC_INT(missionSpriteNumber)],
+		Mission_SpriteSize,
+		Sprite_Angle_Default, Sprite_Color_Default);
 }
 
 #pragma region DEBUG_DRAW

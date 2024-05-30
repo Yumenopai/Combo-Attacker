@@ -118,8 +118,8 @@ void EnemyTurtleShell::OnDamaged()
 void EnemyTurtleShell::OnDead()
 {
 	// とどめを刺したプレイヤーに武器を与える
-	LastAttacker->AddHaveArm();
-	LastAttacker->SetEnableShowMessage(Player::MessageNotification::WeaponGet, true);
+	LastAttacker->AddHaveWeapon();
+	LastAttacker->SetEnableShowMessage(Player::PlayerMessage::WeaponGet, true);
 
 	int i = 0;
 	// 与えたダメージ量が少なすぎるとLevelをあげない

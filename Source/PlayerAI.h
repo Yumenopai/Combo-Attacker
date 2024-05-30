@@ -5,15 +5,24 @@
 class PlayerAI : public Player
 {
 private:
+	// 現在入力中
 	InputState nowInput = InputState::None;
-	InputState oldInput, nextInput;
+	// ひとつ前の入力
+	InputState oldInput;
+	// 次入力する
+	InputState nextInput;
 
-	// 逃避
-	Enemy* avoidEnemy = nullptr;
+	// 逃避する敵(単体)
+	Enemy* currentAvoidEnemy = nullptr;
+	// 敵から逃げる
 	bool ranAwayFromEnemy = false;
+	// 1Pから逃げる
 	bool ranAwayFromPlayer1P = false;
 
+	// とどめを刺すための待機タイマー
 	int waitTimer = 0;
+	// 直前の敵とどめ対象
+	Enemy* lastAvoidEnemy = nullptr;
 
 public:
 	PlayerAI();
@@ -35,7 +44,7 @@ public:
 	bool InputButtonUp(InputState button) override;
 
 	// 武器変更処理
-	void InputChangeArm(AttackType arm = AttackType::None) override;
+	void InputChangeWeapon(AttackType weapon = AttackType::None) override;
 	// ターゲット回復処理
 	void InputRecover() override;
 

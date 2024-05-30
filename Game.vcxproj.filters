@@ -91,6 +91,9 @@
     <Filter Include="Source\Object\Light">
       <UniqueIdentifier>{e36bc4c1-97aa-49f0-8998-b2c305e55287}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source\const/define">
+      <UniqueIdentifier>{eed8e433-08e6-44d7-b283-d50f8a16c7ab}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\Framework.h">
@@ -246,7 +249,7 @@
     <ClInclude Include="Source\Shader\Skybox.h">
       <Filter>Source\Shader</Filter>
     </ClInclude>
-    <ClInclude Include="Source\EnemyBlue.h">
+    <ClInclude Include="Source\EnemyDragon.h">
       <Filter>Source\Object\Character\Enemy</Filter>
     </ClInclude>
     <ClInclude Include="Source\Shader\WaterSurfaceShader.h">
@@ -284,6 +287,18 @@
     </ClInclude>
     <ClInclude Include="Source\Light\LightManager.h">
       <Filter>Source\Object\Light</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\UtilsDefineConst.h">
+      <Filter>Source\const/define</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\PlayerConst.h">
+      <Filter>Source\const/define</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\EnemyConst.h">
+      <Filter>Source\const/define</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\UIConst.h">
+      <Filter>Source\const/define</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -422,7 +437,7 @@
     <ClCompile Include="Source\Shader\Skybox.cpp">
       <Filter>Source\Shader</Filter>
     </ClCompile>
-    <ClCompile Include="Source\EnemyBlue.cpp">
+    <ClCompile Include="Source\EnemyDragon.cpp">
       <Filter>Source\Object\Character\Enemy</Filter>
     </ClCompile>
     <ClCompile Include="Source\Shader\WaterSurfaceShader.cpp">

@@ -90,7 +90,6 @@ FontSprite::FontSprite(ID3D11Device* device, const char* filename, size_t max_sp
 void FontSprite::Render(ID3D11DeviceContext * dc,
 	float dx, float dy,					 //左上位置
 	float dz,							 //奥行
-	DirectX::XMFLOAT3 offset,
 	float dw, float dh,					 //幅、高さ
 	float sx, float sy,					 //画像切り抜き位置
 	float sw, float sh,					 //画像切り抜きサイズ
@@ -98,14 +97,8 @@ void FontSprite::Render(ID3D11DeviceContext * dc,
 	DirectX::XMFLOAT4 color				 //色
 )
 {
-
-	dx += offset.x;
-	dy += offset.y;
-	dz += offset.z;
-
-	//画面に描画するときは -1.0 ～ 1.0の範囲で指定する必要がある。
-	//この空間をNDC空間と呼ぶ。
-
+	//画面に描画するときは -1.0 ～ 1.0の範囲で指定する(NDC空間)
+	// 
 	//頂点座標
 	DirectX::XMFLOAT2 positions[] =
 	{
@@ -229,7 +222,6 @@ void FontSprite::End(ID3D11DeviceContext* dc)
 void FontSprite::Textout(ID3D11DeviceContext* dc, std::string str,
 	float dx, float dy,					 //左上位置
 	float dz,							 //奥行
-	DirectX::XMFLOAT3 offset,
 	float dw, float dh,					 //幅、高さ
 	float sx, float sy,					 //画像切り抜き位置
 	float sw, float sh,					 //画像切り抜きサイズ
@@ -244,7 +236,7 @@ void FontSprite::Textout(ID3D11DeviceContext* dc, std::string str,
 	{
 		int x = c % 16;
 		int y = c / 16;
-		Render(dc, dx + i * dw, dy, dz, offset, dw, dh, x * sx, y * sy, textureWidth / sw, textureHeight / sh, angle, color);
+		Render(dc, dx + i * dw, dy, dz, dw, dh, x * sx, y * sy, textureWidth / sw, textureHeight / sh, angle, color);
 		++i;
 	}
 	End(dc);

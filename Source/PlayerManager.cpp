@@ -43,14 +43,13 @@ void PlayerManager::Render(const RenderContext& rc, ModelShader* shader)
 }
 
 //プリミティブ描画
-void PlayerManager::Render2d(const RenderContext& rc, Sprite* gauge, FontSprite* font, Sprite* frame, Sprite* arm, Sprite* message)
+void PlayerManager::Render2d(const RenderContext& rc, Sprite* gauge, FontSprite* font, Sprite* frame, Sprite* weapon, Sprite* message)
 {
 	for (Player* player : players)
 	{
-		player->PrimitiveRender(rc);
 		player->RenderHPBar(rc.deviceContext, gauge, font);
 		player->RenderCharacterOverHead(rc, font, message);
-		player->RenderHaveArms(rc.deviceContext, frame, arm);
+		player->RenderHaveWeapons(rc.deviceContext, frame, weapon);
 	}
 }
 

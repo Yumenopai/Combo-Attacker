@@ -43,79 +43,91 @@ public:
 
 
 protected:
+	// モデル
 	std::unique_ptr<Model> model;
-	State	state = State::Wander;
-	
+	// ステート
+	State state = State::Wander;
+	// エフェクトY軸オフセット
 	float effectOffset_Y = 0.8f;
 
+	// 縄張り対象位置
 	DirectX::XMFLOAT3 territoryOrigin = { 0,0,0 };
+	// 縄張り範囲
 	float	territoryRange = 10.0f;
+	// 移動スピード
 	float	moveSpeed = 3.0f;
+	// 回転スピード
 	float	turnSpeed = DirectX::XMConvertToRadians(360);
+	// 探知範囲
 	float	searchRange = 5.0f;
+	// 攻撃範囲
 	float	attackRange = 3.0f;
 
+	// 目玉ノードの名前
 	const char* eyeBallNodeName = "";
 
 public:
 	EnemySlime();
 	~EnemySlime() override;
 
-	//更新処理
+	// 更新処理
 	void Update(float elapsedTime) override;
 
-	//描画処理
+	// シャドウマップ描画
 	void ShadowRender(const RenderContext& rc, ShadowMap* shadowMap) override;
+	// 描画
 	void Render(const RenderContext& rc, ModelShader* shader) override;
 
-	//縄張り設定
+	// 縄張り設定
 	void SetTerritory(const DirectX::XMFLOAT3& origin, float range);
-	//Getter
+	// Getter
 	const float GetEffectOffset_Y() override { return effectOffset_Y; }
 
 protected:
-	//ダメージ時に呼ばれる
+	// ダメージ時に呼ばれる
 	void OnDamaged() override;
-	//死亡した時に呼ばれる
+	// 死亡した時に呼ばれる
 	void OnDead() override;
 
-	//ターゲット位置をランダム設定
+	// ターゲット位置をランダム設定
 	void SetRandomTargetPosition();
 
-	//ターゲット位置を設定
+	// ターゲット位置を設定
 	void UpdateTargetPosition();
 
-	Player::EnemySearch GetNearestPlayerES();
+	// Getter_最近プレイヤーの敵探査ステート
+	Player::EnemySearch GetNearestPlayer_EnemySearch();
 
-	//目標地点へ移動
+	// 目標地点へ移動
 	void MoveToTarget(float elapsedTime, float speedRate);
 	
-	//最近Playerへの回転
+	// 最近Playerへの回転
 	void TurnToTarget(float elapsedTime, float speedRate);
 
-	//プレイヤー索敵
+	// プレイヤー索敵
 	virtual bool SearchPlayer();
 
-	//ノードとプレイヤーの衝突処理
+	// ノードとプレイヤーの衝突処理
 	void CollisionNodeVsPlayer(const char* nodeName, float nodeRadius);
 
-	//徘徊ステート更新処理
+	// 徘徊ステート更新処理
 	void UpdateWanderState(float elapsedTime);
-	//待機ステート更新処理
+	// 待機ステート更新処理
 	void UpdateIdleState(float elapsedTime);
-	//追跡ステート更新処理
+	// 追跡ステート更新処理
 	void UpdatePursuitState(float elapsedTime);
-	//攻撃ステート更新処理
+	// 攻撃ステート更新処理
 	void UpdateAttackState(float elapsedTime);
-	//戦闘待機ステート更新処理
+	// 戦闘待機ステート更新処理
 	void UpdateIdleBattleState(float elapsedTime);
-	//ダメージステート更新処理
+	// ダメージステート更新処理
 	void UpdateHitDamageState(float elapsedTime);
 
 	// 各ステージごとの更新処理
 	virtual void UpdateEachState(float elapsedTime);
 
-	//ステート遷移
+	// ステート遷移
 	void TransitionState(State nowState);
+	// アニメーション遷移
 	virtual void TransitionPlayAnimation(State nowState);
 };

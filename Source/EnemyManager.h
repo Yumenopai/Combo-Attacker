@@ -7,6 +7,12 @@
 class EnemyManager
 {
 private:
+	//複数エネミー管理のため、エネミーポインターをここで管理
+	std::vector<Enemy*> enemies;
+	//削除処理予約
+	std::set<Enemy*> removes;
+
+private:
 	EnemyManager() {}
 	~EnemyManager() {}
 
@@ -43,10 +49,4 @@ public:
 	//エネミー全削除
 	void Clear();
 	void CollisionEnemyVsEnemies();
-
-	//複数エネミー管理のため、エネミーポインターをここで管理
-	std::vector<Enemy*>		enemies;
-
-private:
-	std::set<Enemy*> removes;
 };

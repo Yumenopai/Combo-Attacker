@@ -5,6 +5,12 @@
 
 class PlayerStateMachine
 {
+private:
+	// 現在のステート 
+	PlayerStateBase* currentState = nullptr;
+	// 各ステートを保持する配列 
+	std::vector<PlayerStateBase*> statePool;
+
 public:
 	~PlayerStateMachine();
 	// 更新処理 
@@ -17,10 +23,4 @@ public:
 	void ChangeState(int newState);
 	// ステート登録 
 	void RegisterState(PlayerStateBase* state);
-	
-private:
-	// 現在のステート 
-	PlayerStateBase* currentState = nullptr;
-	// 各ステートを保持する配列 
-	std::vector<PlayerStateBase*> statePool;
 };

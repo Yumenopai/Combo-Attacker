@@ -1,5 +1,9 @@
 #include <map>
+#include <iomanip>
+#include <sstream>
 
+#include "UtilsDefineConst.h"
+#include "UIConst.h"
 #include "Player.h"
 #include "PlayerManager.h"
 #include "State/Player/PlayerEachState.h"
@@ -25,17 +29,17 @@ void Player::Init()
 {
 	ID3D11Device* device = Graphics::Instance().GetDevice();
 	//プレイヤーモデル読み込み
-	model = std::make_unique<Model>(device, "Data/Model/SD-UnityChan/UnityChan.fbx", playerModelSize);
+	model = std::make_unique<Model>(device, "Data/Model/SD-UnityChan/UnityChan.fbx", model_size);
 
 	// 武器登録
-	HaveArms.clear();
-	for (int i = 0; i < SC_INT(Player::AttackType::MaxCount); i++)
+	HaveWeapons.clear();
+	for (AttackType type = AttackType::Sword; type < AttackType::MaxCount; type = SC_AT(SC_INT(type) + 1))
 	{
-		HaveArms.insert(std::pair<Player::AttackType, bool>(SC_AT(i), false));
+		HaveWeapons.insert(std::pair<Player::AttackType, bool>(type, false));
 	}
 	// 初期武器
-	CurrentUseArm = InitialArm;
-	HaveArms[InitialArm] = true;
+	CurrentUseWeapon = InitialWeapon;
+	HaveWeapons[InitialWeapon] = true;
 
 	enemySearch.clear();
 	enemyDist.clear();
@@ -48,7 +52,7 @@ void Player::Init()
 	}
 
 	// HP設定
-	health = maxHealth = playerMaxHealth;
+	health = maxHealth = max_health;
 
 	// StateMachineを生成 
 	stateMachine = new PlayerStateMachine();
@@ -80,6 +84,7 @@ void Player::Init()
 	stateMachine->SetState(SC_INT(State::Idle));
 }
 
+// 更新処理
 void Player::UpdateUtils(float elapsedTime)
 {
 	// 回復遷移可能か
@@ -128,11 +133,11 @@ void Player::UpdateEnemyDistance(float elapsedTime)
 		float dist = XMVectorGetX(XMVector3Length(DistVec));
 
 		enemyDist[enemy] = dist; //各エネミーとの距離等を更新毎に記録する
-		if (dist < playerVSenemyJudgeDist[(int)EnemySearch::Attack])
+		if (dist < judge_dist_attack)
 		{
 			enemySearch[enemy] = EnemySearch::Attack;
 		}
-		else if (dist < playerVSenemyJudgeDist[(int)EnemySearch::Find])
+		else if (dist < judge_dist_find)
 		{
 			enemySearch[enemy] = EnemySearch::Find;
 		}
@@ -140,6 +145,7 @@ void Player::UpdateEnemyDistance(float elapsedTime)
 		{
 			enemySearch[enemy] = EnemySearch::None;
 			noneEnemy++;
+			// エネミーがいなくなった時、現在のエネミー探索ステートをNoneにする
 			if (i == (enemyCount - 1) && enemyCount == noneEnemy)
 			{
 				currentEnemySearch = EnemySearch::None;
@@ -163,15 +169,11 @@ void Player::UpdateEnemyDistance(float elapsedTime)
 	}
 }
 
-//ジャンプ処理
+// ジャンプ処理
 void Player::UpdateJumpState(float elapsedTime)
 {
 	// 攻撃中の場合はジャンプさせない
 	if (isAttacking) return;
-
-	const float firstJumpSpeed = 150.0f;
-	const float secondJumpSpeed = 15.0f;
-	const float MaxJumpSpeed = 17.5f;
 
 	switch (jumpTrg)
 	{
@@ -179,9 +181,9 @@ void Player::UpdateJumpState(float elapsedTime)
 		// 押している間の処理
 		if (InputButton(Player::InputState::Jump))
 		{
-			velocity.y += firstJumpSpeed * elapsedTime;
+			velocity.y += first_jump_speed * elapsedTime;
 			// 指定加速度まであがったら
-			if (velocity.y > MaxJumpSpeed)
+			if (velocity.y > max_jump_speed)
 			{
 				jumpTrg = JumpState::CanDoubleJump;
 			}
@@ -197,13 +199,13 @@ void Player::UpdateJumpState(float elapsedTime)
 		// 2段目ジャンプは高さ調節不可
 		if (InputButtonDown(Player::InputState::Jump))
 		{
-			if (velocity.y > 0) velocity.y += secondJumpSpeed;
-			else				velocity.y = secondJumpSpeed;
+			if (velocity.y > 0) velocity.y += second_jump_speed;
+			else				velocity.y = second_jump_speed;
 
 			jumpTrg = JumpState::CannotJump;
 		}
 		// 一段目ジャンプ中の攻撃ボタン
-		else if (InputAttackFromJump(elapsedTime))
+		else if (InputAttackFromJump())
 		{
 			jumpTrg = JumpState::CannotJump;
 		}
@@ -231,67 +233,76 @@ void Player::UpdateJumpState(float elapsedTime)
 	}
 }
 
-//描画
+// シャドウマップ用描画
 void Player::ShadowRender(const RenderContext& rc, ShadowMap* shadowMap)
 {
 	shadowMap->Draw(rc, model.get());
 }
-//描画
+// 描画
 void Player::Render(const RenderContext& rc, ModelShader* shader)
 {
 	shader->Draw(rc, model.get());
 }
 
-// 攻撃の軌跡描画
-void Player::PrimitiveRender(const RenderContext& rc)
-{
-	PrimitiveRenderer* primitiveRenderer = Graphics::Instance().GetPrimitiveRenderer();
-
-	// ポリゴン描画
-	primitiveRenderer->Render(rc.deviceContext, rc.camera->GetView(), rc.camera->GetProjection(), D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
-}
-
 // HP描画
 void Player::RenderHPBar(ID3D11DeviceContext* dc, Sprite* gauge, FontSprite* font) const
 {
-	const float frameExpansion = 6;
 	Graphics& graphics = Graphics::Instance();
-	const float screenWidth = static_cast<float>(graphics.GetScreenWidth());
+	static const float screenWidth = static_cast<float>(graphics.GetScreenWidth());
 
 	// 名前表示
-	font->Textout(dc, characterName, 200, hpGuage_Y - 7.0f, 1.0f, { -10, 10, 0 }, 12, 16, 32, 32, 16, 16, 0, nameColor);
+	font->Textout(dc, playerName, 
+		hp_gauge_name_position.x,
+		hpGaugePosition_Y + hp_gauge_name_position.y, 
+		TEXT_Depth_Default,
+		TEXT_SizeWidge_Default, TEXT_SizeHeight_Default,
+		TEXT_CutPositionX_Default, TEXT_CutPositionY_Default, TEXT_CutWidge_Default, TEXT_CutHeight_Default,
+		TEXT_Angle_Default, nameColor);
 	// Lv表示
 	std::string levelStr = "Lv:" + std::to_string(currentLevel);
-	font->Textout(dc, levelStr, 800, hpGuage_Y + 12.0f, 1.0f, { -10, 10, 0 }, 12, 16, 32, 32, 16, 16, 0, nameColor);
-	// HP表示
-	std::string hpStr = std::to_string(GetHealth()) + '/' + std::to_string(GetMaxHealth());
-	font->Textout(dc, hpStr, 900, hpGuage_Y + 12.0f, 1.0f, { -10, 10, 0 }, 12, 16, 32, 32, 16, 16, 0, nameColor);
+	font->Textout(dc, levelStr,
+		lv_display_position_x,
+		hpGaugePosition_Y + display_under_text_offset_y,
+		TEXT_Depth_Default,
+		TEXT_SizeWidge_Default, TEXT_SizeHeight_Default,
+		TEXT_CutPositionX_Default, TEXT_CutPositionY_Default, TEXT_CutWidge_Default, TEXT_CutHeight_Default,
+		TEXT_Angle_Default, nameColor);
+	// HP表示;
+	std::ostringstream ss;
+	ss << std::setw(hp_display_digit) << std::setfill('0') << GetHealth();
+	std::string hp(ss.str());
+	std::string hpStr = hp + '/' + std::to_string(GetMaxHealth());
+	font->Textout(dc, hpStr,
+		hp_display_position_x,
+		hpGaugePosition_Y + display_under_text_offset_y,
+		TEXT_Depth_Default,
+		TEXT_SizeWidge_Default, TEXT_SizeHeight_Default,
+		TEXT_CutPositionX_Default, TEXT_CutPositionY_Default, TEXT_CutWidge_Default, TEXT_CutHeight_Default,
+		TEXT_Angle_Default, nameColor);
 
 	//ゲージ描画(下地)
 	gauge->Render(dc,
-		(screenWidth / 2) - (hpGuageWidth / 2),
-		hpGuage_Y,
-		0,
-		hpGuageWidth + frameExpansion,
-		hpGuageHeight + frameExpansion,
-		0, 0,
-		static_cast<float>(gauge->GetTextureWidth()),
-		static_cast<float>(gauge->GetTextureHeight()),
-		0.0f,
-		{ 0.3f, 0.3f, 0.3f, 0.8f }
+		(screenWidth / 2) - (hp_gauge_size.x / 2), // X_中央に配置するため幅の半分とゲージ長さの半分で求める
+		hpGaugePosition_Y, // Y
+		Sprite_Position_Z_Default, // Z
+		hp_gauge_size.x + hp_gauge_frame_expansion,
+		hp_gauge_size.y + hp_gauge_frame_expansion,
+		Sprite_NoneTexture, Sprite_NoneTexture, // 元textureはない
+		Sprite_NoneTexture,	Sprite_NoneTexture, // 元textureはない
+		Sprite_Angle_Default,
+		hp_gauge_frame_color // 背景カラー
 	);
 	//ゲージ描画
 	gauge->Render(dc,
-		(screenWidth / 2) - (hpGuageWidth / 2) + frameExpansion / 2,
-		hpGuage_Y + frameExpansion / 2,
-		0,
-		hpGuageWidth * (GetHealthRate() / 100.0f),
-		hpGuageHeight,
-		0, 0,
-		static_cast<float>(gauge->GetTextureWidth()),
-		static_cast<float>(gauge->GetTextureHeight()),
-		0.0f,
-		{ GetHpWorning() ? 0.8f : 0.2f, GetHpWorning() ? 0.2f : 0.8f , 0.2f, 1.0f}
+		(screenWidth / 2) - (hp_gauge_size.x / 2) + hp_gauge_frame_expansion / 2, // X_中央に配置するため幅の半分とゲージ長さの半分で求める
+		hpGaugePosition_Y + hp_gauge_frame_expansion / 2, // Y_上下の拡張を合わせたサイズ分で足しているため半分足す
+		Sprite_Position_Z_Default, // Z
+		hp_gauge_size.x * (GetHealthRate() / 100.0f), //百分率を小数に変換
+		hp_gauge_size.y,
+		Sprite_NoneTexture, Sprite_NoneTexture, // 元textureはない
+		Sprite_NoneTexture,	Sprite_NoneTexture, // 元textureはない
+		Sprite_Angle_Default,
+		GetHpWorning() ? hp_gauge_color_wornimg : hp_gauge_color_normal // ゲージカラー/HP減ると色を変える
 	);
 }
 
@@ -319,62 +330,69 @@ void Player::RenderCharacterOverHead(const RenderContext& rc, FontSprite* font, 
 	//ワールドからスクリーンへの変換
 	XMVECTOR ScreenPosition = XMVector3Project(
 		WorldPosition,
-		viewport.TopLeftX,
-		viewport.TopLeftY,
-		viewport.Width,
-		viewport.Height,
-		viewport.MinDepth,
-		viewport.MaxDepth,
-		Projection,
-		View,
-		World
-	);
+		viewport.TopLeftX, viewport.TopLeftY,
+		viewport.Width, viewport.Height,
+		viewport.MinDepth, viewport.MaxDepth,
+		Projection, View, World);
 
 	XMFLOAT3 screenPosition;
 	XMStoreFloat3(&screenPosition, ScreenPosition);
 	//カメラの背後にいるか、明らかに離れているなら描画しない
-	if (screenPosition.z > 0.0f && screenPosition.z < 1.0f)
+	if (screenPosition.z > 0.0f && screenPosition.z < 1.0f) //0.0f～1.0fの間
 	{
 		// 名前
-		font->Textout(rc.deviceContext, characterName,
-			0,
-			screenPosition.y,
-			0,
-			{ screenPosition.x - 12 * 5, 0, 0 },
-			12, 16,
-			32, 32, 16, 16, 0, nameColor);
+		font->Textout(rc.deviceContext, playerName,
+			screenPosition.x + name_offset.x,
+			screenPosition.y + name_offset.y,
+			TEXT_Depth_Default,
+			TEXT_SizeWidge_Default, TEXT_SizeHeight_Default,
+			TEXT_CutPositionX_Default, TEXT_CutPositionY_Default,
+			TEXT_CutWidge_Default, TEXT_CutHeight_Default,
+			TEXT_Angle_Default,
+			nameColor);
 
 		// メッセージ
-		if (messageNumber == 0 || messageNumber == 1)
+		if (messageNumber == PlayerMessage::WeaponGet || messageNumber == PlayerMessage::LevelUp)
 		{
-			const DirectX::XMFLOAT2 spriteSize = { 600.0f,100.f };
-			messageYTimer += 0.2f;
-			message->Render(rc.deviceContext, { screenPosition.x - 60, screenPosition.y - 5.0f - messageYTimer, 0 }, { 180, 30 }, { spriteSize.x, spriteSize.y * messageNumber }, spriteSize, 0, { 1, 1, 1, 1 });
+			// タイマー増加
+			messageYTimer += message_timer_increase;
+			message->Render(rc.deviceContext,
+				{ screenPosition.x + message_offset.x, screenPosition.y + message_offset.y - messageYTimer, Sprite_Position_Z_Default },
+				message_size,
+				{ message_sprite_size.x, message_sprite_size.y * SC_INT(messageNumber)  },
+				message_sprite_size,
+				Sprite_Angle_Default,
+				Sprite_Color_Default);
 			
-			if (messageYTimer > 10.0f)
+			if (messageYTimer > message_timer_max)
 			{
-				enableShowMessage[messageNumber] = false;
-				messageNumber = -1;
+				enableShowMessage[SC_INT(messageNumber)] = false;
+				messageNumber = PlayerMessage::None;
 			}
 		}
-		else if (enableShowMessage[0])
+		else if (enableShowMessage[SC_INT(PlayerMessage::WeaponGet)])
 		{
-			messageNumber = 0;
-			messageYTimer = 0.0;
+			messageNumber = PlayerMessage::WeaponGet;
+			messageYTimer = 0.0f;
 		}
-		else if (enableShowMessage[1])
+		else if (enableShowMessage[SC_INT(PlayerMessage::LevelUp)])
 		{
-			messageNumber = 1;
-			messageYTimer = 0.0;
+			messageNumber = PlayerMessage::LevelUp;
+			messageYTimer = 0.0f;
 		}
 		else
 		{
-			for (int i = SC_INT(MessageNotification::Attack); i < SC_INT(MessageNotification::MaxCount); i++)
+			for (PlayerMessage mes = PlayerMessage::Attack; mes < PlayerMessage::MaxCount; mes = SC_PM(SC_INT(mes) + 1))
 			{
-				if (enableShowMessage[i])
+				if (enableShowMessage[SC_INT(mes)])
 				{
-					const DirectX::XMFLOAT2 spriteSize = { 600.0f,100.f };
-					message->Render(rc.deviceContext, { screenPosition.x - 60, screenPosition.y - 5.0f, 0 }, { 180, 30 }, { spriteSize.x, spriteSize.y * i }, spriteSize, 0, { 1, 1, 1, 1 });
+					message->Render(rc.deviceContext,
+						{ screenPosition.x + message_offset.x, screenPosition.y + message_offset.y - messageYTimer, Sprite_Position_Z_Default },
+						message_size,
+						{ message_sprite_size.x, message_sprite_size.y * SC_INT(mes) },
+						message_sprite_size,
+						Sprite_Angle_Default,
+						Sprite_Color_Default);
 					break;
 				}
 			}
@@ -382,31 +400,42 @@ void Player::RenderCharacterOverHead(const RenderContext& rc, FontSprite* font, 
 	}
 }
 
-void Player::RenderHaveArms(ID3D11DeviceContext* dc, Sprite* frame, Sprite* arm)
+void Player::RenderHaveWeapons(ID3D11DeviceContext* dc, Sprite* frame, Sprite* weapon)
 {
-	const DirectX::XMFLOAT2 spriteSize = { 300.0f,300.f };
-
-	//HaveArmFrame
-	for (int i = 0; i < HaveArms.size(); i++)
+	//HaveWeaponFrame
+	for (int i = 0; i < HaveWeapons.size(); i++)
 	{
-		float spriteOffset_x = 0;
-		if (i == SC_INT(CurrentUseArm)) spriteOffset_x = spriteSize.x;
-		else spriteOffset_x = HaveArms[SC_AT(i)] ? spriteSize.x * 2 : 0;
-
-		frame->Render(dc, { 1000.0f + 65 * i, hpGuage_Y - 10.0f, 0.0f }, { 70, 70 }, { spriteOffset_x, spriteSize.y }, spriteSize, 0, { 1, 1, 1, 1 });
+		float textureCutPosition_x = 0;
+		// 現在使用中の武器
+		if (i == SC_INT(CurrentUseWeapon)) {
+			textureCutPosition_x = WeaponIcon_SpriteSize.x;
+		}
+		else {
+			// 所持している武器かどうかでセットする
+			textureCutPosition_x = HaveWeapons[SC_AT(i)] ? WeaponIcon_SpriteSize.x * 2 : 0; // 2倍座標部分・0倍座標部分
+		}
+		frame->Render(dc,
+			{ WeaponFrame_Position_X + WeaponFrame_Offset_X * i, hpGaugePosition_Y + WeaponFrame_Offset_Y, Sprite_Position_Z_Default },
+			WeaponFrame_Size,
+			{ textureCutPosition_x, WeaponIcon_SpriteSize.y }, 
+			WeaponIcon_SpriteSize,
+			Sprite_Angle_Default,
+			Sprite_Color_Default);
 	}
-	//HaveArm
-	for (int i = 0; i < HaveArms.size(); i++)
+	//HaveWeapon
+	for (int i = 0; i < HaveWeapons.size(); i++)
 	{
-		float spriteOffset_x = spriteSize.x * (i + 1);
-		float spriteOffset_y = 0;
-		//if (SC_AT(i) != CurrentUseArm && SC_AT(i) == GetNextArm()) {
-		//	spriteOffset_y = spriteSize.y;
-		//}
-
-		float color_a = HaveArms[SC_AT(i)] ? 1.0f : 0.3f;
-		float color_rb = (SC_AT(i) == CurrentUseArm) ? 0.4f : 1.0f;
-		arm->Render(dc, { 1013.0f + 65 * i, hpGuage_Y + 2.0f, 0.0f }, { 45, 45 }, { spriteOffset_x, spriteOffset_y }, spriteSize, 0, { color_rb, 1, color_rb, color_a });
+		float textureCutPosition_x = WeaponIcon_SpriteSize.x * (i + 1); // i+1倍座標部分
+		float textureCutPosition_y = 0;
+		float color_a = HaveWeapons[SC_AT(i)] ? Sprite_Color_Default.z : WeaponIcon_ColorTranslucent_a; // 未所持武器を半透明にする
+		float color_rb = (SC_AT(i) == CurrentUseWeapon) ? WeaponIcon_ColorDecrease_rb : Sprite_Color_Default.y; // 使用中の武器に緑色を付ける
+		weapon->Render(dc,
+			{ WeaponIcon_Position_X + WeaponFrame_Offset_X * i, hpGaugePosition_Y + WeaponIcon_Offset_Y, Sprite_Position_Z_Default },
+			WeaponIcon_Size,
+			{ textureCutPosition_x, textureCutPosition_y },
+			WeaponIcon_SpriteSize,
+			Sprite_Angle_Default,
+			{ color_rb, Sprite_Color_Default.y, color_rb, color_a });
 	}
 }
 
@@ -437,23 +466,13 @@ void Player::OnDead()
 	ChangeState(State::Dead);
 }
 
-void Player::UpdateArmPositions(Model* model, Arms& arm)
+void Player::UpdateWeaponPositions(Model* model, Weapon& weapon)
 {
-	Model::Node* armBone = model->FindNode(arm.nodeName);
-	XMMATRIX W = XMLoadFloat4x4(&armBone->worldTransform);
-	XMVECTOR V = arm.tipOffset;
+	Model::Node* weaponBone = model->FindNode(weapon.nodeName);
+	XMMATRIX W = XMLoadFloat4x4(&weaponBone->worldTransform);
+	XMVECTOR V = weapon.tipOffset;
 	XMVECTOR P = XMVector3Transform(V, W);
-	XMStoreFloat3(&arm.position, P);
-
-	// 剣の根本と先端の座標を取得し、頂点バッファに保存
-	// 剣の原点から根本と先端までのオフセット値
-	DirectX::XMVECTOR RootOffset = arm.rootOffset;
-	DirectX::XMVECTOR TipOffset = arm.tipOffset;
-
-	XMVECTOR RootP = XMVector3Transform(RootOffset, W);
-	XMVECTOR TipP = XMVector3Transform(TipOffset, W);
-	DirectX::XMStoreFloat3(&trailPositions[0][0], RootP);
-	DirectX::XMStoreFloat3(&trailPositions[1][0], TipP);
+	XMStoreFloat3(&weapon.position, P);
 }
 
 void Player::HorizontalVelocityByAttack(bool plus, int velo, float elapsedTime)
@@ -480,11 +499,11 @@ void Player::UpdateVerticalVelocity(float elapsedFrame)
 	// ジャンプスピアー攻撃のみ別の下向き処理を使用する
 	if (state == State::AttackSpearJump)
 	{
-		if (velocity.y > 0)
+		if (velocity.y > 0) // 既にY座標上向き加速値があれば0にする
 		{
 			velocity.y = 0;
 		}
-		velocity.y += gravity * 0.25f * elapsedFrame;
+		velocity.y += gravity * spear_jamp_attack_velocity_rate * elapsedFrame;
 	}
 	else
 	{
@@ -499,7 +518,7 @@ bool Player::InputMove(float elapsedTime)
 	XMFLOAT3 moveVec = GetMoveVec();
 
 	//移動処理
-	Move(moveVec.x, moveVec.z, moveSpeed);
+	Move(moveVec.x, moveVec.z, move_speed);
 	//旋回処理
 	Turn(elapsedTime, moveVec.x, moveVec.z, turnSpeed);
 
@@ -515,24 +534,14 @@ bool Player::InputAttackFromNoneAttack()
 	enableSpecialAttack = true;
 
 	if (targetPlayer->enableSpecialAttack
-		&& targetPlayer->CurrentUseArm == this->CurrentUseArm
-		) {
-		switch (CurrentUseArm)
-		{
-		case Player::AttackType::Hammer:
-			ChangeState(State::AttackHammerJump);
-			break;
-		case Player::AttackType::Spear:
-			ChangeState(State::AttackSpearJump);
-			break;
-		case Player::AttackType::Sword:
-			ChangeState(State::AttackSwordJump);
-			break;
-		}
+		&& targetPlayer->CurrentUseWeapon == this->CurrentUseWeapon)
+	{
+		// ジャンプ攻撃をスペシャル技として使用する
+		InputAttackFromJump();
 	}
 	else
 	{
-		switch (CurrentUseArm)
+		switch (CurrentUseWeapon)
 		{
 		case Player::AttackType::Hammer:
 			ChangeState(State::AttackHammer1);
@@ -547,12 +556,12 @@ bool Player::InputAttackFromNoneAttack()
 	}
 	return true;
 }
-bool Player::InputAttackFromJump(float elapsedTime)
+bool Player::InputAttackFromJump()
 {
 	// 押されていない時はreturn
 	if (!InputButtonDown(Player::InputState::Attack)) return false;
 
-	switch (CurrentUseArm)
+	switch (CurrentUseWeapon)
 	{
 	case Player::AttackType::Hammer:
 		ChangeState(State::AttackHammerJump);
@@ -569,58 +578,60 @@ bool Player::InputAttackFromJump(float elapsedTime)
 }
 
 // 次の選択武器取得
-Player::AttackType Player::GetNextArm()
+Player::AttackType Player::GetNextWeapon()
 {
 	// 現在の次の番号の武器を選択する
-	for (int i = SC_INT(CurrentUseArm);;)
+	AttackType type = CurrentUseWeapon;
+	while (true)
 	{
-		// 回転
-		if (i == SC_INT(AttackType::MaxCount) - 1) i = 0;
-		else i++;
-		// 全検索したらbreak
-		if (i == SC_INT(CurrentUseArm)) break;
+		// 次の武器を選択
+		type = SC_AT(SC_INT(type) + 1);
+		// 範囲外になれば初めに戻る
+		if (type == AttackType::MaxCount) {
+			type = AttackType::Sword;
+		}
 
+		// 全検索したらbreak
+		if (type == CurrentUseWeapon) break;
 		// 未所持ならcontinue
-		if (!HaveArms[SC_AT(i)]) continue;
+		if (!HaveWeapons[type]) continue;
 
 		// 次に所持しているものを選択する
-		return SC_AT(i);
+		return type;
 	}
 	// 現在の武器をそのまま返す
-	return CurrentUseArm;
+	return CurrentUseWeapon;
 }
 
 // アイテムゲット
-void Player::AddHaveArm(Player::AttackType arm/* = AttackType::None*/)
+void Player::AddHaveWeapon(Player::AttackType weapon/* = AttackType::None*/)
 {
 	// 指定されていたらそれを設定する
-	if (arm != AttackType::None) {
-		HaveArms[arm] = true;
+	if (weapon != AttackType::None) {
+		HaveWeapons[weapon] = true;
 		return;
 	}
 
 	// 現在持っていない武器リスト
-	std::unordered_map<AttackType,bool> remainArm = HaveArms;
-	for (const auto& arm : HaveArms)
+	std::unordered_map<AttackType,bool> remainWeapon = HaveWeapons;
+	for (const auto& weapon : HaveWeapons)
 	{
-		if (HaveArms[arm.first])
-		{
-			remainArm.erase(arm.first);
+		if (HaveWeapons[weapon.first]) {
+			remainWeapon.erase(weapon.first);
 		}
 	}
 
 	// 全て持っている場合はreturn
-	if (remainArm.size() == 0) return;
+	if (remainWeapon.size() == 0) return;
 
 	// 乱数
-	int num = rand() % remainArm.size();
+	int num = rand() % remainWeapon.size();
 	int i = 0;
 	// 獲得する武器を確定する
-	for (const auto& arm : remainArm)
+	for (const auto& weapon : remainWeapon)
 	{
-		if (i == num)
-		{
-			HaveArms[arm.first] = true;
+		if (i == num) {
+			HaveWeapons[weapon.first] = true;
 			return;
 		}
 		i++;
@@ -630,17 +641,16 @@ void Player::AddHaveArm(Player::AttackType arm/* = AttackType::None*/)
 //回復遷移確認処理
 bool Player::EnableRecoverTransition()
 {
-	// 20%以上はfalse
+	// 危険でなければfalse
 	if (!targetPlayer->GetHpWorning()) return false;
 
-	XMVECTOR posPlayerthis = XMLoadFloat3(&GetPosition());
-	XMVECTOR posPlayertarget = XMLoadFloat3(&targetPlayer->GetPosition());
-	float distSq = XMVectorGetX(XMVector3LengthSq(XMVectorSubtract(posPlayerthis, posPlayertarget)));
-	// 近く無ければfalse
-	if (distSq > 3.0f * 3.0f) return false;
+	XMVECTOR thisPlayerPosition = XMLoadFloat3(&GetPosition());
+	XMVECTOR targetPlayerPosition = XMLoadFloat3(&targetPlayer->GetPosition());
+	// プレイヤー同士の距離
+	float distSq = XMVectorGetX(XMVector3LengthSq(XMVectorSubtract(thisPlayerPosition, targetPlayerPosition)));
 
-	// trueで遷移可能
-	return true;
+	// 回復可能な距離になれば遷移可能
+	return distSq < recover_dist * recover_dist;
 }
 
 // 近距離攻撃時の角度矯正
@@ -670,8 +680,7 @@ void Player::CollisionPlayerVsEnemies()
 		if (Collision::IntersectCylinderVsCylinder(
 			enemy->GetPosition(), enemy->GetRadius(), enemy->GetHeight(),
 			position, radius, height,
-			XMFLOAT3{}, outPosition
-		))
+			XMFLOAT3{}, outPosition))
 		{
 			SetPosition(outPosition);
 		}
@@ -679,7 +688,7 @@ void Player::CollisionPlayerVsEnemies()
 }
 
 // 武器とエネミーの衝突処理
-void Player::CollisionArmsVsEnemies(Arms arm)
+void Player::CollisionWeaponsVsEnemies(Weapon weapon)
 {
 	//指定のノードと全ての敵を総当たりで衝突処理
 	EnemyManager& enemyManager = EnemyManager::Instance();
@@ -690,7 +699,7 @@ void Player::CollisionArmsVsEnemies(Arms arm)
 		//衝突処理
 		XMFLOAT3 outPosition;
 		if (Collision::IntersectSphereVsCylinder(
-			arm.position, arm.radius,
+			weapon.position, weapon.radius,
 			enemy->GetPosition(), enemy->GetRadius(), enemy->GetHeight(),
 			outPosition
 		))
@@ -701,9 +710,10 @@ void Player::CollisionArmsVsEnemies(Arms arm)
 			// 攻撃判定しない場合はreturn
 			if (attackingEnemyNumber == i && !isAttackJudge) return;
 
-			int damage = arm.damage + static_cast<int>(currentLevel * 0.2f);
+			// ダメージ計算
+			int damage = weapon.damage + SC_INT(currentLevel * damage_increase);
 			// ダメージを与えない場合はreturn
-			if (!enemy->ApplyDamage(damage, 0, this, this == &Player1P::Instance() ? 0 : 1)) return;
+			if (!enemy->ApplyDamage(damage, invincible_time, this, serialNumber)) return;
 
 			currentAttackEnemy = enemy;
 			attackingEnemyNumber = i;
@@ -716,10 +726,9 @@ void Player::CollisionArmsVsEnemies(Arms arm)
 			}
 
 			// 吹き飛ばしは4回目以上
-			if (attackCount >= 4)
+			if (attackCount >= impulse_attack_count)
 			{
 				// 吹き飛ばし攻撃
-				const float power = 13.0f; //仮の水平の力
 				const XMFLOAT3& ep = enemy->GetPosition();
 
 				// ノックバック方向の算出
@@ -728,9 +737,11 @@ void Player::CollisionArmsVsEnemies(Arms arm)
 				float lengthXZ = sqrtf(vx * vx + vz * vz);
 				vx /= lengthXZ;
 				vz /= lengthXZ;
+				// Y方向の調整
+				float vy = impulse_power_adjust_rate_y;
 
 				// ノックバック
-				enemy->AddImpulse({ power * vx , power * 0.8f, power * vz });
+				enemy->AddImpulse({ impulse_power * vx , impulse_power * vy, impulse_power * vz });
 			}
 		}
 		else if(attackingEnemyNumber == i)//攻撃中のエネミーと一旦攻撃が外れた時、次回当たった時に判定を行う
@@ -750,15 +761,15 @@ void Player::DrawDebugPrimitive() const
 		position,		//位置
 		radius,			//半径
 		height,			//高さ
-		{ 0,0,0 },		//角度
-		{ 1,0,0,1 });	//色
+		GIZMOS_CylinderAngle_Default,		//角度
+		GIZMOS_Color_Red);	//色
 
 	if (Hammer.flag1 || Hammer.flag2 || Hammer.flagJump)
 	{
 		gizmos->DrawSphere(
 			Hammer.position,
 			Hammer.radius,
-			XMFLOAT4(0, 0, 1, 1)
+			GIZMOS_Color_Blue
 		);
 	}
 	if (Spear.flag1 || Spear.flag2 || Spear.flag3 || Spear.flagJump)
@@ -766,7 +777,7 @@ void Player::DrawDebugPrimitive() const
 		gizmos->DrawSphere(
 			Spear.position,
 			Spear.radius,
-			XMFLOAT4(0, 0, 1, 1)
+			GIZMOS_Color_Blue
 		);
 	}
 	if (Sword.flag1 || Sword.flag2 || Sword.flag3 || Sword.flagJump)
@@ -774,7 +785,7 @@ void Player::DrawDebugPrimitive() const
 		gizmos->DrawSphere(
 			Sword.position,
 			Sword.radius,
-			XMFLOAT4(0, 0, 1, 1)
+			GIZMOS_Color_Blue
 		);
 	}
 

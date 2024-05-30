@@ -10,7 +10,7 @@
 void SceneTitle::Initialize()
 {
 	ID3D11Device* device = Graphics::Instance().GetDevice();
-	sprite = std::make_unique<Sprite>(device, "Data/Sprite/Logo.png");
+	sprite = std::make_unique<Sprite>(device, "Data/Sprite/logo.png");
 	model = std::make_unique<Model>(device, "Data/Model/SD-UnityChan/UnityChan.fbx", 0.2f);
 	model->PlayAnimation(static_cast<int>(Player::Animation::Idle), true);
 

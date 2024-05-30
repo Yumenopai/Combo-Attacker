@@ -6,6 +6,53 @@ using namespace DirectX;
 //キャラクター
 class Character
 {
+protected:
+	// 位置
+	XMFLOAT3 position = { 0,0,0 };
+	// 角度
+	XMFLOAT3 angle = { 0,0,0 };
+	// スケール
+	XMFLOAT3 scale = { 1,1,1 };
+	// トランスフォーム
+	XMFLOAT4X4 transform = {
+		1,0,0,0,
+		0,1,0,0,
+		0,0,1,0,
+		0,0,0,1
+	};
+	// ダメージ半径
+	float radius = 0.5f;
+
+	// 重力
+	const float gravity = -1.0f;
+	// 加速度
+	XMFLOAT3 velocity = { 0,0,0 };
+	// 地面に着地しているか
+	bool isGround = false;
+	// 高さ
+	float height = 2.0f;
+	// HP
+	int health = 40;
+	// 最大HP
+	int maxHealth = 40;
+	// ダメージ無敵時間タイマー
+	float invincibleTimer = 0.0f;
+	// 摩擦力
+	float	friction = 0.5f;
+
+	// 加速力
+	float acceleration = 1.0f;
+	// 最大移動スピード
+	float maxMoveSpeed = 5.0f;
+	// 移動ベクトル_X
+	float moveVecX = 0.0f;
+	// 移動ベクトル_Y
+	float moveVecZ = 0.0f;
+	// レイキャスト用足元オフセット
+	float stepOffset = 1.0f;
+	// 傾斜率
+	float slopeRate = 1.0f;
+
 public:
 	Character() {}
 	virtual ~Character() {}
@@ -76,34 +123,4 @@ private:
 	void UpdateHorizontalVelocity(float elapsedFrame);
 	//水平移動更新
 	void UpdateHorizontalMove(float elapsedTime);
-
-protected:
-	XMFLOAT3	position = { 0,0,0 };
-	XMFLOAT3	angle = { 0,0,0 };
-	XMFLOAT3	scale = { 1,1,1 };
-	XMFLOAT4X4 transform = {
-		1,0,0,0,
-		0,1,0,0,
-		0,0,1,0,
-		0,0,0,1
-	};
-
-	float radius = 0.5f;
-
-	float	gravity = -1.0f;
-	XMFLOAT3 velocity = { 0,0,0 };
-	bool	isGround = false;
-	float	height = 2.0f;
-	int		health = 40;
-	int		maxHealth = 40;
-	float	invincibleTimer = 0.0f;
-
-	float	friction = 0.5f;
-
-	float acceleration = 1.0f;
-	float maxMoveSpeed = 5.0f;
-	float moveVecX = 0.0f;
-	float moveVecZ = 0.0f;
-	float stepOffset = 1.0f;
-	float slopeRate = 1.0f;
 };

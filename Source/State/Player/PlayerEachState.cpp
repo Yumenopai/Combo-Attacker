@@ -28,7 +28,7 @@ void StateIdle::Update(float elapsedTime)
 	// 攻撃処理
 	player->InputAttackFromNoneAttack();
 	// 武器変更
-	player->InputChangeArm();
+	player->InputChangeWeapon();
 	// 能力処理
 	player->InputRecover();
 }
@@ -72,7 +72,7 @@ void StateRun::Update(float elapsedTime)
 	// 攻撃処理
 	player->InputAttackFromNoneAttack();
 	// 武器変更
-	player->InputChangeArm();
+	player->InputChangeWeapon();
 	// 能力処理
 	player->InputRecover();
 }
@@ -252,16 +252,16 @@ void StateAttackHammer1::Init()
 
 void StateAttackHammer1::Update(float elapsedTime)
 {
-	Player::Arms Hammer = player->GetHammer();
+	Player::Weapon Hammer = player->GetHammer();
 	Hammer.flag1 = (player->GetModel()->IsPlayAnimation());
 	if (Hammer.flag1)
 	{
-		player->UpdateArmPositions(player->GetModel(), Hammer);
+		player->UpdateWeaponPositions(player->GetModel(), Hammer);
 		float animationTime = player->GetModel()->GetCurrentAnimationSeconds();
 		//攻撃当たり判定時間
 		if (animationTime >= 0.4f)
 		{
-			player->CollisionArmsVsEnemies(Hammer);
+			player->CollisionWeaponsVsEnemies(Hammer);
 		}
 		//任意のアニメーション再生区間でのみ次の攻撃技を出すようにする
 		if (player->InputButtonDown(Player::InputState::Attack)
@@ -289,14 +289,14 @@ void StateAttackHammer2::Init()
 
 void StateAttackHammer2::Update(float elapsedTime)
 {
-	Player::Arms Hammer = player->GetHammer();
+	Player::Weapon Hammer = player->GetHammer();
 	Hammer.flag1 = false;
 	Hammer.flag2 = (player->GetModel()->IsPlayAnimation());
 	if (Hammer.flag2)
 	{
-		player->UpdateArmPositions(player->GetModel(), Hammer);
+		player->UpdateWeaponPositions(player->GetModel(), Hammer);
 		if (player->GetModel()->GetCurrentAnimationSeconds() <= 0.7f) {
-			player->CollisionArmsVsEnemies(Hammer);
+			player->CollisionWeaponsVsEnemies(Hammer);
 		}
 	}
 	else {
@@ -317,12 +317,12 @@ void StateAttackHammerJump::Init()
 
 void StateAttackHammerJump::Update(float elapsedTime)
 {
-	Player::Arms Hammer = player->GetHammer();
+	Player::Weapon Hammer = player->GetHammer();
 	Hammer.flagJump = player->GetModel()->IsPlayAnimation();
 	if (Hammer.flagJump)
 	{
-		player->UpdateArmPositions(player->GetModel(), Hammer);
-		player->CollisionArmsVsEnemies(Hammer);
+		player->UpdateWeaponPositions(player->GetModel(), Hammer);
+		player->CollisionWeaponsVsEnemies(Hammer);
 		player->PlayEffect(Player::EffectNumber::RedVortex, Hammer.position, 0.4f);
 	}
 
@@ -352,11 +352,11 @@ void StateAttackSpear1::Init()
 
 void StateAttackSpear1::Update(float elapsedTime)
 {
-	Player::Arms Spear = player->GetSpear();
+	Player::Weapon Spear = player->GetSpear();
 	if (player->GetModel()->IsPlayAnimation())
 	{
-		player->UpdateArmPositions(player->GetModel(), Spear);
-		player->CollisionArmsVsEnemies(Spear);
+		player->UpdateWeaponPositions(player->GetModel(), Spear);
+		player->CollisionWeaponsVsEnemies(Spear);
 
 		float animationTime = player->GetModel()->GetCurrentAnimationSeconds();
 		// 武器出現アニメーション再生区間
@@ -388,15 +388,15 @@ void StateAttackSpear2::Init()
 
 void StateAttackSpear2::Update(float elapsedTime)
 {
-	Player::Arms Spear = player->GetSpear();
+	Player::Weapon Spear = player->GetSpear();
 	Spear.flag1 = false;
 	Spear.flag2 = player->GetModel()->IsPlayAnimation();
 	if (Spear.flag2)
 	{
-		player->UpdateArmPositions(player->GetModel(), Spear);
+		player->UpdateWeaponPositions(player->GetModel(), Spear);
 
 		float animationTime = player->GetModel()->GetCurrentAnimationSeconds();
-		if (animationTime >= 0.30f) player->CollisionArmsVsEnemies(Spear);
+		if (animationTime >= 0.30f) player->CollisionWeaponsVsEnemies(Spear);
 
 		if (animationTime >= 0.30f && animationTime <= 0.45f)
 		{
@@ -431,14 +431,14 @@ void StateAttackSpear3::Init()
 
 void StateAttackSpear3::Update(float elapsedTime)
 {
-	Player::Arms Spear = player->GetSpear();
+	Player::Weapon Spear = player->GetSpear();
 	Spear.flag2 = false;
 	Spear.flag3 = player->GetModel()->IsPlayAnimation();
 	if (Spear.flag3)
 	{
-		player->UpdateArmPositions(player->GetModel(), Spear);
+		player->UpdateWeaponPositions(player->GetModel(), Spear);
 		float animationTime = player->GetModel()->GetCurrentAnimationSeconds();
-		if (animationTime >= 0.30f) player->CollisionArmsVsEnemies(Spear);
+		if (animationTime >= 0.30f) player->CollisionWeaponsVsEnemies(Spear);
 
 		// 足を踏ん張る際の前進をここで行う
 		if (animationTime < 0.43f)
@@ -464,12 +464,12 @@ void StateAttackSpearJump::Init()
 
 void StateAttackSpearJump::Update(float elapsedTime)
 {
-	Player::Arms Spear = player->GetSpear();
+	Player::Weapon Spear = player->GetSpear();
 	Spear.flagJump = player->GetModel()->IsPlayAnimation();
 	if (Spear.flagJump)
 	{
-		player->UpdateArmPositions(player->GetModel(), Spear);
-		player->CollisionArmsVsEnemies(Spear);
+		player->UpdateWeaponPositions(player->GetModel(), Spear);
+		player->CollisionWeaponsVsEnemies(Spear);
 
 		float animationTime = player->GetModel()->GetCurrentAnimationSeconds();
 		// 回転しながら前下方向に突き刺していくアニメーション
@@ -500,12 +500,12 @@ void StateAttackSword1::Init()
 
 void StateAttackSword1::Update(float elapsedTime)
 {
-	Player::Arms Sword = player->GetSword();
+	Player::Weapon Sword = player->GetSword();
 	Sword.flag1 = player->GetModel()->IsPlayAnimation();
 	if (Sword.flag1)
 	{
-		player->UpdateArmPositions(player->GetModel(), Sword);
-		player->CollisionArmsVsEnemies(Sword);
+		player->UpdateWeaponPositions(player->GetModel(), Sword);
+		player->CollisionWeaponsVsEnemies(Sword);
 		
 		float animationTime = player->GetModel()->GetCurrentAnimationSeconds();
 		// 足を踏ん張る際の前進をここで行う 既に何か進んでいる時はこの処理をしない
@@ -520,7 +520,7 @@ void StateAttackSword1::Update(float elapsedTime)
 			player->AddAttackCount();
 			player->ChangeState(Player::State::AttackSword2);
 		}
-		// 足元の動きに合わせた前進 違和感あるので一旦コメント
+		//TODO:足元の動きに合わせた前進 違和感あるので一旦コメント
 		//else if (animationTime >= 0.50f)
 		//{
 		//	velocity.x += sinf(angle.y) * 38 * elapsedTime;
@@ -543,13 +543,13 @@ void StateAttackSword2::Init()
 
 void StateAttackSword2::Update(float elapsedTime)
 {
-	Player::Arms Sword = player->GetSword();
+	Player::Weapon Sword = player->GetSword();
 	Sword.flag1 = false;
 	Sword.flag2 = player->GetModel()->IsPlayAnimation();
 	if (Sword.flag2)
 	{
-		player->UpdateArmPositions(player->GetModel(), Sword);
-		player->CollisionArmsVsEnemies(Sword);
+		player->UpdateWeaponPositions(player->GetModel(), Sword);
+		player->CollisionWeaponsVsEnemies(Sword);
 
 		float animationTime = player->GetModel()->GetCurrentAnimationSeconds();
 		// 足を踏ん張る際の前進をここで行う
@@ -586,15 +586,15 @@ void StateAttackSword3::Init()
 
 void StateAttackSword3::Update(float elapsedTime)
 {
-	Player::Arms Sword = player->GetSword();
+	Player::Weapon Sword = player->GetSword();
 	Sword.flag2 = false;
 	Sword.flag3 = player->GetModel()->IsPlayAnimation();
 	if (Sword.flag3)
 	{
-		player->UpdateArmPositions(player->GetModel(), Sword);
+		player->UpdateWeaponPositions(player->GetModel(), Sword);
 		float animationTime = player->GetModel()->GetCurrentAnimationSeconds();
 		if (animationTime >= 0.25f && animationTime <= 0.6f) {
-			player->CollisionArmsVsEnemies(Sword);
+			player->CollisionWeaponsVsEnemies(Sword);
 		}
 
 		// 足を踏ん張る際の前進をここで行う
@@ -625,12 +625,12 @@ void StateAttackSwordJump::Init()
 
 void StateAttackSwordJump::Update(float elapsedTime)
 {
-	Player::Arms Sword = player->GetSword();
+	Player::Weapon Sword = player->GetSword();
 	Sword.flagJump = player->GetModel()->IsPlayAnimation();
 	if (Sword.flagJump)
 	{
-		player->UpdateArmPositions(player->GetModel(), Sword);
-		player->CollisionArmsVsEnemies(Sword);
+		player->UpdateWeaponPositions(player->GetModel(), Sword);
+		player->CollisionWeaponsVsEnemies(Sword);
 		player->PlayEffect(Player::EffectNumber::GreenVortex, Sword.position, 0.4f);
 	}
 

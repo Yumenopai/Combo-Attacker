@@ -48,12 +48,12 @@ public:
 public:
 	EnemyTurtleShell();
 
-	//ダメージ時に呼ばれる
+	// ダメージ時に呼ばれる
 	void OnDamaged() override;
-	//死亡した時に呼ばれる
+	// 死亡した時に呼ばれる
 	void OnDead() override;
 
-	//プレイヤー索敵
+	// プレイヤー索敵
 	bool SearchPlayer();
 
 	// 簡略化関数
@@ -65,9 +65,9 @@ private:
 	// 各ステージごとの更新処理
 	void UpdateEachState(float elapsedTime);
 
-	//追跡ステート更新処理
+	// 追跡ステート更新処理
 	void UpdatePursuitState(float elapsedTime);
 
-	//遷移時のアニメーション再生
+	// 遷移時のアニメーション再生
 	void TransitionPlayAnimation(State nowState);
 };

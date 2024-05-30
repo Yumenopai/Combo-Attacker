@@ -2,6 +2,7 @@
 
 #include "Shader/Shader.h"
 #include "Character.h"
+#include "PlayerManager.h"
 
 #define PL1P 0
 #define PLAI 1
@@ -10,24 +11,44 @@ class Player;
 
 class Enemy :public Character
 {
+protected:
+	// 対象位置
+	DirectX::XMFLOAT3 targetPosition = { 0,0,0 };
+
+	// 与えるダメージ
+	int attackDamage = 0;
+
+	// 一番目に攻撃したプレイヤー
+	Player* FirstAttacker = nullptr;
+	// 直近に攻撃したプレイヤー
+	Player* CurrentAttacker = nullptr;
+	// とどめをさすプレイヤー
+	Player* LastAttacker = nullptr;
+	// 自身がダメージを受けた量(プレイヤー毎)
+	int attackedDamage[PLAYER_Count] = { 0,0 };
+
 public:
 	Enemy(){}
 	~Enemy() override{}
 
-	//更新処理
+	// 更新処理
 	virtual void Update(float elapsedTime) = 0;
 
-	//描画処理
+	// シャドウマップ描画
 	virtual void ShadowRender(const RenderContext& rc, ShadowMap* shadowMap) = 0;
+	// 描画
 	virtual void Render(const RenderContext& rc, ModelShader* shader) = 0;
 
-	//破棄
+	// 破棄
 	void Destroy();
 
-	//デバッグプリミティブ描画
+	// デバッグプリミティブ描画
 	virtual void DrawDebugPrimitive();
 
-	//ダメージ加算
+	// 攻撃されていない場合はnullptrで返す
+	Player* GetMostAttackPlayer() const;
+
+	// ダメージ加算
 	bool ApplyDamage(int damage, float invincibleTime, Player* attacker, int playerNo);
 
 	//Setter
@@ -45,17 +66,4 @@ public:
 	int GetAttackedDamagePersent(int playerNo) const {
 		return 100 * attackedDamage[playerNo] / (attackedDamage[PL1P] + attackedDamage[PLAI]);
 	}
-	// 攻撃されていない場合はnullptrで返す
-	Player* GetMostAttackPlayer() const;
-
-protected:
-	DirectX::XMFLOAT3 targetPosition = { 0,0,0 };
-
-	int attackDamage = 0; // 与えるダメージ
-
-	// パラメータ
-	Player* FirstAttacker = nullptr;
-	Player* CurrentAttacker = nullptr;
-	Player* LastAttacker = nullptr;
-	int attackedDamage[2] = { 0,0 };
 };

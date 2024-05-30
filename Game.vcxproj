@@ -129,8 +129,9 @@
     <ClInclude Include="Source\Effect.h" />
     <ClInclude Include="Source\EffectManager.h" />
     <ClInclude Include="Source\Enemy.h" />
+    <ClInclude Include="Source\EnemyConst.h" />
     <ClInclude Include="Source\EnemyManager.h" />
-    <ClInclude Include="Source\EnemyBlue.h" />
+    <ClInclude Include="Source\EnemyDragon.h" />
     <ClInclude Include="Source\EnemySlime.h" />
     <ClInclude Include="Source\EnemyTurtleShell.h" />
     <ClInclude Include="Source\Framework.h" />
@@ -157,6 +158,7 @@
     <ClInclude Include="Source\Player.h" />
     <ClInclude Include="Source\Player1P.h" />
     <ClInclude Include="Source\PlayerAI.h" />
+    <ClInclude Include="Source\PlayerConst.h" />
     <ClInclude Include="Source\PlayerManager.h" />
     <ClInclude Include="Source\PostEffect.h" />
     <ClInclude Include="Source\Scene.h" />
@@ -177,6 +179,8 @@
     <ClInclude Include="Source\State\Player\PlayerStateBase.h" />
     <ClInclude Include="Source\State\Player\PlayerStateMachine.h" />
     <ClInclude Include="Source\TransformUtils.h" />
+    <ClInclude Include="Source\UIConst.h" />
+    <ClInclude Include="Source\UtilsDefineConst.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="External\imgui-docking\imgui.cpp" />
@@ -194,7 +198,7 @@
     <ClCompile Include="Source\EffectManager.cpp" />
     <ClCompile Include="Source\Enemy.cpp" />
     <ClCompile Include="Source\EnemyManager.cpp" />
-    <ClCompile Include="Source\EnemyBlue.cpp" />
+    <ClCompile Include="Source\EnemyDragon.cpp" />
     <ClCompile Include="Source\EnemySlime.cpp" />
     <ClCompile Include="Source\EnemyTurtleShell.cpp" />
     <ClCompile Include="Source\Framework.cpp" />

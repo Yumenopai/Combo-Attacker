@@ -28,7 +28,7 @@ public:
 	void Render(const RenderContext& rc, ModelShader* shader);
 
 	//デバッグプリミティブ描画
-	void Render2d(const RenderContext & rc, Sprite* gauge, FontSprite* font, Sprite* frame, Sprite* arm, Sprite* message);
+	void Render2d(const RenderContext & rc, Sprite* gauge, FontSprite* font, Sprite* frame, Sprite* weapon, Sprite* message);
 
 	//プレイヤー登録
 	void Register(Player* player);

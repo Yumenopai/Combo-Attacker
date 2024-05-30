@@ -119,14 +119,13 @@ void EnemySlime::OnDead()
 	Destroy();
 }
 
-Player::EnemySearch EnemySlime::GetNearestPlayerES()
+Player::EnemySearch EnemySlime::GetNearestPlayer_EnemySearch()
 {
 	Player::EnemySearch es = Player::EnemySearch::None;
-	//es = Player1P::Instance().GetEachEnemySearch(this);
 
 	for (Player* player : PlayerManager::Instance().players)
 	{
-		if (static_cast<int>(es) < static_cast<int>(player->GetEachEnemySearch(this)))
+		if (SC_INT(es) < SC_INT(player->GetEachEnemySearch(this)))
 			es = player->GetEachEnemySearch(this);
 	}
 	return es;
@@ -309,7 +308,7 @@ void EnemySlime::UpdatePursuitState(float elapsedTime)
 	TurnToTarget(elapsedTime, 1.0f);
 
 	//プレイヤーが攻撃範囲にいた場合は攻撃ステートへ遷移
-	Player::EnemySearch es = GetNearestPlayerES();
+	Player::EnemySearch es = GetNearestPlayer_EnemySearch();
 
 	if (es >= Player::EnemySearch::Attack)
 	{
@@ -347,7 +346,7 @@ void EnemySlime::UpdateAttackState(float elapsedTime)
 void EnemySlime::UpdateIdleBattleState(float elapsedTime)
 {
 	//プレイヤーが攻撃範囲にいた場合は攻撃ステートへ遷移
-	Player::EnemySearch es = GetNearestPlayerES();
+	Player::EnemySearch es = GetNearestPlayer_EnemySearch();
 
 	if (es >= Player::EnemySearch::Attack)
 	{
@@ -369,7 +368,7 @@ void EnemySlime::UpdateHitDamageState(float elapsedTime)
 	if (model->IsPlayAnimation()) return;
 
 	//プレイヤーが攻撃範囲にいた場合は攻撃ステートへ遷移
-	Player::EnemySearch es = GetNearestPlayerES();
+	Player::EnemySearch es = GetNearestPlayer_EnemySearch();
 
 	if (es >= Player::EnemySearch::Attack)
 	{

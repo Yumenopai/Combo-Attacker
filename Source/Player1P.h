@@ -24,7 +24,7 @@ public:
 	bool InputButtonUp(InputState button) override;
 
 	// 武器変更処理
-	void InputChangeArm(AttackType arm = AttackType::None) override;
+	void InputChangeWeapon(AttackType weapon = AttackType::None) override;
 	// ターゲット回復処理
 	void InputRecover() override;
 
