@@ -277,8 +277,6 @@ void Player::RenderHPBar(ID3D11DeviceContext* dc, Sprite* gauge, FontSprite* fon
 		SPRITE_position_default_z, // Z
 		hp_gauge_size.x + hp_gauge_frame_expansion,
 		hp_gauge_size.y + hp_gauge_frame_expansion,
-		SPRITE_none_texture, SPRITE_none_texture, // 元textureはない
-		SPRITE_none_texture,	SPRITE_none_texture, // 元textureはない
 		SPRITE_angle_default,
 		hp_gauge_frame_color // 背景カラー
 	);
@@ -289,8 +287,6 @@ void Player::RenderHPBar(ID3D11DeviceContext* dc, Sprite* gauge, FontSprite* fon
 		SPRITE_position_default_z, // Z
 		hp_gauge_size.x * (GetHealthRate() / 100.0f), //百分率を小数に変換
 		hp_gauge_size.y,
-		SPRITE_none_texture, SPRITE_none_texture, // 元textureはない
-		SPRITE_none_texture,	SPRITE_none_texture, // 元textureはない
 		SPRITE_angle_default,
 		GetHpWorning() ? hp_gauge_color_wornimg : hp_gauge_color_normal // ゲージカラー/HP減ると色を変える
 	);
@@ -334,52 +330,61 @@ void Player::RenderCharacterOverHead(const RenderContext& rc, FontSprite* font, 
 		StringRender(rc.deviceContext, font, playerName,
 			{ screenPosition.x + name_offset.x, screenPosition.y + name_offset.y },
 			nameColor);
+		// メッセージ描画
+		RenderCharacterMessage(rc.deviceContext, message, { screenPosition.x, screenPosition.y });
+	}
+}
+// キャラクターメッセージ描画
+void Player::RenderCharacterMessage(ID3D11DeviceContext* dc, Sprite* message, DirectX::XMFLOAT2 position)
+{
+	// メッセージ
+	if (messageNumber == PlayerMessage::WeaponGet || messageNumber == PlayerMessage::LevelUp)
+	{
+		// タイマー増加
+		messageYTimer += message_timer_increase;
+		// タイマーで自動的にfalseに切り替えるメッセージ描画
+		message->Render(dc,
+			{ position.x + message_offset.x, position.y + message_offset.y - messageYTimer, SPRITE_position_default_z },
+			message_size,
+			{ message_sprite_size.x, message_sprite_size.y * SC_INT(messageNumber) },
+			message_sprite_size,
+			SPRITE_angle_default,
+			SPRITE_color_default);
 
-		// メッセージ
-		if (messageNumber == PlayerMessage::WeaponGet || messageNumber == PlayerMessage::LevelUp)
+		// タイマーが一定時間まできたら
+		if (messageYTimer > message_timer_max)
 		{
-			// タイマー増加
-			messageYTimer += message_timer_increase;
-			message->Render(rc.deviceContext,
-				{ screenPosition.x + message_offset.x, screenPosition.y + message_offset.y - messageYTimer, SPRITE_position_default_z },
+			enableShowMessage[SC_INT(messageNumber)] = false;
+			messageNumber = PlayerMessage::None;
+		}
+	}
+	else if (enableShowMessage[SC_INT(PlayerMessage::WeaponGet)])
+	{
+		// trueになった時の初期処理
+		messageNumber = PlayerMessage::WeaponGet;
+		messageYTimer = 0.0f;
+	}
+	else if (enableShowMessage[SC_INT(PlayerMessage::LevelUp)])
+	{
+		// trueになった時の初期処理
+		messageNumber = PlayerMessage::LevelUp;
+		messageYTimer = 0.0f;
+	}
+	else
+	{
+		for (PlayerMessage mes = PlayerMessage::Attack; mes < PlayerMessage::MaxCount; mes = SC_PM(SC_INT(mes) + 1))
+		{
+			if (!enableShowMessage[SC_INT(mes)]) continue;
+
+			// trueの時は常時表示するメッセージの描画
+			message->Render(dc,
+				{ position.x + message_offset.x, position.y + message_offset.y - messageYTimer, SPRITE_position_default_z },
 				message_size,
-				{ message_sprite_size.x, message_sprite_size.y * SC_INT(messageNumber)  },
+				{ message_sprite_size.x, message_sprite_size.y * SC_INT(mes) },
 				message_sprite_size,
 				SPRITE_angle_default,
 				SPRITE_color_default);
-			
-			if (messageYTimer > message_timer_max)
-			{
-				enableShowMessage[SC_INT(messageNumber)] = false;
-				messageNumber = PlayerMessage::None;
-			}
-		}
-		else if (enableShowMessage[SC_INT(PlayerMessage::WeaponGet)])
-		{
-			messageNumber = PlayerMessage::WeaponGet;
-			messageYTimer = 0.0f;
-		}
-		else if (enableShowMessage[SC_INT(PlayerMessage::LevelUp)])
-		{
-			messageNumber = PlayerMessage::LevelUp;
-			messageYTimer = 0.0f;
-		}
-		else
-		{
-			for (PlayerMessage mes = PlayerMessage::Attack; mes < PlayerMessage::MaxCount; mes = SC_PM(SC_INT(mes) + 1))
-			{
-				if (enableShowMessage[SC_INT(mes)])
-				{
-					message->Render(rc.deviceContext,
-						{ screenPosition.x + message_offset.x, screenPosition.y + message_offset.y - messageYTimer, SPRITE_position_default_z },
-						message_size,
-						{ message_sprite_size.x, message_sprite_size.y * SC_INT(mes) },
-						message_sprite_size,
-						SPRITE_angle_default,
-						SPRITE_color_default);
-					break;
-				}
-			}
+			break; // 一種類しか表示させないので一つ描画した時点でbreak
 		}
 	}
 }
@@ -537,6 +542,7 @@ bool Player::InputAttackFromNoneAttack()
 	{
 		// ジャンプ攻撃をスペシャル技として使用する
 		InputAttackFromJump();
+		targetPlayer->InputAttackFromJump();
 	}
 	else
 	{

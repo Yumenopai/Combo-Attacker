@@ -310,6 +310,7 @@ void SceneGame::RenderEnemyGauge(ID3D11DeviceContext* dc, const DirectX::XMFLOAT
 		//カメラの背後にいるか、明らかに離れているなら描画しない
 		if (screenPosition.z < 0.0f || screenPosition.z > 1.0f) continue;
 
+		//HPパーセンテージ
 		float healthRate = enemy->GetHealthRate() / 100.0f; //百分率から小数に変換
 
 		//ゲージ描画(下地)
@@ -319,8 +320,6 @@ void SceneGame::RenderEnemyGauge(ID3D11DeviceContext* dc, const DirectX::XMFLOAT
 			SPRITE_position_default_z,
 			enemy_hp_gauge_size.x + enemy_hp_gauge_frame_expansion,
 			enemy_hp_gauge_size.y + enemy_hp_gauge_frame_expansion,
-			SPRITE_none_texture, SPRITE_none_texture,
-			SPRITE_none_texture,	SPRITE_none_texture,
 			SPRITE_angle_default,
 			enemy_hp_gauge_frame_color
 		);
@@ -331,8 +330,6 @@ void SceneGame::RenderEnemyGauge(ID3D11DeviceContext* dc, const DirectX::XMFLOAT
 			SPRITE_position_default_z,
 			enemy_hp_gauge_size.x * healthRate,
 			enemy_hp_gauge_size.y,
-			SPRITE_none_texture, SPRITE_none_texture,
-			SPRITE_none_texture, SPRITE_none_texture,
 			SPRITE_angle_default,
 			enemy_hp_gauge_color_normal
 		);
@@ -343,7 +340,6 @@ void SceneGame::RenderEnemyGauge(ID3D11DeviceContext* dc, const DirectX::XMFLOAT
 void SceneGame::RenderButtonUI(ID3D11DeviceContext* dc)
 {
 	float spriteCutPosition_x = 0;
-	auto nextWeapon1P = Player1P::Instance().GetNextWeapon();
 
 	// X：左 Player
 	{
@@ -354,6 +350,7 @@ void SceneGame::RenderButtonUI(ID3D11DeviceContext* dc)
 			SPRITE_cut_position_default, ButtonFrame_sprite_size,
 			SPRITE_angle_default, SPRITE_color_default);
 
+		auto nextWeapon1P = Player1P::Instance().GetNextWeapon();
 		if (nextWeapon1P != Player1P::Instance().GetCurrentUseWeapon()) // 次が現在の武器＝武器が一つだけしかもっていない時は表示しない
 		{
 			// 武器に対応するカット位置
@@ -396,8 +393,8 @@ void SceneGame::RenderButtonUI(ID3D11DeviceContext* dc)
 		// 武器変更
 		else
 		{
-			auto nextAI = PlayerAI::Instance().GetNextWeapon();
-			if (nextAI == PlayerAI::Instance().GetCurrentUseWeapon())
+			auto nextWeaponAI = PlayerAI::Instance().GetNextWeapon();
+			if (nextWeaponAI == PlayerAI::Instance().GetCurrentUseWeapon())
 			{
 				// 次が現在の武器＝武器が一つだけしかもっていない時は表示しない
 				enable_show = false;
@@ -405,7 +402,7 @@ void SceneGame::RenderButtonUI(ID3D11DeviceContext* dc)
 			else
 			{
 				// 武器に対応するカット位置
-				spriteCutPosition_x = SpriteCutPositionX(nextWeapon1P);
+				spriteCutPosition_x = SpriteCutPositionX(nextWeaponAI);
 			}
 		}
 		if (enable_show)

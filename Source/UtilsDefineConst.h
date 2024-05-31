@@ -18,8 +18,6 @@ static const DirectX::XMFLOAT2 TEXT_cut_size_default = { 16.0f, 16.0f };
 static const float TEXT_angle_default = 0.0f;
 
 /******************** Sprite ********************/
-// テクスチャなし
-static const float SPRITE_none_texture = 0.0f;
 // 奥行/デフォルト
 static const float SPRITE_position_default_z = 0.0f;
 // 切抜位置/デフォルト

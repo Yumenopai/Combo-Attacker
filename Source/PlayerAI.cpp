@@ -80,9 +80,12 @@ void PlayerAI::AttackUpdate()
 		&& (100 * allDamage / (Player1P::Instance().GetAllDamage() + allDamage)) > ai_ran_away_damage_rate/*%*/); // 自身が与えた全ダメージ量(%で示すため100を掛ける)/全員で与えた全ダメージ量
 	SetEnableShowMessage(Player::PlayerMessage::Indifference, ranAwayFromPlayer1P);
 
-	// 自身のダメージが残り僅か
-	ranAwayFromEnemy = GetHpWorning();
-	SetEnableShowMessage(Player::PlayerMessage::RanAway, ranAwayFromEnemy);
+	// 自身のダメージが残り僅かなら逃げる
+	if (!ranAwayFromEnemy && GetHpWorning())
+	{
+		ranAwayFromEnemy = true;
+		SetEnableShowMessage(Player::PlayerMessage::RanAway, ranAwayFromEnemy);
+	}
 
 	// とどめを1Pに譲る
 	if (currentAttackEnemy != nullptr // 現在攻撃中

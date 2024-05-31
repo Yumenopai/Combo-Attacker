@@ -48,6 +48,9 @@ public:
 	// ターゲット回復処理
 	void InputRecover() override;
 
+	// Setter
+	void SetRanAwayFromEnemy(bool isRanAway) { ranAwayFromEnemy = isRanAway; }
+
 private:
 	// 移動ベクトル
 	XMFLOAT3 GetMoveVec() const;

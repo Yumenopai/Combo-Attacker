@@ -236,6 +236,16 @@ void StateRecover::Update(float elapsedTime)
 
 	// ‰ñ•œ
 	player->GetTargetPlayer()->AddHealth(30);
+
+	// PlayerAI‚Ì“¦‚°‰ðœ
+	if (player->GetTargetPlayer()->GetSerialNumber() == PlayerAI::Instance().GetSerialNumber())
+	{
+		if (!PlayerAI::Instance().GetHpWorning())
+		{
+			PlayerAI::Instance().SetRanAwayFromEnemy(false);
+			PlayerAI::Instance().SetEnableShowMessage(Player::PlayerMessage::RanAway, false);
+		}
+	}
 	// ˆÚs
 	player->ChangeState(Player::State::Idle);
 }

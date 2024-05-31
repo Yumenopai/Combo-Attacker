@@ -289,6 +289,10 @@ protected:
 
 	// HPゲージ/Y座標
 	float hpGaugePosition_Y;
+	
+private:
+	// キャラクターメッセージ描画
+	void RenderCharacterMessage(ID3D11DeviceContext* dc, Sprite* message, DirectX::XMFLOAT2 position);
 
 protected:
 	// 更新
@@ -405,7 +409,6 @@ public:
 	// ***************** GETTER & SETTER *****************
 
 	PlayerStateMachine* GetStateMachine() const { return stateMachine; }
-
 	Model* GetModel() const { return model.get(); }
 
 	int GetSerialNumber() const { return serialNumber; }
