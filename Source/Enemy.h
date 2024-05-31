@@ -59,11 +59,11 @@ public:
 
 	//Getter
 	virtual const float GetEffectOffset_Y() = 0;
-	Player* GetFirstAttacker() const { return FirstAttacker; }
-	Player* GetCurrentAttacker() const { return CurrentAttacker; }
-	Player* GetLastAttacker() const { return LastAttacker; }
-	int GetAttackedDamage(int playerNo) const {	return attackedDamage[playerNo]; }
-	int GetAttackedDamagePersent(int playerNo) const {
+	const Player* GetFirstAttacker() const { return FirstAttacker; }
+	const Player* GetCurrentAttacker() const { return CurrentAttacker; }
+	const Player* GetLastAttacker() const { return LastAttacker; }
+	const int GetAttackedDamage(int playerNo) const {	return attackedDamage[playerNo]; }
+	const int GetAttackedDamagePersent(int playerNo) const {
 		return 100 * attackedDamage[playerNo] / (attackedDamage[PL1P] + attackedDamage[PLAI]);
 	}
 };

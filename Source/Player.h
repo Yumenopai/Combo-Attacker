@@ -408,33 +408,32 @@ public:
 #pragma region GETTER & SETTER
 	// ***************** GETTER & SETTER *****************
 
-	PlayerStateMachine* GetStateMachine() const { return stateMachine; }
+	const PlayerStateMachine* GetStateMachine() const { return stateMachine; }
 	Model* GetModel() const { return model.get(); }
 
-	int GetSerialNumber() const { return serialNumber; }
+	const int GetSerialNumber() const { return serialNumber; }
 	Player* GetTargetPlayer() const { return targetPlayer; }
-	Enemy* GetCurrentAttackEnemy() const { return currentAttackEnemy; }
+	const Enemy* GetCurrentAttackEnemy() const { return currentAttackEnemy; }
 	void SetCurrentAttackEnemy(Enemy* enemy) { currentAttackEnemy = enemy; }
 
-	Enemy* GetNearestEnemy() { return nearestEnemy; }
-	EnemySearch GetEachEnemySearch(Enemy* enemy) { return enemySearch[enemy]; }
-	float GetEachEnemyDist(Enemy* enemy) { return enemyDist[enemy]; }
+	const Enemy* GetNearestEnemy() { return nearestEnemy; }
+	const EnemySearch GetEachEnemySearch(Enemy* enemy) { return enemySearch[enemy]; }
+	const float GetEachEnemyDist(Enemy* enemy) { return enemyDist[enemy]; }
 
-	int GetAttackCount() const { return attackCount; }
+	const int GetAttackCount() const { return attackCount; }
 	void SetAttackCount(int count) { attackCount = count; }
 	void AddAttackCount() { attackCount++; }
 	
-	int GetAllDamage() const { return allDamage; }
-
-	bool GetAttacking() const { return isAttacking; }
+	const int GetAllDamage() const { return allDamage; }
+	const bool GetAttacking() const { return isAttacking; }
 	void SetAttacking(bool _isAttacking) { isAttacking = _isAttacking; }
 
-	int GetLevel() const { return currentLevel; }
+	const int GetLevel() const { return currentLevel; }
 	void SetLevel(int lv) { currentLevel = lv; }
 	void AddLevel(int lv) { currentLevel += lv; SetEnableShowMessage(Player::PlayerMessage::LevelUp, true); }
 
-	bool GetHaveEachWeapon(AttackType weapon) { return HaveWeapons[weapon]; }
-	int GetHaveWeaponCount() {
+	const bool GetHaveEachWeapon(AttackType weapon) { return HaveWeapons[weapon]; }
+	const int GetHaveWeaponCount() {
 		int haveCount = 0;
 		for (int i = 0; i < HaveWeapons.size(); i++)
 		{
@@ -445,20 +444,20 @@ public:
 
 	void SetEnableShowMessage(PlayerMessage number, bool isShow) { enableShowMessage[SC_INT(number)] = isShow; }
 
-	bool GetEnableRecoverTransition() const { return enableRecoverTransition; }
+	const bool GetEnableRecoverTransition() const { return enableRecoverTransition; }
 
-	AttackType GetCurrentUseWeapon() const { return CurrentUseWeapon; }
-	bool GetHpWorning() const { return GetHealthRate() <= 20; }
+	const AttackType GetCurrentUseWeapon() const { return CurrentUseWeapon; }
+	const bool GetHpWorning() const { return GetHealthRate() <= 20; }
 
-	EnemySearch GetEnemySearch() const { return currentEnemySearch; }
+	const EnemySearch GetEnemySearch() const { return currentEnemySearch; }
 
-	bool GetAttackJudge() const { return isAttackJudge; }
+	const bool GetAttackJudge() const { return isAttackJudge; }
 	void SetAttackJadge(bool aj) { isAttackJudge = aj; }
 
-	bool GetMoveAttack() const { return isMoveAttack; }
+	const bool GetMoveAttack() const { return isMoveAttack; }
 	void SetMoveAttack(bool ma) { isMoveAttack = ma; }
 	
-	XMFLOAT3 GetVelocity() const { return velocity; }
+	const XMFLOAT3 GetVelocity() const { return velocity; }
 	void SetVelocity(float x = FLT_MAX, float y = FLT_MAX, float z = FLT_MAX)
 	{
 		if(x != FLT_MAX) velocity.x = x;
@@ -472,8 +471,8 @@ public:
 		velocity.z += velo.z;
 	}
 
-	Weapon GetHammer() const { return Hammer; }
-	Weapon GetSpear() const { return Spear; }
-	Weapon GetSword() const { return Sword; }
+	const Weapon GetHammer() const { return Hammer; }
+	const Weapon GetSpear() const { return Spear; }
+	const Weapon GetSword() const { return Sword; }
 #pragma endregion
 };

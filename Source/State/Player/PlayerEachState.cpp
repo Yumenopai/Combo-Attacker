@@ -458,7 +458,7 @@ void StateAttackSpear3::Update(float elapsedTime)
 		// 足を踏ん張る際の前進をここで行う
 		if (animationTime < add_velocity_time_spear3_end)
 		{
-			player->HorizontalVelocityByAttack(true, attack_spear2_add_velocity, elapsedTime);
+			player->HorizontalVelocityByAttack(true, attack_spear3_add_velocity, elapsedTime);
 		}
 	}
 	else {
@@ -561,7 +561,7 @@ void StateAttackSword2::Update(float elapsedTime)
 		// 足を踏ん張る際の前進をここで行う
 		if (animationTime < add_velocity_time_sword2_end)
 		{
-			player->HorizontalVelocityByAttack(true, attack_sword1_add_velocity, elapsedTime);
+			player->HorizontalVelocityByAttack(true, attack_sword2_add_velocity, elapsedTime);
 		}
 		// 任意のアニメーション再生区間でのみ次の攻撃技を出すようにする
 		else if (player->InputButtonDown(Player::InputState::Attack)

@@ -77,8 +77,8 @@ static const int attack_spear2_add_velocity = 60;
 static const float attack_time_spear3_start = 0.30f;
 // スピアー3/慣性前進時間
 static const float add_velocity_time_spear3_end = 0.43f;
-// スピアー2/攻撃中の移動量
-static const int attack_spear2_add_velocity = 39;
+// スピアー3/攻撃中の移動量
+static const int attack_spear3_add_velocity = 39;
 // スピアーJUMP/慣性前進時間
 static const AnimationTime add_velocity_time_spearJ = { 0.15f, 0.5f };
 // スピアーJUMP/攻撃中の移動量
@@ -92,7 +92,7 @@ static const AnimationTime next_attack_time_sword1to2 = { 0.3f, 0.7f };
 // ソード2/慣性前進時間
 static const float add_velocity_time_sword2_end = 0.25f;
 // ソード2/攻撃中の移動量
-static const int attack_sword1_add_velocity = 45;
+static const int attack_sword2_add_velocity = 45;
 // ソード2/次の攻撃技を出せる時間
 static const AnimationTime next_attack_time_sword2to3 = { 0.35f, 0.6f };
 // ソード3/攻撃当たり判定時間
