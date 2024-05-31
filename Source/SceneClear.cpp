@@ -1,21 +1,22 @@
 #include "Graphics/Graphics.h"
-
+#include "Light/LightManager.h"
 #include "SceneManager.h"
-#include "SceneTitle.h"
 #include "SceneClear.h"
 #include "SceneGame.h"
 #include "SceneLoading.h"
 
+#include "SceneTitle.h"
 
 #include "Input/Input.h"
 
 void SceneClear::Initialize()
 {
 	ID3D11Device* device = Graphics::Instance().GetDevice();
-	sprite[0] = std::make_unique<Sprite>(device, "Data/Sprite/4.png");
-	sprite[1] = std::make_unique<Sprite>(device, "Data/Sprite/5.png");
-	//model = std::make_unique<Model>(device, "Data/Model/Jammo/Jammo_Player.fbx", 0.02f);
-	model->PlayAnimation(static_cast<int>(Player::Animation::Running), true);
+	sprite = std::make_unique<Sprite>(device, "Data/Sprite/logo.png");
+	model = std::make_unique<Model>(device, "Data/Model/SD-UnityChan/UnityChan.fbx", 0.2f);
+	model->PlayAnimation(static_cast<int>(Player::Animation::Idle), true);
+
+	stage = std::make_unique<Stage>();
 
 	float screenWidth = Graphics::Instance().GetScreenWidth();
 	float screenHeight = Graphics::Instance().GetScreenHeight();
@@ -26,13 +27,18 @@ void SceneClear::Initialize()
 		XMConvertToRadians(45),		//画角
 		screenWidth / screenHeight,	//画面アスペクト比
 		0.1f,
-		1000.0f
+		100.0f
 	);
 	camera.SetLookAt(
-		XMFLOAT3(0, 10, -10),	//視点
-		XMFLOAT3(0, 0, 0),		//注視点
+		XMFLOAT3(0, 30, -80),	//視点
+		XMFLOAT3(0, -38, 0),		//注視点
 		XMFLOAT3(0, 1, 0)		//上ベクトル
 	);
+
+	// 平行光源を追加
+	mainDirectionalLight = new Light(LightType::Directional);
+	mainDirectionalLight->SetDirection({ 2, -2, 2 });
+	LightManager::Instane().Register(mainDirectionalLight);
 }
 
 void SceneClear::Finalize()
@@ -43,38 +49,30 @@ void SceneClear::Update(float elapsedTime)
 {
 	GamePad& gamePad = Input::Instance().GetGamePad();
 
-	const GamePadButton anyButton = GamePad::BTN_A | GamePad::BTN_B | GamePad::BTN_X | GamePad::BTN_Y| GamePad::BTN_START;
+	const GamePadButton anyButton = GamePad::BTN_A | GamePad::BTN_B | GamePad::BTN_X | GamePad::BTN_Y | GamePad::BTN_START;
 	if (gamePad.GetButtonDown() & anyButton)
 	{
-		SceneManager::Instance().ChangeScene(new SceneLoading(new SceneTitle(), -255));
+		SceneManager::Instance().ChangeScene(new SceneTitle());
 	}
 
-	if (scaleTimer > 91) isScaleDown = true;
-	else if (scaleTimer < 89) isScaleDown = false;
-
-	//if (isScaleDown) scaleTimer -= 0.03f;
-	//else scaleTimer += 0.03f;
-	//scale.x = scale.y = scale.z = sinf(scaleTimer);
 	{
 		//ワールド行列計算
 		XMMATRIX S = XMMatrixScaling(scale.x, scale.y, scale.z);
 		XMMATRIX R = XMMatrixRotationRollPitchYaw(angle.x, angle.y, angle.z);
-		XMMATRIX T = XMMatrixTranslation(0, -5.0f, 0);
+		XMMATRIX T = XMMatrixTranslation(-20, 0.0f, -50);
 		XMFLOAT4X4 worldTramsform;
 		XMStoreFloat4x4(&worldTramsform, S * R * T);
-		
+
 		//モデルアニメーション更新処理
 		model->UpdateAnimation(elapsedTime);
 
 		//モデル行列更新
 		model->UpdateTransform(worldTramsform);
 	}
+	stage->Update(elapsedTime);
 
 	timer += elapsedTime;
-	if (timer <= 0.5f)isShow = true;
-	else isShow = false;
-
-	if (timer >= 1.0f) timer = 0.0f;
+	if (timer >= 2.0f) timer = 0.0f;
 }
 
 void SceneClear::Render()
@@ -85,6 +83,8 @@ void SceneClear::Render()
 	RenderContext rc;
 	ShadowMap* shadowMap = Graphics::Instance().GetShadowMap();
 
+	rc.timer = ++waterTimer;
+
 	//カメラ更新処理
 	rc.view = camera.GetView();
 	rc.projection = camera.GetProjection();
@@ -93,6 +93,17 @@ void SceneClear::Render()
 	rc.camera = &camera;
 	rc.deviceContext = Graphics::Instance().GetDeviceContext();
 	rc.renderState = Graphics::Instance().GetRenderState();
+	LightManager::Instane().PushRenderContext(rc);// ライトの情報を詰め込む
+	rc.shadowMap = shadowMap;
+	rc.shadowColor = { 0.5f,0.5f,0.5f };
+
+	//シャドウマップ描画
+	shadowMap->Begin(rc, camera.GetFocus());
+	//シャドウマップにモデル描画
+	stage->ShadowRender(rc, shadowMap);
+	shadowMap->Draw(rc, model.get());
+	shadowMap->End(rc);
+
 	RenderState* renderState = Graphics::Instance().GetRenderState();
 
 	ID3D11SamplerState* samplers[] =
@@ -116,26 +127,31 @@ void SceneClear::Render()
 
 	//3DModel
 	{
-		ModelShader* shader = Graphics::Instance().GetShader(ShaderId::Phong);
+		ModelShader* shader = Graphics::Instance().GetShader(ShaderId::Toon);
 		shader->Begin(rc);
 		//シェーダーにモデル描画
+		stage->TerrainRender(rc, shader);
 		shader->Draw(rc, model.get());
 		shader->End(rc);
+
+		ModelShader* waterShader = Graphics::Instance().GetShader(ShaderId::WaterSurface);
+		waterShader->Begin(rc);
+		stage->WaterRender(rc, waterShader);
+		waterShader->End(rc);
 	}
 	//2DSprite
 	{
 		float screenWidth = static_cast<float>(graphics.GetScreenWidth());
 		float screenHeight = static_cast<float>(graphics.GetScreenHeight());
-		float textureWidth = static_cast<float>(sprite[0]->GetTextureWidth());
-		float textureHeight = static_cast<float>(sprite[0]->GetTextureHeight());
 
 		FLOAT blendFactor[4] = { 1.0f,1.0f,1.0f,1.0f };
 		UINT sampleMask = 0xFFFFFFFF;
 
 		//titleSprite
 		dc->OMSetBlendState(renderState->GetBlendState(BlendState::Transparency), blendFactor, sampleMask);
-		sprite[0]->Render(dc, 0.0f, 0.0f, 0.0f, screenWidth, screenHeight, 0, 0, textureWidth, textureHeight, 0, { 1, 1, 1, 1 });
-		if (isShow)
-			sprite[1]->Render(dc, 0.0f, 0.0f, 0.0f, screenWidth, screenHeight, 0, 0, textureWidth, textureHeight, 0, { 1, 1, 1, 1 });
+		sprite->Render(dc, 0.0f, 60.0f, 0.0f, screenWidth, 120, 0, 240, screenWidth, 120, 0, { 1, 1, 1, 1 });
+		if (timer <= 1.6f)
+			sprite->Render(dc, 0.0f, 480.0f, 0.0f, screenWidth, 120, 0, 120, screenWidth, 120, 0, { 1, 1, 1, 1 });
 	}
+
 }

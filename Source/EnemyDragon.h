@@ -63,6 +63,8 @@ private:
 	bool isHalfHP = false;
 	// 死亡判定か
 	bool isDead = false;
+	// 死亡からクリア表示までのタイマー
+	int clearTimer = 0;
 
 	// 縄張り対象位置
 	DirectX::XMFLOAT3 territoryOrigin = { 0,0,0 };

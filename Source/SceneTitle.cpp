@@ -5,6 +5,8 @@
 #include "SceneGame.h"
 #include "SceneLoading.h"
 
+#include "SceneClear.h"
+
 #include "Input/Input.h"
 
 void SceneTitle::Initialize()

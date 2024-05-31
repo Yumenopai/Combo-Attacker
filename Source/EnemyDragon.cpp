@@ -3,6 +3,9 @@
 #include "PlayerManager.h"
 #include "Collision.h"
 #include "AnimationTimeStruct.h"
+#include "SceneManager.h"
+#include "SceneLoading.h"
+#include "SceneClear.h"
 #include "imgui.h"
 
 //コンストラクタ
@@ -382,6 +385,9 @@ void EnemyDragon::UpdateDieState(float elapsedTime)
 
 	//破棄
 	Destroy();
+	
+	// クリア画面へ遷移
+	SceneManager::Instance().ChangeScene(new SceneLoading(new SceneClear(), -255));
 }
 
 //ノードとプレイヤーの衝突処理
