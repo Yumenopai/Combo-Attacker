@@ -40,7 +40,7 @@ static const float slime_radius = 0.5f;
 // 当たり判定/高さ
 static const float slime_height = 1.0f;
 // 最大HP
-static const int slime_max_health = 30;
+static const int slime_max_health = 20;
 // 与えるダメージ
 static const int slime_attack_damage = 2;
 // レベルアップ量
@@ -80,7 +80,7 @@ static const float turtle_radius = 0.5f;
 // 当たり判定/高さ
 static const float turtle_height = 1.0f;
 // 最大HP
-static const int turtle_max_health = 40;
+static const int turtle_max_health = 30;
 // 与えるダメージ
 static const int turtle_attack_damage = 1;
 // レベルアップ量
@@ -106,7 +106,7 @@ static const float dragon_radius = 1.8f;
 // 当たり判定/高さ
 static const float dragon_height = 3.6f;
 // 最大HP
-static const int dragon_max_health = 150;
+static const int dragon_max_health = 130;
 // 与えるダメージ
 static const int dragon_attack_damage = 2;
 // レベルアップ量
