@@ -3,6 +3,7 @@
 #include <memory>
 #include "Graphics/Model.h"
 #include "Enemy.h"
+#include "EnemyConst.h"
 #include "Player.h"
 
 class EnemyDragon :public Enemy
@@ -58,9 +59,6 @@ private:
 	// ステート
 	State state = State::Wander;
 
-	// エフェクト用Y軸オフセット
-	float effectOffset_Y = 0.8f;
-
 	// HPが半分以下か
 	bool isHalfHP = false;
 	// 死亡判定か
@@ -68,16 +66,6 @@ private:
 
 	// 縄張り対象位置
 	DirectX::XMFLOAT3 territoryOrigin = { 0,0,0 };
-	// 縄張り対象範囲
-	float territoryRange = 10.0f;
-	// 移動スピード
-	float moveSpeed = 3.0f;
-	// 回転スピード
-	float turnSpeed = DirectX::XMConvertToRadians(360);
-	// 探知範囲
-	float searchRange = 10.0f;
-	// 攻撃範囲
-	float attackRange = 5.0f;
 
 	// ImGui用/最近プレイヤーの名前ストリング
 	std::string nearestPlayerStr = "";
@@ -106,10 +94,8 @@ public:
 	void ShadowRender(const RenderContext& rc, ShadowMap* shadowMap) override;
 	void Render(const RenderContext& rc, ModelShader* shader) override;
 
-	//縄張り設定
-	void SetTerritory(const DirectX::XMFLOAT3& origin, float range);
 	//Getter
-	const float GetEffectOffset_Y() override { return effectOffset_Y; }
+	const float GetEffectOffset_Y() override { return dragon_effect_offset_y; }
 
 	//デバッグ
 	void DebugMenu();
@@ -125,7 +111,7 @@ private:
 	void SetRandomTargetPosition();
 
 	//目標地点へ移動
-	void MoveToTarget(float elapsedTime, float speedRate);
+	void MoveToTarget(float elapsedTime, float speedRate = 1);
 
 	//プレイヤー索敵
 	bool SearchPlayer();

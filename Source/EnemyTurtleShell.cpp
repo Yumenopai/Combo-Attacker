@@ -1,4 +1,5 @@
 #include "EnemyTurtleShell.h"
+#include "EnemyConst.h"
 #include "Graphics/Graphics.h"
 #include "PlayerManager.h"
 #include "Collision.h"
@@ -9,14 +10,14 @@ EnemyTurtleShell::EnemyTurtleShell()
 {
 	ID3D11Device* device = Graphics::Instance().GetDevice();
 	model = std::make_unique<Model>(device, "Data/Model/RPG_TurtleShell/TurtleShellPBR.fbx", 0.01f);
-	eyeBallNodeName = "Eyeball";
+	eye_ball_node_name = "Eyeball";
 
 	angle.y = Math::RandomRange(-360, 360);
-	//radius = 0.5f;
-	height = 1.0f;
-	health = maxHealth = 40;
+	radius = turtle_radius;
+	height = turtle_height;
+	health = maxHealth = turtle_max_health;
 
-	attackDamage = 1;
+	attackDamage = turtle_attack_damage;
 	//待機ステートへ遷移
 	TransitionState(State::Idle);
 }
@@ -28,7 +29,7 @@ bool EnemyTurtleShell::SearchPlayer()
 	XMVECTOR ePos = XMLoadFloat3(&position);
 	float dist = XMVectorGetX(XMVector3LengthSq(XMVectorSubtract(pPos, ePos)));
 
-	if (dist < searchRange * searchRange)
+	if (dist < slime_search_range * slime_search_range)
 	{
 		return true;
 	}
@@ -100,7 +101,7 @@ void EnemyTurtleShell::UpdatePursuitState(float elapsedTime)
 	if (FirstAttacker != nullptr)
 	{
 		targetPosition = FirstAttacker->GetPosition();
-		MoveToTarget(elapsedTime, moveSpeed);
+		MoveToTarget(elapsedTime);
 	}
 
 	EnemySlime::UpdatePursuitState(elapsedTime);
@@ -110,7 +111,7 @@ void EnemyTurtleShell::UpdatePursuitState(float elapsedTime)
 void EnemyTurtleShell::OnDamaged()
 {
 	//ダメージステートへ遷移
-	if (health % 5 == 0) {
+	if (health % 4 == 0) { // ダメージステートへの遷移はランダムっぽくする
 		TransitionState(State::HitDamage);
 	}
 }
@@ -125,16 +126,16 @@ void EnemyTurtleShell::OnDead()
 	// 与えたダメージ量が少なすぎるとLevelをあげない
 	for (Player* player : PlayerManager::Instance().players)
 	{
-		if (attackedDamage[i] > (maxHealth / 5)) {
-			player->AddLevel(2);
+		if (static_cast<float>(attackedDamage[i]) / maxHealth > add_level_min_damage_rate) {
+			player->AddLevel(turtle_add_level_up);
 		}
 		i++;
 	}
 	// 最もダメージを与えたプレイヤーはさらにLevelUp
-	GetMostAttackPlayer()->AddLevel(1);
+	GetMostAttackPlayer()->AddLevel(most_attack_bonus_level_up);
 
 	// 死亡時エフェクト再生
-	PlayEffect(EffectNumber::dead, position, 0.6f);
+	PlayEffect(EffectNumber::dead, position, turtle_dead_effect_size);
 
 	//自身を破棄
 	Destroy();

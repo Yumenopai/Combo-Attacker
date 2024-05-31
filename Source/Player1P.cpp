@@ -23,7 +23,7 @@ Player1P::Player1P()
 	Player::Init();
 
 	position = p1_initial_position;
-	turnSpeed = p1_turn_speed;
+	turn_speed = p1_turn_speed;
 
 	playerName = p1_name;
 	serialNumber = p1_serial_number;

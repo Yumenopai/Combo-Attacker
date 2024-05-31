@@ -283,7 +283,7 @@ protected:
 	XMFLOAT4 nameColor;
 
 	// 回転スピード
-	float turnSpeed;
+	float turn_speed;
 	// 初期装備
 	AttackType InitialWeapon;
 

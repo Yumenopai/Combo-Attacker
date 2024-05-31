@@ -300,6 +300,9 @@
     <ClInclude Include="Source\UIConst.h">
       <Filter>Source\const/define</Filter>
     </ClInclude>
+    <ClInclude Include="Source\AnimationTimeStruct.h">
+      <Filter>Source\system</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\Framework.cpp">

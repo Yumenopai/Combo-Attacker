@@ -1,22 +1,24 @@
 #include "EnemySlime.h"
+#include "EnemyConst.h"
 #include "Graphics/Graphics.h"
 #include "PlayerManager.h"
 #include "Collision.h"
 #include "MathScript.h"
+#include "AnimationTimeStruct.h"
 
 //コンストラクタ
 EnemySlime::EnemySlime()
 {
 	ID3D11Device* device = Graphics::Instance().GetDevice();
-	model = std::make_unique<Model>(device, "Data/Model/RPG_Slime/SlimePBR.fbx", 0.01f);
-	eyeBallNodeName = "EyeBall";
+	model = std::make_unique<Model>(device, slime_model_file, slime_render_size);
+	eye_ball_node_name = slime_eye_ball_node_name;
 
 	angle.y = Math::RandomRange(-360, 360);
-	//radius = 0.5f;
-	height = 1.0f;
-	health = maxHealth = 30;
+	radius = slime_radius;
+	height = slime_height;
+	health = maxHealth = slime_max_health;
 
-	attackDamage = 2;
+	attackDamage = slime_attack_damage;
 	//待機ステートへ遷移
 	TransitionState(State::Idle);
 }
@@ -87,13 +89,6 @@ void EnemySlime::Render(const RenderContext& rc, ModelShader* shader)
 	shader->Draw(rc, model.get());
 }
 
-//縄張り設定
-void EnemySlime::SetTerritory(const DirectX::XMFLOAT3& origin, float range)
-{
-	territoryOrigin = origin;
-	territoryRange = range;
-}
-
 //ダメージ時に呼ばれる
 void EnemySlime::OnDamaged()
 {
@@ -107,13 +102,13 @@ void EnemySlime::OnDead()
 	// 与えたダメージ量が少なすぎるとLevelをあげない
 	for (Player* player : PlayerManager::Instance().players)
 	{
-		if (attackedDamage[i] > (maxHealth / 5)) {
-			player->AddLevel(1);
+		if (static_cast<float>(attackedDamage[i]) / maxHealth > add_level_min_damage_rate) {
+			player->AddLevel(slime_add_level_up);
 		}
 		i++;
 	}
 	// 最もダメージを与えたプレイヤーはさらにLevelUp
-	GetMostAttackPlayer()->AddLevel(1);
+	GetMostAttackPlayer()->AddLevel(most_attack_bonus_level_up);
 
 	//自身を破棄
 	Destroy();
@@ -129,17 +124,6 @@ Player::EnemySearch EnemySlime::GetNearestPlayer_EnemySearch()
 			es = player->GetEachEnemySearch(this);
 	}
 	return es;
-}
-
-//ターゲット位置をランダム設定
-void EnemySlime::SetRandomTargetPosition()
-{
-	float theta = Math::RandomRange(0, DirectX::XM_2PI);
-	float range = Math::RandomRange(0, territoryRange);
-
-	targetPosition.x = territoryOrigin.x + range * sinf(theta);
-	targetPosition.y = territoryOrigin.y;
-	targetPosition.z = territoryOrigin.z + range * cosf(theta);
 }
 
 //ターゲット位置を設定
@@ -170,8 +154,8 @@ void EnemySlime::MoveToTarget(float elapsedTime, float speedRate)
 	vz /= dist;
 
 	//移動処理
-	Move(vx, vz, moveSpeed * speedRate);
-	Turn(elapsedTime, vx, vz, turnSpeed * speedRate);
+	Move(vx, vz, slime_move_speed * speedRate);
+	Turn(elapsedTime, vx, vz, slime_turn_speed * speedRate);
 }
 
 //最近Playerへの回転
@@ -188,7 +172,7 @@ void EnemySlime::TurnToTarget(float elapsedTime, float speedRate)
 	vz /= dist;
 
 	//回転処理
-	Turn(elapsedTime, vx, vz, turnSpeed * speedRate);
+	Turn(elapsedTime, vx, vz, slime_turn_speed * speedRate);
 }
 
 //プレイヤー索敵
@@ -199,12 +183,12 @@ bool EnemySlime::SearchPlayer()
 	float vz = targetPosition.z - position.z;
 	float dist = vx * vx + vy * vy + vz * vz;
 
-	if (dist < attackRange * attackRange)//必ず見つける
+	if (dist < slime_attack_range * slime_attack_range)//必ず見つける
 	{
 		return true;
 	}
 
-	if (dist < searchRange * searchRange)
+	if (dist < slime_search_range * slime_search_range)
 	{
 		float distXZ = sqrtf(vx * vx + vz * vz);
 		//単位ベクトル化
@@ -258,11 +242,10 @@ void EnemySlime::CollisionNodeVsPlayer(const char* nodeName, float nodeRadius)
 				vec.z /= length;
 
 				//XZ平面に吹っ飛ばす力をかける
-				float power = 3.0f;
-				vec.x *= power;
-				vec.z *= power;
-				//Y方向にも力をかける
-				vec.y = 4.0f;
+				vec.x *= slime_impulse_power_rate;
+				vec.z *= slime_impulse_power_rate;
+				//Y方向は矯正した上側への力をかける
+				vec.y = slime_impulse_power_y;
 
 				//吹っ飛ばす
 				player->AddImpulse(vec);
@@ -276,9 +259,8 @@ void EnemySlime::CollisionNodeVsPlayer(const char* nodeName, float nodeRadius)
 //徘徊ステート更新処理
 void EnemySlime::UpdateWanderState(float elapsedTime)
 {
-	//目標地点へ移動
-	//MoveToTarget(elapsedTime, 0.5f);
-	TurnToTarget(elapsedTime, 0.5f);
+	//目標地点へ回転
+	TurnToTarget(elapsedTime, slime_turn_speed);
 
 	//プレイヤー索敵
 	if (SearchPlayer())
@@ -302,10 +284,8 @@ void EnemySlime::UpdateIdleState(float elapsedTime)
 //追跡ステート更新処理
 void EnemySlime::UpdatePursuitState(float elapsedTime)
 {
-	//目標地点へ移動
-	//MoveToTarget(elapsedTime,1.0f);
 	//目標へ回転
-	TurnToTarget(elapsedTime, 1.0f);
+	TurnToTarget(elapsedTime, slime_turn_speed);
 
 	//プレイヤーが攻撃範囲にいた場合は攻撃ステートへ遷移
 	Player::EnemySearch es = GetNearestPlayer_EnemySearch();
@@ -325,14 +305,14 @@ void EnemySlime::UpdatePursuitState(float elapsedTime)
 void EnemySlime::UpdateAttackState(float elapsedTime)
 {
 	//目標へ回転
-	TurnToTarget(elapsedTime, 1.0f);
+	TurnToTarget(elapsedTime, slime_turn_speed);
 
 	//任意のアニメーション再生区間でのみ衝突判定処理をする
 	float animationTime = model->GetCurrentAnimationSeconds();
-	if (animationTime >= 0.1f && animationTime <= 0.35f)
+	if (IsDuringTime(animationTime, slime_attack_time))
 	{
 		//目玉ノードとプレイヤーの衝突処理
-		CollisionNodeVsPlayer(eyeBallNodeName, 0.2f);
+		CollisionNodeVsPlayer(eye_ball_node_name, attack_node_radius);
 	}
 
 	//攻撃アニメーションが終わったら戦闘待機ステートへ遷移
@@ -358,9 +338,7 @@ void EnemySlime::UpdateIdleBattleState(float elapsedTime)
 		//待機ステートへ遷移
 		TransitionState(State::Idle);
 	}
-	
-	TurnToTarget(elapsedTime, 0.0f);
-}
+	}
 
 //ダメージステート更新処理
 void EnemySlime::UpdateHitDamageState(float elapsedTime)
@@ -386,25 +364,6 @@ void EnemySlime::UpdateHitDamageState(float elapsedTime)
 void EnemySlime::TransitionState(State nowState)
 {
 	state = nowState; //ステート設定
-
-	//switch (nowState)
-	//{
-	//case State::Idle:
-	//	break;
-	//case State::Wander:
-	//	//目標地点設定
-	//	SetRandomTargetPosition();
-	//	break;
-	//case State::Pursuit:
-	//	break;
-	//case State::Attack:
-	//	break;
-	//case State::IdleBattle:
-	//	break;
-	//case State::HitDamage:
-	//	break;
-	//}
-
 	TransitionPlayAnimation(nowState);
 }
 

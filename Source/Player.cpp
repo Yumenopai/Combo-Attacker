@@ -524,7 +524,7 @@ bool Player::InputMove(float elapsedTime)
 	//移動処理
 	Move(moveVec.x, moveVec.z, move_speed);
 	//旋回処理
-	Turn(elapsedTime, moveVec.x, moveVec.z, turnSpeed);
+	Turn(elapsedTime, moveVec.x, moveVec.z, turn_speed);
 
 	//進行ベクトルがゼロベクトルでない場合は入力された
 	return moveVec.x != 0 || moveVec.y != 0 || moveVec.z != 0;
@@ -565,6 +565,9 @@ bool Player::InputAttackFromJump()
 {
 	// 押されていない時はreturn
 	if (!InputButtonDown(Player::InputState::Attack)) return false;
+
+	// スペシャル技false
+	enableSpecialAttack = false;
 
 	switch (CurrentUseWeapon)
 	{
@@ -665,7 +668,7 @@ void Player::ForceTurnByAttack(float elapsedTime)
 	if (enemySearch[nearestEnemy] >= EnemySearch::Find)
 	{
 		//旋回処理
-		Turn(elapsedTime, nearestVec.x, nearestVec.z, turnSpeed);
+		Turn(elapsedTime, nearestVec.x, nearestVec.z, turn_speed);
 	}
 }
 

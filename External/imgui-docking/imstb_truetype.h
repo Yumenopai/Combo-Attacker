@@ -1480,7 +1480,7 @@ STBTT_DEF int stbtt_FindGlyphIndex(const stbtt_fontinfo *info, int unicode_codep
       return 0;
    } else if (format == 4) { // standard mapping for windows fonts: binary search collection of ranges
       stbtt_uint16 segcount = ttUSHORT(data+index_map+6) >> 1;
-      stbtt_uint16 searchRange = ttUSHORT(data+index_map+8) >> 1;
+      stbtt_uint16 search_range = ttUSHORT(data+index_map+8) >> 1;
       stbtt_uint16 entrySelector = ttUSHORT(data+index_map+10);
       stbtt_uint16 rangeShift = ttUSHORT(data+index_map+12) >> 1;
 
@@ -1492,7 +1492,7 @@ STBTT_DEF int stbtt_FindGlyphIndex(const stbtt_fontinfo *info, int unicode_codep
          return 0;
 
       // they lie from endCount .. endCount + segCount
-      // but searchRange is the nearest power of two, so...
+      // but slime_search_range is the nearest power of two, so...
       if (unicode_codepoint >= ttUSHORT(data + search + rangeShift*2))
          search += rangeShift*2;
 
@@ -1500,10 +1500,10 @@ STBTT_DEF int stbtt_FindGlyphIndex(const stbtt_fontinfo *info, int unicode_codep
       search -= 2;
       while (entrySelector) {
          stbtt_uint16 end;
-         searchRange >>= 1;
-         end = ttUSHORT(data + search + searchRange*2);
+         search_range >>= 1;
+         end = ttUSHORT(data + search + search_range*2);
          if (unicode_codepoint > end)
-            search += searchRange*2;
+            search += search_range*2;
          --entrySelector;
       }
       search += 2;

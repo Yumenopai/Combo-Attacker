@@ -2,19 +2,19 @@
 #include "Graphics/Graphics.h"
 #include "PlayerManager.h"
 #include "Collision.h"
+#include "AnimationTimeStruct.h"
 #include "imgui.h"
 
 //コンストラクタ
 EnemyDragon::EnemyDragon()
 {
 	ID3D11Device* device = Graphics::Instance().GetDevice();
-	model = std::make_unique<Model>(device, "Data/Model/Enemy/Blue.fbx", 0.008f);
+	model = std::make_unique<Model>(device, dragon_model_file, dragon_render_size);
 
-	height = 3.6f;
-	radius = 1.8f;
-	health = maxHealth = 100;
-	isHalfHP = false;
-	attackDamage = 2;
+	radius = dragon_radius;
+	height = dragon_height;
+	health = maxHealth = dragon_max_health;
+	attackDamage = dragon_attack_damage;
 
 	//待機ステートへ遷移
 	TransitionState(State::Idle);
@@ -150,17 +150,10 @@ void EnemyDragon::Render(const RenderContext& rc, ModelShader* shader)
 	shader->Draw(rc, model.get());
 }
 
-//縄張り設定
-void EnemyDragon::SetTerritory(const DirectX::XMFLOAT3& origin, float range)
-{
-	territoryOrigin = origin;
-	territoryRange = range;
-}
-
 //ダメージ時に呼ばれる
 void EnemyDragon::OnDamaged()
 {
-	if (health <= 50 && !isHalfHP)
+	if (!isHalfHP && health <= maxHealth / 2) // 半分まできたら
 	{
 		//ダメージステートへ遷移
 		TransitionState(State::GetHit);
@@ -176,16 +169,13 @@ void EnemyDragon::OnDead()
 	// 与えたダメージ量が少なすぎるとLevelをあげない
 	for (Player* player : PlayerManager::Instance().players)
 	{
-		if (attackedDamage[i] > (maxHealth / 3)) {
-			player->AddLevel(3);
-		}
-		else if (attackedDamage[i] > (maxHealth / 5)) {
-			player->AddLevel(2);
+		if (attackedDamage[i] > (maxHealth / add_level_min_damage_rate)) {
+			player->AddLevel(dragon_add_level_up);
 		}
 		i++;
 	}
 	// 最もダメージを与えたプレイヤーはさらにLevelUp
-	GetMostAttackPlayer()->AddLevel(2);
+	GetMostAttackPlayer()->AddLevel(most_attack_bonus_level_up);
 
 	//死亡ステートへ遷移
 	TransitionState(State::Die);
@@ -218,8 +208,6 @@ void EnemyDragon::UpdateTargetPosition()
 			targetPosition = player->GetPosition();
 		}
 	}
-
-	//targetPosition = Player1P::Instance().GetPosition();
 }
 
 //ターゲット位置をランダム設定
@@ -244,8 +232,8 @@ void EnemyDragon::MoveToTarget(float elapsedTime, float speedRate)
 	vz /= dist;
 
 	//移動処理
-	Move(vx, vz, moveSpeed * speedRate);
-	Turn(elapsedTime, vx, vz, turnSpeed * speedRate);
+	Move(vx, vz, dragon_move_speed * speedRate);
+	Turn(elapsedTime, vx, vz, dragon_turn_speed * speedRate);
 }
 
 //プレイヤー索敵
@@ -263,7 +251,7 @@ bool EnemyDragon::SearchPlayer()
 void EnemyDragon::UpdateWanderState(float elapsedTime)
 {
 	//目標地点へ移動
-	MoveToTarget(elapsedTime, 0.5f);
+	MoveToTarget(elapsedTime, 0.5f);// 速度レート指定：通常の50%速度
 
 	//プレイヤー索敵
 	if (SearchPlayer())
@@ -288,7 +276,7 @@ void EnemyDragon::UpdateIdleState(float elapsedTime)
 void EnemyDragon::UpdatePursuitState(float elapsedTime)
 {
 	//目標地点へ移動
-	MoveToTarget(elapsedTime, 1.0f);
+	MoveToTarget(elapsedTime);
 
 	//プレイヤーが近づくと攻撃ステートへ遷移
 	Player::EnemySearch es = GetNearestPlayer_EnemySearch();
@@ -309,11 +297,10 @@ void EnemyDragon::UpdateAttackState(float elapsedTime)
 {
 	//任意のアニメーション再生区間でのみ衝突判定処理をする
 	float animationTime = model->GetCurrentAnimationSeconds();
-	if (animationTime >= 0.35f && animationTime <= 0.6f)
+	if (IsDuringTime(animationTime, dragon_attack_head_time))
 	{
 		//頭ノードとプレイヤーの衝突処理
-		CollisionNodeVsPlayer("Jaw3", 0.2f);
-
+		CollisionNodeVsPlayer(dragon_head_node_name, attack_node_radius);
 	}	
 
 	//攻撃アニメーションが終わったら戦闘待機ステートへ遷移
@@ -339,8 +326,6 @@ void EnemyDragon::UpdateIdleBattleState(float elapsedTime)
 		//待機ステートへ遷移
 		TransitionState(State::Idle);
 	}
-
-	MoveToTarget(elapsedTime, 0.0f);
 }
 
 //咆哮ステート更新処理
@@ -360,11 +345,11 @@ void EnemyDragon::UpdateAttackClawState(float elapsedTime)
 {
 	//任意のアニメーション再生区間でのみ衝突判定処理をする
 	float animationTime = model->GetCurrentAnimationSeconds();
-	if (animationTime >= 0.4f && animationTime <= 1.05f)
+	if (IsDuringTime(animationTime, dragon_attack_claw_time))
 	{
 		//爪ノードとプレイヤーの衝突処理
-		CollisionNodeVsPlayer("WingClaw2_L", 1);
-		CollisionNodeVsPlayer("WingClaw2_L_1", 1);
+		CollisionNodeVsPlayer(dragon_clawL_node_name, attack_node_radius);
+		CollisionNodeVsPlayer(dragon_clawR_node_name, attack_node_radius);
 	}
 
 	//攻撃アニメーションが終わったら戦闘待機ステートへ遷移
@@ -433,11 +418,10 @@ void EnemyDragon::CollisionNodeVsPlayer(const char* nodeName, float nodeRadius)
 		vec.z /= length;
 
 		// XZ平面に吹っ飛ばす力をかける
-		float power = 10.0f;
-		vec.x *= power;
-		vec.z *= power;
-		// Y方向にも力をかける
-		vec.y = 5.0f;
+		vec.x *= dragon_impulse_power_rate;
+		vec.z *= dragon_impulse_power_rate;
+		//Y方向は矯正した上側への力をかける
+		vec.y = dragon_impulse_power_y;
 
 		// 吹っ飛ばす
 		player->AddImpulse(vec);

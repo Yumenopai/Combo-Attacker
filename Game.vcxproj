@@ -178,6 +178,7 @@
     <ClInclude Include="Source\State\Player\PlayerEachState.h" />
     <ClInclude Include="Source\State\Player\PlayerStateBase.h" />
     <ClInclude Include="Source\State\Player\PlayerStateMachine.h" />
+    <ClInclude Include="Source\AnimationTimeStruct.h" />
     <ClInclude Include="Source\TransformUtils.h" />
     <ClInclude Include="Source\UIConst.h" />
     <ClInclude Include="Source\UtilsDefineConst.h" />

@@ -22,7 +22,7 @@ PlayerAI::PlayerAI()
 	Player::Init();
 
 	position = ai_initial_position;
-	turnSpeed = ai_turn_speed;
+	turn_speed = ai_turn_speed;
 
 	playerName = ai_Name;
 	serialNumber = ai_serial_number;

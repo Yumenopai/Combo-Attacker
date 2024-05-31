@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <DirectXMath.h>
+#include "AnimationTimeStruct.h"
 
 // Player::AttackType/置換
 #define SC_AT static_cast<Player::AttackType>
@@ -36,6 +37,8 @@ static const float spear_jamp_attack_velocity_rate = 0.25f;
 
 // 回復可能距離
 static const float recover_dist = 3.0f;
+// HP回復量
+static const int recover_add_health = 40;
 
 // プレイヤーから敵への攻撃無敵時間
 static const float invincible_time = 0.0f;
@@ -47,6 +50,68 @@ static const int impulse_attack_count = 4;
 static const float impulse_power = 13.0f;
 // プレイヤーから敵の吹っ飛ばすパワー調整_Y
 static const float impulse_power_adjust_rate_y = 0.8f;
+
+// ハンマー1/攻撃当たり判定時間
+static const float attack_time_hammer1_start = 0.4f;
+// ハンマー1/次の攻撃技を出せる時間
+static const AnimationTime next_attack_time_hammer1to2 = { 0.5f, 0.8f };
+// ハンマー2/攻撃当たり判定時間
+static const float attack_time_hammer2_end = 0.7f;
+// ハンマーJUMP/攻撃中の移動量
+static const int attack_hammerJ_velocity = 800;
+// スピアー1/次の攻撃技を出せる時間
+static const AnimationTime next_attack_time_spear1to2 = { 0.2f, 0.7f };
+// スピアー1/慣性前進時間
+static const float add_velocity_time_spear1_end = 0.25f;
+// スピアー1/攻撃中の移動量
+static const int attack_spear1_add_velocity = 40;
+// スピアー2/慣性前進時間
+static const AnimationTime add_velocity_time_spear2 = { 0.30f, 0.45f };
+// スピアー2/攻撃当たり判定時間
+static const float attack_time_spear2_start = 0.30f;
+// スピアー2/次の攻撃技を出せる時間
+static const AnimationTime next_attack_time_spear2to3 = { 0.37f, 0.6f };
+// スピアー2/攻撃中の移動量
+static const int attack_spear2_add_velocity = 60;
+// スピアー3/攻撃当たり判定時間
+static const float attack_time_spear3_start = 0.30f;
+// スピアー3/慣性前進時間
+static const float add_velocity_time_spear3_end = 0.43f;
+// スピアー2/攻撃中の移動量
+static const int attack_spear2_add_velocity = 39;
+// スピアーJUMP/慣性前進時間
+static const AnimationTime add_velocity_time_spearJ = { 0.15f, 0.5f };
+// スピアーJUMP/攻撃中の移動量
+static const int attack_spearJ_velocity = 800;
+// ソード1/慣性前進時間
+static const float add_velocity_time_sword1_end = 0.2f;
+// ソード1/攻撃中の移動量
+static const int attack_sword1_add_velocity = 43;
+// ソード1/次の攻撃技を出せる時間
+static const AnimationTime next_attack_time_sword1to2 = { 0.3f, 0.7f };
+// ソード2/慣性前進時間
+static const float add_velocity_time_sword2_end = 0.25f;
+// ソード2/攻撃中の移動量
+static const int attack_sword1_add_velocity = 45;
+// ソード2/次の攻撃技を出せる時間
+static const AnimationTime next_attack_time_sword2to3 = { 0.35f, 0.6f };
+// ソード3/攻撃当たり判定時間
+static const AnimationTime attack_time_sword3 = { 0.25f, 0.6f };
+// ソード3/慣性前進時間
+static const AnimationTime add_velocity_time_sword3 = { 0.25f, 0.5f };
+// ソード3/攻撃中の移動量
+static const int attack_sword3_add_velocity = 48;
+// ソード3/Y軸跳ね時間
+static const float add_velocity_y_time_sword3_end = 0.4f;
+// ソード3/Y軸跳ね量
+static const float attack_sword3_add_velocity_y = 120.0f;
+// ソードJUMP/攻撃中の移動量
+static const int attack_swordJ_velocity = 800;
+
+// 連続攻撃フィニッシュカウント
+static const int attack_count_finish = 4;
+// 攻撃エフェクトサイズ
+static const float attack_effect_size = 0.4f;
 
 // プレイヤーの名前表示位置オフセット
 static const DirectX::XMFLOAT2 name_offset = { -60.0f,5.0f };
