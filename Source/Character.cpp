@@ -1,5 +1,5 @@
 #include "Character.h"
-#include "Player.h"
+#include "Character/Player.h"
 #include "Stage.h"
 #include "Input/Input.h"
 
