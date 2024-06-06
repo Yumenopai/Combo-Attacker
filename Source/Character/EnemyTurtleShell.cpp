@@ -1,7 +1,7 @@
 #include "EnemyTurtleShell.h"
-#include "EnemyConst.h"
+#include "Constant/EnemyConst.h"
 #include "Graphics/Graphics.h"
-#include "PlayerManager.h"
+#include "Manager/PlayerManager.h"
 #include "Collision.h"
 #include "MathScript.h"
 

@@ -2,9 +2,9 @@
 
 #include <vector>
 #include <set>
-#include "Player.h"
-#include "Player1P.h"
-#include "PlayerAI.h"
+#include "Character/Player.h"
+#include "Character/Player1P.h"
+#include "Character/PlayerAI.h"
 
 class PlayerManager
 {

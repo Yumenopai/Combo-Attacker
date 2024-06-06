@@ -1,17 +1,18 @@
 #pragma once
 
-#include "UtilsDefineConst.h"
-#include "EnemyConst.h"
-#include "UIConst.h"
+#include "Constant/UtilsDefineConst.h"
+#include "Constant/EnemyConst.h"
+#include "Constant/UIConst.h"
 #include "Graphics/FontSprite.h"
 #include "Stage.h"
 #include "Light/Light.h"
 #include "Camera/CameraController.h"
-#include "Player1P.h"
-#include "playerAI.h"
-#include "EnemySlime.h"
-#include "EnemyTurtleShell.h"
-#include "EnemyDragon.h"
+#include "Character/Player1P.h"
+#include "Character/PlayerAI.h"
+#include "Character/EnemySlime.h"
+#include "Character/EnemyTurtleShell.h"
+#include "Character/EnemyDragon.h"
+#include "Scene.h"
 #include "Shader/Skybox.h"
 
 //ÉQÅ[ÉÄÉVÅ[Éì

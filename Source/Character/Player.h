@@ -2,8 +2,8 @@
 
 #include <memory>
 #include <iostream>
-#include "UtilsDefineConst.h"
-#include "PlayerConst.h"
+#include "Constant/UtilsDefineConst.h"
+#include "Constant/PlayerConst.h"
 #include "Shader/Shader.h"
 #include "Graphics/Model.h"
 #include "Graphics/Graphics.h"

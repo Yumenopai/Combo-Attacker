@@ -22,6 +22,8 @@ PlayerAI::PlayerAI()
 	Player::Init();
 
 	position = ai_initial_position;
+	angle = initial_angle;
+
 	turn_speed = ai_turn_speed;
 
 	playerName = ai_Name;

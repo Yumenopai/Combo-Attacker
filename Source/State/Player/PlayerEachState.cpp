@@ -1,6 +1,6 @@
 #include "PlayerEachState.h"
-#include "Player.h"
-#include "PlayerManager.h"
+#include "Character/PlayerAI.h"
+#include "Character/Manager/PlayerManager.h"
 #include "AnimationTimeStruct.h"
 
 /************************************
@@ -633,7 +633,8 @@ void StateAttackSwordJump::Update(float elapsedTime)
 {
 	Player::Weapon Sword = player->GetSword();
 	Sword.flagJump = player->GetModel()->IsPlayAnimation();
-	if (Sword.flagJump)
+	float animationTime = player->GetModel()->GetCurrentAnimationSeconds();
+	if(animationTime <= attack_time_swordJump_end)
 	{
 		player->UpdateWeaponPositions(player->GetModel(), Sword);
 		player->CollisionWeaponsVsEnemies(Sword);
@@ -642,9 +643,10 @@ void StateAttackSwordJump::Update(float elapsedTime)
 
 	if (player->GetMoveAttack())
 	{
+		// ˆÚ“®‚µ‚È‚ª‚ç‚ÌUŒ‚‚Ìê‡Axz•ûŒü‚Éˆê’è‘¬“x‚ð‰Á‚¦‘±‚¯‚é
 		player->HorizontalVelocityByAttack(false, attack_swordJ_velocity, elapsedTime);
 	}
-	if (!player->GetModel()->IsPlayAnimation())
+	if (!Sword.flagJump)
 	{
 		player->SetMoveAttack(false);
 		player->ChangeState(Player::State::Idle);

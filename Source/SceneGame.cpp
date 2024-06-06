@@ -1,15 +1,12 @@
 #include <functional>
+
+#include "SceneGame.h"
 #include "Graphics/Graphics.h"
 #include "Graphics/FontSprite.h"
 #include "SceneManager.h"
-#include "SceneTitle.h"
 #include "SceneLoading.h"
-#include "SceneGame.h"
-#include "PlayerManager.h"
-#include "EnemyManager.h"
-#include "EnemySlime.h"
-#include "EnemyTurtleShell.h"
-#include "EnemyDragon.h"
+#include "Character/Manager/PlayerManager.h"
+#include "Character/Manager/EnemyManager.h"
 #include "TransformUtils.h"
 #include "Light/LightManager.h"
 #include "EffectManager.h"
@@ -33,8 +30,8 @@ void SceneGame::Initialize()
 		1000.0f
 	);
 	camera.SetLookAt(
-		XMFLOAT3(0, 10, -10),	//視点
-		XMFLOAT3(0, 0, 0),		//注視点
+		XMFLOAT3(32, 4, 29),	//視点
+		XMFLOAT3(28, 1.5f, 19),	//注視点
 		XMFLOAT3(0, 1, 0)		//上ベクトル
 	);
 
@@ -251,7 +248,7 @@ void SceneGame::Render()
 		camera.DebugImGui();
 		player1P->DebugMenu();
 		playerAI->DebugMenu();
-		enemyBlue->DebugMenu();
+		enemyDragon->DebugMenu();
 	}
 #endif
 }

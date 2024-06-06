@@ -1,8 +1,8 @@
 #include "Enemy.h"
 #include "Graphics/Graphics.h"
-#include "EnemyManager.h"
+#include "Manager/EnemyManager.h"
 #include "Player.h"
-#include "PlayerManager.h"
+#include "Manager/PlayerManager.h"
 #include "Player1P.h"
 #include "PlayerAI.h"
 

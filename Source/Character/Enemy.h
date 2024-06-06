@@ -2,7 +2,7 @@
 
 #include "Shader/Shader.h"
 #include "Character.h"
-#include "PlayerManager.h"
+#include "Manager/PlayerManager.h"
 
 #define PL1P 0
 #define PLAI 1

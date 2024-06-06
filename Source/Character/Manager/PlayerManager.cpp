@@ -1,7 +1,7 @@
 #include "PlayerManager.h"
 #include "Graphics/Graphics.h"
 #include "Collision.h"
-#include "Player.h"
+#include "Character/Player.h"
 
 //XVˆ—
 void PlayerManager::Update(float elapsedTime)

@@ -3,7 +3,7 @@
 #include <memory>
 #include "Graphics/Model.h"
 #include "Enemy.h"
-#include "EnemyConst.h"
+#include "Constant/EnemyConst.h"
 #include "Player.h"
 
 class EnemyDragon :public Enemy

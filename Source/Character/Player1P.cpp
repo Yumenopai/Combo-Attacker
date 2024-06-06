@@ -23,6 +23,7 @@ Player1P::Player1P()
 	Player::Init();
 
 	position = p1_initial_position;
+	angle = initial_angle;
 	turn_speed = p1_turn_speed;
 
 	playerName = p1_name;

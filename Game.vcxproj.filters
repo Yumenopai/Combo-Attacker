@@ -216,20 +216,8 @@
     <ClInclude Include="Source\SceneClear.h">
       <Filter>Source\scene</Filter>
     </ClInclude>
-    <ClInclude Include="Source\Enemy.h">
-      <Filter>Source\Object\Character\Enemy</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\EnemyManager.h">
-      <Filter>Source\Object\Character\Enemy</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\EnemySlime.h">
-      <Filter>Source\Object\Character\Enemy</Filter>
-    </ClInclude>
     <ClInclude Include="Source\Graphics\FontSprite.h">
       <Filter>Source\Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\EnemyTurtleShell.h">
-      <Filter>Source\Object\Character\Enemy</Filter>
     </ClInclude>
     <ClInclude Include="Source\Shader\ToonShader.h">
       <Filter>Source\Shader</Filter>
@@ -240,17 +228,11 @@
     <ClInclude Include="Source\Shader\UVScrollShader.h">
       <Filter>Source\Shader</Filter>
     </ClInclude>
-    <ClInclude Include="Source\Player.h">
-      <Filter>Source\Object\Character\Player</Filter>
-    </ClInclude>
     <ClInclude Include="Source\Graphics\PrimitiveRenderer.h">
       <Filter>Source\Graphics</Filter>
     </ClInclude>
     <ClInclude Include="Source\Shader\Skybox.h">
       <Filter>Source\Shader</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\EnemyDragon.h">
-      <Filter>Source\Object\Character\Enemy</Filter>
     </ClInclude>
     <ClInclude Include="Source\Shader\WaterSurfaceShader.h">
       <Filter>Source\Shader</Filter>
@@ -260,15 +242,6 @@
     </ClInclude>
     <ClInclude Include="Source\Shader\ShadowMap.h">
       <Filter>Source\Shader</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Player1P.h">
-      <Filter>Source\Object\Character\Player</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\PlayerAI.h">
-      <Filter>Source\Object\Character\Player</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\PlayerManager.h">
-      <Filter>Source\Object\Character\Player</Filter>
     </ClInclude>
     <ClInclude Include="Source\MathScript.h">
       <Filter>Source\system</Filter>
@@ -288,20 +261,47 @@
     <ClInclude Include="Source\Light\LightManager.h">
       <Filter>Source\Object\Light</Filter>
     </ClInclude>
-    <ClInclude Include="Source\UtilsDefineConst.h">
-      <Filter>Source\const/define</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\PlayerConst.h">
-      <Filter>Source\const/define</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\EnemyConst.h">
-      <Filter>Source\const/define</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\UIConst.h">
-      <Filter>Source\const/define</Filter>
-    </ClInclude>
     <ClInclude Include="Source\AnimationTimeStruct.h">
       <Filter>Source\system</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Constant\EnemyConst.h">
+      <Filter>Source\const/define</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Constant\PlayerConst.h">
+      <Filter>Source\const/define</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Constant\UIConst.h">
+      <Filter>Source\const/define</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Constant\UtilsDefineConst.h">
+      <Filter>Source\const/define</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Character\Enemy.h">
+      <Filter>Source\Object\Character\Enemy</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Character\EnemyDragon.h">
+      <Filter>Source\Object\Character\Enemy</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Character\EnemySlime.h">
+      <Filter>Source\Object\Character\Enemy</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Character\EnemyTurtleShell.h">
+      <Filter>Source\Object\Character\Enemy</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Character\Manager\EnemyManager.h">
+      <Filter>Source\Object\Character\Enemy</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Character\Manager\PlayerManager.h">
+      <Filter>Source\Object\Character\Player</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Character\Player.h">
+      <Filter>Source\Object\Character\Player</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Character\Player1P.h">
+      <Filter>Source\Object\Character\Player</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Character\PlayerAI.h">
+      <Filter>Source\Object\Character\Player</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -410,20 +410,8 @@
     <ClCompile Include="Source\SceneClear.cpp">
       <Filter>Source\scene</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Enemy.cpp">
-      <Filter>Source\Object\Character\Enemy</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\EnemyManager.cpp">
-      <Filter>Source\Object\Character\Enemy</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\EnemySlime.cpp">
-      <Filter>Source\Object\Character\Enemy</Filter>
-    </ClCompile>
     <ClCompile Include="Source\Graphics\FontSprite.cpp">
       <Filter>Source\Graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\EnemyTurtleShell.cpp">
-      <Filter>Source\Object\Character\Enemy</Filter>
     </ClCompile>
     <ClCompile Include="Source\Shader\ToonShader.cpp">
       <Filter>Source\Shader</Filter>
@@ -431,17 +419,11 @@
     <ClCompile Include="Source\Shader\UVScrollShader.cpp">
       <Filter>Source\Shader</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Player.cpp">
-      <Filter>Source\Object\Character\Player</Filter>
-    </ClCompile>
     <ClCompile Include="Source\Graphics\PrimitiveRenderer.cpp">
       <Filter>Source\Graphics</Filter>
     </ClCompile>
     <ClCompile Include="Source\Shader\Skybox.cpp">
       <Filter>Source\Shader</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\EnemyDragon.cpp">
-      <Filter>Source\Object\Character\Enemy</Filter>
     </ClCompile>
     <ClCompile Include="Source\Shader\WaterSurfaceShader.cpp">
       <Filter>Source\Shader</Filter>
@@ -451,15 +433,6 @@
     </ClCompile>
     <ClCompile Include="Source\Shader\ShadowMap.cpp">
       <Filter>Source\Shader</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Player1P.cpp">
-      <Filter>Source\Object\Character\Player</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\PlayerAI.cpp">
-      <Filter>Source\Object\Character\Player</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\PlayerManager.cpp">
-      <Filter>Source\Object\Character\Player</Filter>
     </ClCompile>
     <ClCompile Include="Source\State\Player\PlayerEachState.cpp">
       <Filter>Source\Object\Character\Player\State</Filter>
@@ -472,6 +445,33 @@
     </ClCompile>
     <ClCompile Include="Source\Light\LightManager.cpp">
       <Filter>Source\Object\Light</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Character\Enemy.cpp">
+      <Filter>Source\Object\Character\Enemy</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Character\EnemyDragon.cpp">
+      <Filter>Source\Object\Character\Enemy</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Character\EnemySlime.cpp">
+      <Filter>Source\Object\Character\Enemy</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Character\EnemyTurtleShell.cpp">
+      <Filter>Source\Object\Character\Enemy</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Character\Manager\EnemyManager.cpp">
+      <Filter>Source\Object\Character\Enemy</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Character\Manager\PlayerManager.cpp">
+      <Filter>Source\Object\Character\Player</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Character\Player.cpp">
+      <Filter>Source\Object\Character\Player</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Character\Player1P.cpp">
+      <Filter>Source\Object\Character\Player</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Character\PlayerAI.cpp">
+      <Filter>Source\Object\Character\Player</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

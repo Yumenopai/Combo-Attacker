@@ -1,7 +1,7 @@
 #include "EnemyManager.h"
 #include "Graphics/Graphics.h"
 #include "Collision.h"
-#include "Player.h"
+#include "Character/Player.h"
 
 //更新処理
 void EnemyManager::Update(float elapsedTime)
@@ -17,7 +17,8 @@ void EnemyManager::Update(float elapsedTime)
 		auto it = std::find(enemies.begin(), enemies.end(), enemy);
 		if (it != enemies.end())	enemies.erase(it);
 
-		delete enemy;
+		// uniquePointerのためDeleteは不要
+		//delete enemy;
 	}
 	removes.clear();
 

@@ -2,15 +2,15 @@
 #include <iomanip>
 #include <sstream>
 
-#include "UtilsDefineConst.h"
-#include "UIConst.h"
 #include "Player.h"
-#include "PlayerManager.h"
+#include "Constant/UtilsDefineConst.h"
+#include "Constant/UIConst.h"
+#include "Manager/PlayerManager.h"
 #include "State/Player/PlayerEachState.h"
 #include "Graphics/Graphics.h"
 #include "Graphics/PrimitiveRenderer.h"
 #include "Input/Input.h"
-#include "EnemyManager.h"
+#include "Manager/EnemyManager.h"
 #include "Enemy.h"
 #include "Stage.h"
 #include "imgui.h"

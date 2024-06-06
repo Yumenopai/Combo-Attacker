@@ -43,12 +43,6 @@ void CameraController::Update(float elapsedTime)
 	DirectX::XMFLOAT3 front;
 	DirectX::XMStoreFloat3(&front, Front);
 
-	//range変更
-	//if (gamePad.GetButton() & GamePad::BTN_X)//ボタン変更
-	//{
-	//	range -= 0.01f;
-	//}
-
 	//注視点から後ろベクトル方向に一定距離離れたカメラ視点を求める
 	DirectX::XMFLOAT3 eye;
 	eye.x = target.x - front.x * range;

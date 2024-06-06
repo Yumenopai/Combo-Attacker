@@ -107,6 +107,8 @@ static const float add_velocity_y_time_sword3_end = 0.4f;
 static const float attack_sword3_add_velocity_y = 120.0f;
 // ソードJUMP/攻撃中の移動量
 static const int attack_swordJ_velocity = 800;
+// ソードJUMP/攻撃当たり判定時間
+static const float attack_time_swordJump_end = 0.63f;
 
 // 連続攻撃フィニッシュカウント
 static const int attack_count_finish = 4;
@@ -165,8 +167,10 @@ static const int ai_serial_number = 1;
 static const DirectX::XMFLOAT4 p1_name_color = { 0.1f, 0.65f, 0.9f, 1.0f };
 static const DirectX::XMFLOAT4 ai_name_color = { 1.0f, 1.0f, 1.0f, 1.0f };
 // 初期位置
-static const DirectX::XMFLOAT3 p1_initial_position = { -7.0f, 5.0f, -66.0f };
-static const DirectX::XMFLOAT3 ai_initial_position = { -7.0f, 5.0f, -60.0f };
+static const DirectX::XMFLOAT3 p1_initial_position = { 28.0f, 5.0f, 19.0f };
+static const DirectX::XMFLOAT3 ai_initial_position = { 25.0f, 5.0f, 14.0f };
+// 初期角度
+static const DirectX::XMFLOAT3 initial_angle = { 0.0f, 0.0f, 0.0f };
 // 回転速度
 static const float p1_turn_speed = DirectX::XMConvertToRadians(1200);
 static const float ai_turn_speed = DirectX::XMConvertToRadians(360);
