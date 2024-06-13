@@ -124,16 +124,21 @@
     <ClInclude Include="Source\Camera\Camera.h" />
     <ClInclude Include="Source\Camera\CameraController.h" />
     <ClInclude Include="Source\Camera\FreeCameraController.h" />
-    <ClInclude Include="Source\Character.h" />
-    <ClInclude Include="Source\Character\Enemy.h" />
+    <ClInclude Include="Source\Character\Core\Character.h" />
+    <ClInclude Include="Source\Character\Core\Enemy.h" />
+    <ClInclude Include="Source\Character\Core\EnemyBoss.h" />
+    <ClInclude Include="Source\Character\Core\EnemyNormal.h" />
+    <ClInclude Include="Source\Character\Core\Player.h" />
     <ClInclude Include="Source\Character\EnemyDragon.h" />
     <ClInclude Include="Source\Character\EnemySlime.h" />
     <ClInclude Include="Source\Character\EnemyTurtleShell.h" />
     <ClInclude Include="Source\Character\Manager\EnemyManager.h" />
     <ClInclude Include="Source\Character\Manager\PlayerManager.h" />
-    <ClInclude Include="Source\Character\Player.h" />
     <ClInclude Include="Source\Character\Player1P.h" />
     <ClInclude Include="Source\Character\PlayerAI.h" />
+    <ClInclude Include="Source\Character\State\Player\PlayerEachState.h" />
+    <ClInclude Include="Source\Character\State\Player\PlayerStateBase.h" />
+    <ClInclude Include="Source\Character\State\Player\PlayerStateMachine.h" />
     <ClInclude Include="Source\Collision.h" />
     <ClInclude Include="Source\Constant\EnemyConst.h" />
     <ClInclude Include="Source\Constant\PlayerConst.h" />
@@ -177,9 +182,6 @@
     <ClInclude Include="Source\Shader\UVScrollShader.h" />
     <ClInclude Include="Source\Shader\WaterSurfaceShader.h" />
     <ClInclude Include="Source\Stage.h" />
-    <ClInclude Include="Source\State\Player\PlayerEachState.h" />
-    <ClInclude Include="Source\State\Player\PlayerStateBase.h" />
-    <ClInclude Include="Source\State\Player\PlayerStateMachine.h" />
     <ClInclude Include="Source\AnimationTimeStruct.h" />
     <ClInclude Include="Source\TransformUtils.h" />
   </ItemGroup>
@@ -193,16 +195,20 @@
     <ClCompile Include="Source\Camera\Camera.cpp" />
     <ClCompile Include="Source\Camera\CameraController.cpp" />
     <ClCompile Include="Source\Camera\FreeCameraController.cpp" />
-    <ClCompile Include="Source\Character.cpp" />
-    <ClCompile Include="Source\Character\Enemy.cpp" />
+    <ClCompile Include="Source\Character\Core\Character.cpp" />
+    <ClCompile Include="Source\Character\Core\Enemy.cpp" />
+    <ClCompile Include="Source\Character\Core\EnemyBoss.cpp" />
+    <ClCompile Include="Source\Character\Core\EnemyNormal.cpp" />
+    <ClCompile Include="Source\Character\Core\Player.cpp" />
     <ClCompile Include="Source\Character\EnemyDragon.cpp" />
     <ClCompile Include="Source\Character\EnemySlime.cpp" />
     <ClCompile Include="Source\Character\EnemyTurtleShell.cpp" />
     <ClCompile Include="Source\Character\Manager\EnemyManager.cpp" />
     <ClCompile Include="Source\Character\Manager\PlayerManager.cpp" />
-    <ClCompile Include="Source\Character\Player.cpp" />
     <ClCompile Include="Source\Character\Player1P.cpp" />
     <ClCompile Include="Source\Character\PlayerAI.cpp" />
+    <ClCompile Include="Source\Character\State\Player\PlayerEachState.cpp" />
+    <ClCompile Include="Source\Character\State\Player\PlayerStateMachine.cpp" />
     <ClCompile Include="Source\Collision.cpp" />
     <ClCompile Include="Source\Effect.cpp" />
     <ClCompile Include="Source\EffectManager.cpp" />
@@ -237,8 +243,6 @@
     <ClCompile Include="Source\Shader\UVScrollShader.cpp" />
     <ClCompile Include="Source\Shader\WaterSurfaceShader.cpp" />
     <ClCompile Include="Source\Stage.cpp" />
-    <ClCompile Include="Source\State\Player\PlayerEachState.cpp" />
-    <ClCompile Include="Source\State\Player\PlayerStateMachine.cpp" />
     <ClCompile Include="Source\TransformUtils.cpp" />
   </ItemGroup>
   <ItemGroup>

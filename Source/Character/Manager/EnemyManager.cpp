@@ -1,7 +1,6 @@
 #include "EnemyManager.h"
 #include "Graphics/Graphics.h"
 #include "Collision.h"
-#include "Character/Player.h"
 
 //更新処理
 void EnemyManager::Update(float elapsedTime)
@@ -15,10 +14,9 @@ void EnemyManager::Update(float elapsedTime)
 	for (Enemy* enemy : removes)
 	{
 		auto it = std::find(enemies.begin(), enemies.end(), enemy);
-		if (it != enemies.end())	enemies.erase(it);
-
-		// uniquePointerのためDeleteは不要
-		//delete enemy;
+		if (it != enemies.end()) {
+			enemies.erase(it);
+		}
 	}
 	removes.clear();
 
@@ -68,23 +66,18 @@ void EnemyManager::Remove(Enemy* enemy)
 //エネミー全削除
 void EnemyManager::Clear()
 {
-	// uniquePointerのためDeleteは不要
-	//for (Enemy* enemy : enemies)
-	//{
-	//	delete enemy;
-	//}
 	enemies.clear();
 }
 
 //エネミー同士の衝突処理
 void EnemyManager::CollisionEnemyVsEnemies()
 {
-	size_t enemyCount = enemies.size();
+	int count = enemies.size();
 
-	for (size_t i = 0; i < enemyCount; i++) {
+	for (int i = 0; i < count; i++) {
 		Enemy* enemyA = enemies.at(i);
 
-		for (size_t j = i + 1; j < enemyCount; j++) {
+		for (int j = i + 1; j < count; j++) {
 			Enemy* enemyB = enemies.at(j);
 
 			DirectX::XMFLOAT3 outPosition;

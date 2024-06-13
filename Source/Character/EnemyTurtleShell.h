@@ -2,10 +2,10 @@
 
 #include <memory>
 #include "Graphics/Model.h"
-#include "EnemySlime.h"
+#include "Core/EnemyNormal.h"
 #include "Effect.h"
 
-class EnemyTurtleShell :public EnemySlime
+class EnemyTurtleShell :public EnemyNormal
 {
 private:
 	//アニメーション
@@ -62,12 +62,9 @@ public:
 	}
 
 private:
-	// 各ステージごとの更新処理
-	void UpdateEachState(float elapsedTime);
-
 	// 追跡ステート更新処理
 	void UpdatePursuitState(float elapsedTime);
 
 	// 遷移時のアニメーション再生
-	void TransitionPlayAnimation(State nowState);
+	void TransitionPlayAnimation(State nowState) override;
 };

@@ -1,5 +1,5 @@
 #pragma once
-#include "Player.h"
+#include "Core/Player.h"
 
 //ƒvƒŒƒCƒ„[
 class Player1P : public Player

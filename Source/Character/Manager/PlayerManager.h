@@ -2,9 +2,7 @@
 
 #include <vector>
 #include <set>
-#include "Character/Player.h"
-#include "Character/Player1P.h"
-#include "Character/PlayerAI.h"
+#include "Character/Core/Player.h"
 
 class PlayerManager
 {
@@ -50,6 +48,6 @@ public:
 	std::vector<Player*> players;
 
 private:
-
+	//íœ—\–ñ
 	std::set<Player*> removes;
 };

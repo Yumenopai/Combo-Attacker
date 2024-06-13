@@ -160,6 +160,8 @@ static const int hp_display_digit = 3;
 // 名前
 static const std::string p1_name = "PLAYER";
 static const std::string ai_Name = " BUDDY";
+// 現在のプレイヤー登録数
+static const int player_count = 2;
 // シリアルナンバー
 static const int p1_serial_number = 0;
 static const int ai_serial_number = 1;

@@ -38,7 +38,10 @@ static const DirectX::XMFLOAT4 GIZMOS_color_green = { 0.0f, 1.0f, 0.0f, 1.0f };
 static const DirectX::XMFLOAT4 GIZMOS_color_blue = { 0.0f, 0.0f, 1.0f, 1.0f };
 
 /******************** Player ********************/
-static const int PLAYER_count = 2;
+// Player1P/シリアルナンバー
+static const int PL1P_NO = 0;
+// PlayerAI/シリアルナンバー
+static const int PLAI_NO = 1;
 
 /******************** SceneGame ********************/
 // カメラY軸調整

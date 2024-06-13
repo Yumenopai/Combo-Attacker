@@ -1,7 +1,6 @@
 #include "PlayerManager.h"
 #include "Graphics/Graphics.h"
 #include "Collision.h"
-#include "Character/Player.h"
 
 //更新処理
 void PlayerManager::Update(float elapsedTime)
@@ -15,9 +14,9 @@ void PlayerManager::Update(float elapsedTime)
 	for (Player* player : removes)
 	{
 		auto it = std::find(players.begin(), players.end(), player);
-		if (it != players.end())	players.erase(it);
-
-		delete player;
+		if (it != players.end()) {
+			players.erase(it);
+		}
 	}
 	removes.clear();
 
@@ -69,27 +68,29 @@ void PlayerManager::Remove(Player* player)
 //player全削除
 void PlayerManager::Clear()
 {
-	// uniquePointerのためDeleteは不要
-	//for (Player* player : players)
-	//{
-	//	delete player;
-	//}
 	players.clear();
 }
 
 //player同士の衝突処理
 void PlayerManager::CollisionPlayerVsPlayer()
 {
-	Player1P& player1P = Player1P::Instance();
-	PlayerAI& playerAI = PlayerAI::Instance();
+	int count = players.size();
 
-	DirectX::XMFLOAT3 outPosition;
-	if (Collision::IntersectCylinderVsCylinder(
-		player1P.GetPosition(), player1P.GetRadius(), player1P.GetHeight(),
-		playerAI.GetPosition(), playerAI.GetRadius(), playerAI.GetHeight(),
-		XMFLOAT3{}, outPosition))
-	{
-		//押し出し後の位置設定
-		playerAI.SetPosition(outPosition);
+	for (int i = 0; i < count; i++) {
+		Player* playerA = players.at(i);
+
+		for (int j = i + 1; j < count; j++) {
+			Player* playerB = players.at(j);
+
+			DirectX::XMFLOAT3 outPosition;
+			if (Collision::IntersectCylinderVsCylinder(
+				playerA->GetPosition(), playerA->GetRadius(), playerA->GetHeight(),
+				playerB->GetPosition(), playerB->GetRadius(), playerB->GetHeight(),
+				XMFLOAT3{}, outPosition))
+			{
+				//押し出し後の位置設定
+				playerB->SetPosition(outPosition);
+			}
+		}
 	}
 }

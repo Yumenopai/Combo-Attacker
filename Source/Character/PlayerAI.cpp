@@ -1,6 +1,6 @@
 #include "PlayerAI.h"
 #include "Player1P.h"
-#include "Enemy.h"
+#include "Core/Enemy.h"
 
 static PlayerAI* instance = nullptr;
 //インスタンス取得

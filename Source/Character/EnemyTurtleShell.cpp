@@ -18,8 +18,9 @@ EnemyTurtleShell::EnemyTurtleShell()
 	health = maxHealth = turtle_max_health;
 
 	attackDamage = turtle_attack_damage;
-	//待機ステートへ遷移
-	TransitionState(State::Idle);
+
+	// 共通初期化処理
+	EnemyNormal::Init();
 }
 
 //プレイヤー索敵
@@ -69,32 +70,6 @@ void EnemyTurtleShell::TransitionPlayAnimation(State nowState)
 	model->PlayAnimation(static_cast<int>(anime), animeLoop); //アニメーション再生
 }
 
-// 各ステージごとの更新処理
-void EnemyTurtleShell::UpdateEachState(float elapsedTime)
-{
-	switch (state)
-	{
-	case State::Wander:
-		UpdateWanderState(elapsedTime);
-		break;
-	case State::Idle:
-		UpdateIdleState(elapsedTime);
-		break;
-	case State::Pursuit:
-		UpdatePursuitState(elapsedTime);
-		break;
-	case State::Attack:
-		UpdateAttackState(elapsedTime);
-		break;
-	case State::IdleBattle:
-		UpdateIdleBattleState(elapsedTime);
-		break;
-	case State::HitDamage:
-		UpdateHitDamageState(elapsedTime);
-		break;
-	}
-}
-
 //追跡ステート更新処理
 void EnemyTurtleShell::UpdatePursuitState(float elapsedTime)
 {
@@ -104,7 +79,7 @@ void EnemyTurtleShell::UpdatePursuitState(float elapsedTime)
 		MoveToTarget(elapsedTime);
 	}
 
-	EnemySlime::UpdatePursuitState(elapsedTime);
+	EnemyNormal::UpdatePursuitState(elapsedTime);
 }
 
 //ダメージ時に呼ばれる

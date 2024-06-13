@@ -2,7 +2,7 @@
 
 #include <vector>
 #include <set>
-#include "Character/Enemy.h"
+#include "Character/Core/Enemy.h"
 
 class EnemyManager
 {

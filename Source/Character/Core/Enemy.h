@@ -1,11 +1,10 @@
 #pragma once
 
+#include "Constant/UtilsDefineConst.h"
+#include "Constant/PlayerConst.h"
 #include "Shader/Shader.h"
 #include "Character.h"
-#include "Manager/PlayerManager.h"
 
-#define PL1P 0
-#define PLAI 1
 
 class Player;
 
@@ -25,7 +24,7 @@ protected:
 	// とどめをさすプレイヤー
 	Player* LastAttacker = nullptr;
 	// 自身がダメージを受けた量(プレイヤー毎)
-	int attackedDamage[PLAYER_count] = { 0,0 };
+	int attackedDamage[player_count] = { 0,0 };
 
 public:
 	Enemy(){}
@@ -64,6 +63,6 @@ public:
 	const Player* GetLastAttacker() const { return LastAttacker; }
 	const int GetAttackedDamage(int playerNo) const {	return attackedDamage[playerNo]; }
 	const int GetAttackedDamagePersent(int playerNo) const {
-		return 100 * attackedDamage[playerNo] / (attackedDamage[PL1P] + attackedDamage[PLAI]);
+		return 100 * attackedDamage[playerNo] / (attackedDamage[p1_serial_number] + attackedDamage[ai_serial_number]);
 	}
 };
