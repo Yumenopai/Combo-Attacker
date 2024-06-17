@@ -144,12 +144,12 @@ static const float hp_gauge_frame_expansion = 6.0f;
 static const DirectX::XMFLOAT4 hp_gauge_frame_color = { 0.3f, 0.3f, 0.3f, 0.8f };
 
 // HPゲージ/名前表示位置
-static const DirectX::XMFLOAT2 hp_gauge_name_position = { 190.0f, 3.0f };
+static const DirectX::XMFLOAT2 hp_gauge_name_offset = { 190.0f, 3.0f };
 
 // HPゲージ/Lv表示位置_X
-static const float lv_display_position_x = 790.0f;
+static const float lv_display_position_x = 740.0f;
 // HPゲージ/HP表示位置_X
-static const float hp_display_position_x = 890.0f;
+static const float hp_display_position_x = 850.0f;
 // HPゲージ/HPゲージ下テキストオフセット_Y
 static const float display_under_text_offset_y = 25.0f;
 

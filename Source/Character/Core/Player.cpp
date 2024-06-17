@@ -255,7 +255,7 @@ void Player::RenderHPBar(ID3D11DeviceContext* dc, Sprite* gauge, FontSprite* fon
 
 	// 名前表示
 	StringRender(dc, font, playerName,
-		{ hp_gauge_name_position.x, hpGaugePosition_Y + hp_gauge_name_position.y },
+		{ hp_gauge_name_offset.x, hpGaugePosition_Y + hp_gauge_name_offset.y },
 		nameColor);
 
 	// Lv表示
@@ -268,7 +268,7 @@ void Player::RenderHPBar(ID3D11DeviceContext* dc, Sprite* gauge, FontSprite* fon
 	std::ostringstream ss;
 	ss << std::setw(hp_display_digit) << std::setfill('0') << GetHealth(); // 桁数指定
 	std::string hp(ss.str());
-	std::string hpStr = hp + '/' + std::to_string(GetMaxHealth());
+	std::string hpStr = "HP:" + hp + '/' + std::to_string(GetMaxHealth());
 	StringRender(dc, font, hpStr,
 		{ hp_display_position_x, hpGaugePosition_Y + display_under_text_offset_y },
 		nameColor);
