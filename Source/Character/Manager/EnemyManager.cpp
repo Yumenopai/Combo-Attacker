@@ -72,7 +72,7 @@ void EnemyManager::Clear()
 //エネミー同士の衝突処理
 void EnemyManager::CollisionEnemyVsEnemies()
 {
-	int count = enemies.size();
+	int count = SC_INT(enemies.size());
 
 	for (int i = 0; i < count; i++) {
 		Enemy* enemyA = enemies.at(i);

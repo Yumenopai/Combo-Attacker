@@ -44,6 +44,10 @@ static const int PL1P_NO = 0;
 static const int PLAI_NO = 1;
 
 /******************** SceneGame ********************/
+// ステージの端
+static const float STAGE_side_min = -98.0f;
+static const float STAGE_side_max = 98.0f;
+
 // カメラY軸調整
 static const float SCENEGAME_camera_y = 0.5f;
 // シャドウマップ色

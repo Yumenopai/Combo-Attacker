@@ -102,6 +102,9 @@ void Player::UpdateUtils(float elapsedTime)
 	// 速力処理更新
 	UpdateVelocity(elapsedTime);
 
+	// ステージの端の仮壁処理
+	StageSideWall();
+
 	// オブジェクト行列更新
 	UpdateTransform();
 
@@ -693,6 +696,16 @@ void Player::CollisionPlayerVsEnemies()
 			SetPosition(outPosition);
 		}
 	}
+}
+
+// ステージの端の仮壁処理
+void Player::StageSideWall()
+{
+	// 強制的な押し返し
+	if (position.x > STAGE_side_max) position.x = STAGE_side_max;
+	if (position.x < STAGE_side_min) position.x = STAGE_side_min;
+	if (position.z > STAGE_side_max) position.z = STAGE_side_max;
+	if (position.z < STAGE_side_min) position.z = STAGE_side_min;
 }
 
 // 武器とエネミーの衝突処理

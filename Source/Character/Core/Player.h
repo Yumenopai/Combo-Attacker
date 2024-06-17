@@ -308,6 +308,9 @@ protected:
 	// プレイヤーとエネミーとの衝突処理
 	void CollisionPlayerVsEnemies();
 
+	// ステージの端の仮壁処理
+	void StageSideWall();
+
 	// 回復遷移確認処理
 	bool EnableRecoverTransition();
 

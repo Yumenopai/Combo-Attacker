@@ -74,7 +74,7 @@ void PlayerManager::Clear()
 //player“¯m‚ÌÕ“Ëˆ—
 void PlayerManager::CollisionPlayerVsPlayer()
 {
-	int count = players.size();
+	int count = SC_INT(players.size());
 
 	for (int i = 0; i < count; i++) {
 		Player* playerA = players.at(i);
