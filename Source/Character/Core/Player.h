@@ -355,8 +355,11 @@ public:
 
 	// シャドウマップ用描画
 	void ShadowRender(const RenderContext& rc, ShadowMap* shadowMap);
-	// 描画
-	void Render(const RenderContext& rc, ModelShader* shader);
+	// 3D描画
+	void Render3d(const RenderContext& rc, ModelShader* shader);
+	// 2D描画
+	void Render2d(const RenderContext& rc, Sprite* gauge, FontSprite* font, 
+		Sprite* frame, Sprite* weapon, Sprite* notification);
 	// HPバー描画
 	void RenderHPBar(ID3D11DeviceContext* dc, Sprite* gauge, FontSprite* font);
 	// キャラクター名前描画

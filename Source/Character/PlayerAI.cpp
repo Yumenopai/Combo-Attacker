@@ -111,6 +111,32 @@ void PlayerAI::AttackUpdate()
 	}
 }
 
+// メッセージUI表示
+void PlayerAI::RenderMessageUI(ID3D11DeviceContext* dc, Sprite* frame, Sprite* message)
+{
+	frame->Render(dc,
+		{ message_frame_position.x, message_frame_position.y, SPRITE_position_default_z },
+		message_size,
+		SPRITE_cut_position_default,
+		message_frame_render_size,
+		SPRITE_angle_default,
+		SPRITE_color_default);
+
+	// カット位置を表示するメッセージに対応させる
+
+
+	message->Render(dc,
+		{ message_frame_position.x, message_frame_position.y, SPRITE_position_default_z },
+		message_size,
+		SPRITE_cut_position_default,
+		message_frame_render_size,
+		SPRITE_angle_default,
+		SPRITE_color_default);
+
+
+
+}
+
 // 移動ベクトル
 XMFLOAT3 PlayerAI::GetMoveVec() const
 {

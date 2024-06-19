@@ -200,6 +200,16 @@ static const float ai_ran_away_from_enemy_dist = 4.0f;
 // 敵へ向かう判定距離
 static const float ai_go_toward_enemy_dist = 10.0f;
 
+/** PlayerAI_Message **/
+// 位置
+static const DirectX::XMFLOAT2 message_frame_position = { 10.0f, 560.0f };
+// サイズ
+static const DirectX::XMFLOAT2 message_frame_size = { 300.0f, 76.0f };
+// 描画サイズ
+static const DirectX::XMFLOAT2 message_frame_render_size = { 150.0f, 38.0f };
+
+
+
 //TODO:武器クラス作成の際に移動
 /******************** Weapon ********************/
 // 武器の初期位置

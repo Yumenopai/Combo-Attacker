@@ -36,6 +36,9 @@ public:
 	// 攻撃時の更新処理
 	void AttackUpdate();
 
+	// メッセージUI
+	void RenderMessageUI(ID3D11DeviceContext* dc, Sprite* frame, Sprite* message);
+
 	// ボタン判定(押下時)
 	bool InputButtonDown(InputState button) override;
 	// ボタン判定(入力時)

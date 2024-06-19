@@ -242,9 +242,17 @@ void Player::ShadowRender(const RenderContext& rc, ShadowMap* shadowMap)
 	shadowMap->Draw(rc, model.get());
 }
 // ï`âÊ
-void Player::Render(const RenderContext& rc, ModelShader* shader)
+void Player::Render3d(const RenderContext& rc, ModelShader* shader)
 {
 	shader->Draw(rc, model.get());
+}
+// ï`âÊ
+void Player::Render2d(const RenderContext& rc, Sprite* gauge, FontSprite* font, 
+	Sprite* button, Sprite* weapon, Sprite* notification)
+{
+	RenderHPBar(rc.deviceContext, gauge, font);
+	RenderCharacterOverHead(rc, font, notification);
+	RenderHaveWeapons(rc.deviceContext, button, weapon);
 }
 
 // HPï`âÊ
@@ -393,7 +401,7 @@ void Player::RenderCharacterMessage(ID3D11DeviceContext* dc, Sprite* message, Di
 }
 
 // èäéùïêäÌï`âÊ
-void Player::RenderHaveWeapons(ID3D11DeviceContext* dc, Sprite* frame, Sprite* weapon)
+void Player::RenderHaveWeapons(ID3D11DeviceContext* dc, Sprite* button, Sprite* weapon)
 {
 	//HaveWeaponFrame
 	for (int i = 0; i < HaveWeapons.size(); i++)
@@ -407,7 +415,7 @@ void Player::RenderHaveWeapons(ID3D11DeviceContext* dc, Sprite* frame, Sprite* w
 			// èäéùÇµÇƒÇ¢ÇÈïêäÌÇ©Ç«Ç§Ç©Ç≈ÉZÉbÉgÇ∑ÇÈ
 			textureCutPosition_x = HaveWeapons[SC_AT(i)] ? WeaponIcon_sprite_size.x * 2 : 0; // 2î{ç¿ïWïîï™ÅE0î{ç¿ïWïîï™
 		}
-		frame->Render(dc,
+		button->Render(dc,
 			{ WeaponFrame_position_x + WeaponFrame_offset.x * i, hpGaugePosition_Y + WeaponFrame_offset.y, SPRITE_position_default_z },
 			WeaponFrame_render_size,
 			{ textureCutPosition_x, WeaponIcon_sprite_size.y }, 

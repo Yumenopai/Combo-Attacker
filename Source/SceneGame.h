@@ -41,8 +41,8 @@ private:
 	std::unique_ptr<Sprite> spriteMissionFrame;
 	// スプライト/ミッションテキスト
 	std::unique_ptr<Sprite> spriteMissionText;
-	// スプライト/PlayerAIメッセージテキスト
-	std::unique_ptr<Sprite> spriteMessageText;
+	// スプライト/メッセージフレーム
+	std::unique_ptr<Sprite> spriteNotification;
 
 	// ミッションテキスト/タイマー
 	int missionSpriteTimer = 0;

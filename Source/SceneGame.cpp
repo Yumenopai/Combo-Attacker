@@ -65,7 +65,7 @@ void SceneGame::Initialize()
 	spriteNameOnButton = std::make_unique<Sprite>(device, "Data/Sprite/name.png");
 	spriteMissionFrame = std::make_unique<Sprite>(device, "Data/Sprite/missionFrame.png");
 	spriteMissionText = std::make_unique<Sprite>(device, "Data/Sprite/missionText.png");
-	spriteMessageText = std::make_unique<Sprite>(device, "Data/Sprite/message.png");
+	spriteNotification = std::make_unique<Sprite>(device, "Data/Sprite/notification.png");
 	
 	font = std::make_unique<FontSprite>(device, "Data/Font/font6.png", 256);
 	gauge = std::make_unique<Sprite>(device);
@@ -193,7 +193,7 @@ void SceneGame::Render()
 	// 3Dモデル描画
 	ModelShader* shader = Graphics::Instance().GetShader(ShaderId::Toon);
 	shader->Begin(rc);
-	PlayerManager::Instance().Render(rc, shader);
+	PlayerManager::Instance().Render3d(rc, shader);
 	stage->TerrainRender(rc, shader);
 	EnemyManager::Instance().Render(rc, shader);
 	shader->End(rc);
@@ -217,8 +217,11 @@ void SceneGame::Render()
 		// エネミーHP
 		RenderEnemyGauge(dc, rc.view, rc.projection);
 		// プレイヤー2DRender
-		PlayerManager::Instance().Render2d(rc, gauge.get(), font.get(), spriteButtonFrame.get(), spriteWeaponIcon.get(),spriteMessageText.get());
-	
+		PlayerManager::Instance().Render2d(rc, gauge.get(), font.get(), 
+			spriteButtonFrame.get(),
+			spriteWeaponIcon.get(),
+			spriteNotification.get()
+		);
 		// ボタンUI
 		RenderButtonUI(dc);
 		// ミッションUI

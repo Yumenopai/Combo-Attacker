@@ -33,22 +33,21 @@ void PlayerManager::ShadowRender(const RenderContext& rc, ShadowMap* shadowMap)
 		player->ShadowRender(rc, shadowMap);
 	}
 }
-void PlayerManager::Render(const RenderContext& rc, ModelShader* shader)
+void PlayerManager::Render3d(const RenderContext& rc, ModelShader* shader)
 {
 	for (Player* player : players)
 	{
-		player->Render(rc, shader);
+		player->Render3d(rc, shader);
 	}
 }
 
 //プリミティブ描画
-void PlayerManager::Render2d(const RenderContext& rc, Sprite* gauge, FontSprite* font, Sprite* frame, Sprite* weapon, Sprite* message)
+void PlayerManager::Render2d(const RenderContext& rc, Sprite* gauge, FontSprite* font, 
+	Sprite* button, Sprite* weapon, Sprite* notification)
 {
 	for (Player* player : players)
 	{
-		player->RenderHPBar(rc.deviceContext, gauge, font);
-		player->RenderCharacterOverHead(rc, font, message);
-		player->RenderHaveWeapons(rc.deviceContext, frame, weapon);
+		player->Render2d(rc, gauge, font, button, weapon, notification);
 	}
 }
 
