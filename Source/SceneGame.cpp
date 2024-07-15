@@ -65,7 +65,10 @@ void SceneGame::Initialize()
 	spriteNameOnButton = std::make_unique<Sprite>(device, "Data/Sprite/name.png");
 	spriteMissionFrame = std::make_unique<Sprite>(device, "Data/Sprite/missionFrame.png");
 	spriteMissionText = std::make_unique<Sprite>(device, "Data/Sprite/missionText.png");
-	spriteMessageText = std::make_unique<Sprite>(device, "Data/Sprite/message.png");
+	spriteNotification = std::make_unique<Sprite>(device, "Data/Sprite/notification.png");
+	spriteCharacterIcon = std::make_unique<Sprite>(device, "Data/Sprite/characterIcon.png");
+	spriteMessageFrame = std::make_unique<Sprite>(device, "Data/Sprite/messageFrame.png");
+	spriteMessage = std::make_unique<Sprite>(device, "Data/Sprite/message.png");
 	
 	font = std::make_unique<FontSprite>(device, "Data/Font/font6.png", 256);
 	gauge = std::make_unique<Sprite>(device);
@@ -193,7 +196,7 @@ void SceneGame::Render()
 	// 3Dモデル描画
 	ModelShader* shader = Graphics::Instance().GetShader(ShaderId::Toon);
 	shader->Begin(rc);
-	PlayerManager::Instance().Render(rc, shader);
+	PlayerManager::Instance().Render3d(rc, shader);
 	stage->TerrainRender(rc, shader);
 	EnemyManager::Instance().Render(rc, shader);
 	shader->End(rc);
@@ -214,11 +217,23 @@ void SceneGame::Render()
 
 	// 2Dスプライト描画
 	{
+		// プレイヤーUI下地
+		RenderPlayerUIBackground(dc);
+
 		// エネミーHP
 		RenderEnemyGauge(dc, rc.view, rc.projection);
 		// プレイヤー2DRender
-		PlayerManager::Instance().Render2d(rc, gauge.get(), font.get(), spriteButtonFrame.get(), spriteWeaponIcon.get(),spriteMessageText.get());
-	
+		PlayerManager::Instance().Render2d(rc, gauge.get(), font.get(), 
+			spriteCharacterIcon.get(),
+			spriteButtonFrame.get(),
+			spriteWeaponIcon.get(),
+			spriteNotification.get()
+		);
+		// プレイヤーAIメッセージ
+		PlayerAI::Instance().RenderMessageUI(dc,
+			spriteCharacterIcon.get(),
+			spriteMessageFrame.get(),
+			spriteMessage.get());
 		// ボタンUI
 		RenderButtonUI(dc);
 		// ミッションUI
@@ -331,6 +346,20 @@ void SceneGame::RenderEnemyGauge(ID3D11DeviceContext* dc, const DirectX::XMFLOAT
 			enemy_hp_gauge_color_normal
 		);
 	}
+}
+
+void SceneGame::RenderPlayerUIBackground(ID3D11DeviceContext* dc)
+{
+	// 下地描画
+	gauge->Render(dc,
+		playerUI_background_position.x, // X
+		playerUI_background_position.y, // Y
+		SPRITE_position_default_z, // Z
+		playerUI_background_size.x,
+		playerUI_background_size.y,
+		SPRITE_angle_default,
+		hp_gauge_frame_color // 背景カラー
+	);
 }
 
 // ボタンUI描画

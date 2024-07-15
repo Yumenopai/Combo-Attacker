@@ -125,14 +125,11 @@ public:
 		MaxCount
 	};
 	// 通知メッセージ
-	enum class PlayerMessage
+	enum class NotificationMessage
 	{
 		None = -1,		// なし
 		WeaponGet = 0,	// 武器獲得
 		LevelUp,		// レベルアップ
-		Attack,			// とどめして
-		RanAway,		// 逃げる
-		Indifference,	// もう知らない
 
 		MaxCount
 	};
@@ -230,11 +227,11 @@ private:
 
 	/****** UI ******/
 	// メッセージ
-	PlayerMessage messageNumber = PlayerMessage::None;
+	NotificationMessage notificationMessageNumber = NotificationMessage::None;
 	// メッセージ表示用タイマー
-	float messageYTimer = 0.0f;
+	float notificationTimer = 0.0f;
 	// メッセージ
-	bool enableShowMessage[SC_INT(PlayerMessage::MaxCount)] = {};
+	bool enableShowNotification[SC_INT(NotificationMessage::MaxCount)] = {};
 
 	// Effect
 	Effect EffectArray[SC_INT(EffectNumber::MaxCount)] =
@@ -289,10 +286,12 @@ protected:
 
 	// HPゲージ/Y座標
 	float hpGaugePosition_Y;
+	// キャラクターアイコン/切り取り位置
+	float iconCutPosition_X;
 	
 private:
 	// キャラクターメッセージ描画
-	void RenderCharacterMessage(ID3D11DeviceContext* dc, Sprite* message, DirectX::XMFLOAT2 position);
+	void RenderNotificationMessage(ID3D11DeviceContext* dc, Sprite* message, DirectX::XMFLOAT2 position);
 
 protected:
 	// 更新
@@ -355,10 +354,13 @@ public:
 
 	// シャドウマップ用描画
 	void ShadowRender(const RenderContext& rc, ShadowMap* shadowMap);
-	// 描画
-	void Render(const RenderContext& rc, ModelShader* shader);
+	// 3D描画
+	void Render3d(const RenderContext& rc, ModelShader* shader);
+	// 2D描画
+	void Render2d(const RenderContext& rc, Sprite* gauge, FontSprite* font, 
+		Sprite* icon, Sprite* frame, Sprite* weapon, Sprite* notification);
 	// HPバー描画
-	void RenderHPBar(ID3D11DeviceContext* dc, Sprite* gauge, FontSprite* font);
+	void RenderHPBar(ID3D11DeviceContext* dc, Sprite* icon, Sprite* gauge, FontSprite* font);
 	// キャラクター名前描画
 	void RenderCharacterOverHead(const RenderContext& rc, FontSprite* font, Sprite* message);
 	// 所持武器描画
@@ -433,7 +435,7 @@ public:
 
 	const int GetLevel() const { return currentLevel; }
 	void SetLevel(int lv) { currentLevel = lv; }
-	void AddLevel(int lv) { currentLevel += lv; SetEnableShowMessage(Player::PlayerMessage::LevelUp, true); }
+	virtual void AddLevel(int lv);
 
 	const bool GetHaveEachWeapon(AttackType weapon) { return HaveWeapons[weapon]; }
 	const int GetHaveWeaponCount() {
@@ -445,7 +447,7 @@ public:
 		return haveCount;
 	}
 
-	void SetEnableShowMessage(PlayerMessage number, bool isShow) { enableShowMessage[SC_INT(number)] = isShow; }
+	void SetShowNotification(NotificationMessage number) { enableShowNotification[SC_INT(number)] = true; }
 
 	const bool GetEnableRecoverTransition() const { return enableRecoverTransition; }
 

@@ -190,6 +190,12 @@ void StateJumpEnd::Update(float elapsedTime)
 void StateDamage::Init()
 {
 	player->PlayAnimation(Player::Animation::Damage, false);
+
+	// PlayerAIのメッセージ
+	if (player->GetSerialNumber() == PlayerAI::Instance().GetSerialNumber())
+	{
+		PlayerAI::Instance().SetShowMessage(PlayerAI::Message::Damage);
+	}
 }
 
 void StateDamage::Update(float elapsedTime)
@@ -208,6 +214,11 @@ void StateDamage::Update(float elapsedTime)
 void StateDead::Init()
 {
 	player->PlayAnimation(Player::Animation::Death, false);
+	// PlayerAIのメッセージ
+	if (player->GetSerialNumber() == PlayerAI::Instance().GetSerialNumber())
+	{
+		PlayerAI::Instance().SetShowMessage(PlayerAI::Message::Damage);
+	}
 }
 
 void StateDead::Update(float elapsedTime)
@@ -229,6 +240,12 @@ void StateRecover::Init()
 {
 	player->PlayAnimation(Player::Animation::JumpEnd, false);
 	player->PlayEffect(Player::EffectNumber::Recovery, player->GetTargetPlayer()->GetPosition(), 0.6f);
+	
+	// PlayerAIのメッセージ
+	if (player->GetSerialNumber() == PlayerAI::Instance().GetSerialNumber())
+	{
+		PlayerAI::Instance().SetShowMessage(PlayerAI::Message::Recover);
+	}
 }
 
 void StateRecover::Update(float elapsedTime)
@@ -238,13 +255,14 @@ void StateRecover::Update(float elapsedTime)
 	// 回復
 	player->GetTargetPlayer()->AddHealth(recover_add_health);
 
-	// PlayerAIの逃げ解除
+	// PlayerAI独自の処理
 	if (player->GetTargetPlayer()->GetSerialNumber() == PlayerAI::Instance().GetSerialNumber())
 	{
-		if (!PlayerAI::Instance().GetHpWorning())
-		{
+		if (!PlayerAI::Instance().GetHpWorning()) {
+			// 逃げ解除
 			PlayerAI::Instance().SetRanAwayFromEnemy(false);
-			PlayerAI::Instance().SetEnableShowMessage(Player::PlayerMessage::RanAway, false);
+			// メッセージ
+			PlayerAI::Instance().SetShowMessage(PlayerAI::Message::Recovered);
 		}
 	}
 	// 移行

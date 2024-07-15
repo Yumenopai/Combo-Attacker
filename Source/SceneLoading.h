@@ -8,7 +8,7 @@
 class SceneLoading : public Scene
 {
 public:
-	SceneLoading(Scene* nextScene, int remain) : nextScene(nextScene), remain(remain) {}
+	SceneLoading(Scene* nextScene) : nextScene(nextScene) {}
 	~SceneLoading() override {}
 
 	void Initialize() override;
@@ -21,15 +21,11 @@ private:
 	static void LoadingThread(SceneLoading* scene);
 
 private:
-	std::unique_ptr<Sprite> sprite;
+	std::unique_ptr<Sprite> sprite[2];
 	std::unique_ptr<FontSprite> font;
 
 	float angle = 0.0f;
-	int remain;
 	Scene* nextScene = nullptr;
 	std::unique_ptr<std::thread> thread;
-
-	int loadingOnly = -255;
-
 	float timer = 0.0f;;
 };

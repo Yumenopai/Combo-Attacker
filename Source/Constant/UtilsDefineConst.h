@@ -49,7 +49,7 @@ static const float STAGE_side_min = -98.0f;
 static const float STAGE_side_max = 98.0f;
 
 // カメラY軸調整
-static const float SCENEGAME_camera_y = 0.5f;
+static const float SCENEGAME_camera_y = 1.3f;
 // シャドウマップ色
 static const DirectX::XMFLOAT3 SCENEGAME_shadow_color = { 0.5f, 0.5f, 0.5f };
 

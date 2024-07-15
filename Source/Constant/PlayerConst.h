@@ -5,8 +5,10 @@
 
 // Player::AttackType/置換
 #define SC_AT static_cast<Player::AttackType>
-// Player::PlayerMessage/置換
-#define SC_PM static_cast<Player::PlayerMessage>
+// Player::NotificationMessage/置換
+#define SC_NM static_cast<Player::NotificationMessage>
+// PlayerAI::Message/置換
+#define SC_AIM static_cast<PlayerAI::Message>
 
 /******************** Player ********************/
 // 初期レベル
@@ -118,40 +120,61 @@ static const float attack_effect_size = 0.4f;
 // プレイヤーの名前表示位置オフセット
 static const DirectX::XMFLOAT2 name_offset = { -60.0f,5.0f };
 
-// メッセージ/スプライトサイズ
-static const DirectX::XMFLOAT2 message_sprite_size = { 600.0f, 100.f }; // 6:1
-// メッセージ/表示位置オフセット
-static const DirectX::XMFLOAT2 message_offset = { -90.0f, -5.0f };
-// メッセージ/サイズ
-static const DirectX::XMFLOAT2 message_size = { 180.0f, 30.0f }; // 6:1
-//メッセージ/タイマー増加量
-static const float message_timer_increase = 0.2f;
-//メッセージ/タイマー初期値
-static const float message_timer_initial = 0.0f;
-//メッセージ/タイマー最大値
-static const float message_timer_max = 10.0f;
+// 通知メッセージ/スプライトサイズ
+static const DirectX::XMFLOAT2 notification_sprite_size = { 600.0f, 100.f }; // 6:1
+// 通知メッセージ/表示位置オフセット
+static const DirectX::XMFLOAT2 notification_offset = { -90.0f, -5.0f };
+// 通知メッセージ/サイズ
+static const DirectX::XMFLOAT2 notification_size = { 180.0f, 30.0f }; // 6:1
+// メッセージ/タイマー増加量
+static const float notification_timer_increase = 0.2f;
+// メッセージ/タイマー初期値
+static const float notification_timer_initial = 0.0f;
+// メッセージ/タイマー最大値
+static const float notification_timer_max = 10.0f;
+
+// 上部UI下地/位置
+static const DirectX::XMFLOAT2 playerUI_background_position = { 0.0f,0.0f };
+// 上部UI下地/サイズ
+static const DirectX::XMFLOAT2 playerUI_background_size = { 580.0f,150.0f };
+// 上部UI下地/ゲージ下地カラー
+static const DirectX::XMFLOAT4 playerUI_background_color = { 0.3f, 0.3f, 0.3f, 0.8f };
+
+// HPゲージ/表示位置_X
+static const float hp_gauge_position_x = 86.0f;
+// HPゲージ/表示位置_Y_player1P
+static const float p1_hp_gauge_position_y = 45.0f;
+// HPゲージ/表示位置_Y_playerAI
+static const float ai_hp_gauge_position_y = 110.0f;
 
 // HPゲージ/サイズ
-static const DirectX::XMFLOAT2 hp_gauge_size = { 700.0f, 15.0f };
+static const DirectX::XMFLOAT2 hp_gauge_size = { 300.0f, 15.0f };
+// HPゲージ/背景拡張サイズ_XY
+static const float hp_gauge_frame_expansion = 6.0f;
+
+// HPゲージ/ゲージ下地カラー
+static const DirectX::XMFLOAT4 hp_gauge_frame_color = { 0.3f, 0.3f, 0.3f, 0.8f };
 // HPゲージ/ゲージカラー_通常
 static const DirectX::XMFLOAT4 hp_gauge_color_normal = { 0.2f, 0.8f, 0.2f, 1.0f };
 // HPゲージ/ゲージカラー_危険
 static const DirectX::XMFLOAT4 hp_gauge_color_wornimg = { 0.8f, 0.2f, 0.2f, 1.0f };
 
-// HPゲージ/背景拡張サイズ_XY
-static const float hp_gauge_frame_expansion = 6.0f;
-// HPゲージ/ゲージ下地カラー
-static const DirectX::XMFLOAT4 hp_gauge_frame_color = { 0.3f, 0.3f, 0.3f, 0.8f };
+// HPゲージ/アイコン表示位置_X
+static const float hp_icon_position_x = 15.0f;
+// HPゲージ/アイコン表示オフセット_Y
+static const float hp_icon_offset_y = -35.0f;
+// アイコン/描画サイズ
+static const DirectX::XMFLOAT2 hp_icon_render_size = { 56.0f, 56.0f };
 
-// HPゲージ/名前表示位置
-static const DirectX::XMFLOAT2 hp_gauge_name_position = { 190.0f, 3.0f };
-
+// HPゲージ/名前表示位置_X
+static const float name_display_position_x = 66.0f;
 // HPゲージ/Lv表示位置_X
-static const float lv_display_position_x = 790.0f;
+static const float lv_display_position_x = 166.0f;
 // HPゲージ/HP表示位置_X
-static const float hp_display_position_x = 890.0f;
-// HPゲージ/HPゲージ下テキストオフセット_Y
-static const float display_under_text_offset_y = 25.0f;
+static const float hp_display_position_x = 246.0f;
+
+// HPゲージ/HPゲージ上テキストオフセット_Y
+static const float display_upper_text_offset_y = -25.0f;
 
 // HPゲージ/HP表示桁数
 static const int hp_display_digit = 3;
@@ -176,9 +199,6 @@ static const DirectX::XMFLOAT3 initial_angle = { 0.0f, 0.0f, 0.0f };
 // 回転速度
 static const float p1_turn_speed = DirectX::XMConvertToRadians(1200);
 static const float ai_turn_speed = DirectX::XMConvertToRadians(360);
-// HPゲージ/位置_Y
-static const float p1_hp_gauge_position_y = 565.0f;
-static const float ai_hp_gauge_position_y = 630.0f;
 
 // 逃げるようになる最低全ダメージ量
 static const int ai_ran_away_min_damage = 50;
@@ -189,7 +209,7 @@ static const int ai_enemy_few_remain_damage_rate = 15;
 // とどめを相手に譲る最低ダメージ割合
 static const int ai_concede_finish_min_damage_rate = 20;
 // 攻撃時の味方プレイヤーのとどめ攻撃を待つタイマー
-static const int ai_wait_timer_max = 120;
+static const float ai_wait_timer_max = 3.0f;
 
 // 味方についていく判定距離
 static const float ai_player_follow_dist = 2.5f;
@@ -199,6 +219,41 @@ static const float ai_ran_away_from_p1_dist = 3.5f;
 static const float ai_ran_away_from_enemy_dist = 4.0f;
 // 敵へ向かう判定距離
 static const float ai_go_toward_enemy_dist = 10.0f;
+
+/** PlayerAI_Message **/
+// アイコン/位置
+static const DirectX::XMFLOAT2 message_icon_position = { 10.0f, 560.0f };
+// アイコン/サイズ
+static const DirectX::XMFLOAT2 message_icon_size = { 76.0f, 76.0f };
+// アイコン/描画サイズ
+static const DirectX::XMFLOAT2 message_icon_render_size = { 38.0f, 38.0f };
+// フレーム/位置
+static const DirectX::XMFLOAT2 message_frame_position = { 50.0f, 560.0f };
+// フレーム/サイズ
+static const DirectX::XMFLOAT2 message_frame_size = { 300.0f, 76.0f };
+// フレーム/描画サイズ
+static const DirectX::XMFLOAT2 message_frame_render_size = { 150.0f, 38.0f };
+// メッセージ/描画オフセット_Y
+static const float message_render_offset_Y = 10.0f;
+// メッセージ/サイズ倍率
+static const float message_size_rate_normal = 1.0f;
+// メッセージ/サイズ倍率
+static const float message_size_rate_big = 1.25f;
+// メッセージ/アウトラインカラー
+static const DirectX::XMFLOAT4 message_outline_color = { 1.0f,0.5f,0.4f,1.0f };
+
+// メッセージ/最大表示数
+static const int message_max_count = 5;
+// メッセージ/スプライトサイズ
+static const DirectX::XMFLOAT2 message_sprite_size = { 300.0f, 76.0f };
+// メッセージ/サイズ
+static const DirectX::XMFLOAT2 message_size = { 150.0f, 38.0f };
+// メッセージ/タイマー初期値
+static const float message_timer_initial = 0.0f;
+// メッセージ/タイマー最大値
+static const float message_timer_max = 20.0f;
+// メッセージ/各項目最大値
+static const int message_each_max_count = 4;
 
 //TODO:武器クラス作成の際に移動
 /******************** Weapon ********************/
