@@ -52,7 +52,7 @@ void SceneTitle::Update(float elapsedTime)
 	const GamePadButton anyButton = GamePad::BTN_A | GamePad::BTN_B | GamePad::BTN_X | GamePad::BTN_Y | GamePad::BTN_START;
 	if (gamePad.GetButtonDown() & anyButton)
 	{
-		SceneManager::Instance().ChangeScene(new SceneLoading(new SceneGame(), -255));
+		SceneManager::Instance().ChangeScene(new SceneLoading(new SceneGame()));
 	}
 
 	//if (isScaleDown) scaleTimer -= 0.03f;

@@ -43,11 +43,11 @@ void PlayerManager::Render3d(const RenderContext& rc, ModelShader* shader)
 
 //プリミティブ描画
 void PlayerManager::Render2d(const RenderContext& rc, Sprite* gauge, FontSprite* font, 
-	Sprite* button, Sprite* weapon, Sprite* notification)
+	Sprite* icon, Sprite* button, Sprite* weapon, Sprite* notification)
 {
 	for (Player* player : players)
 	{
-		player->Render2d(rc, gauge, font, button, weapon, notification);
+		player->Render2d(rc, gauge, font, icon, button, weapon, notification);
 	}
 }
 

@@ -31,6 +31,7 @@ Player1P::Player1P()
 	nameColor = p1_name_color;
 	//UI
 	hpGaugePosition_Y = p1_hp_gauge_position_y;
+	iconCutPosition_X = 0;
 }
 
 Player1P::~Player1P()

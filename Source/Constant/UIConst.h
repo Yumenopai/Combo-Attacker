@@ -5,22 +5,22 @@
 // 武器アイコン/スプライトサイズ
 static const DirectX::XMFLOAT2 WeaponIcon_sprite_size = { 300.0f, 300.f };
 // 武器アイコン/サイズ
-static const DirectX::XMFLOAT2 WeaponIcon_size = { 45.0f, 45.0f };
+static const DirectX::XMFLOAT2 WeaponIcon_size = { 36.0f, 36.0f };
 // 武器アイコン/位置_X
-static const float WeaponIcon_position_x = 1013.0f;
+static const float WeaponIcon_position_x = 400.0f + 13.0f;
 // 武器アイコン/オフセット_Y
-static const float WeaponIcon_offset_y = 2.0f;
+static const float WeaponIcon_offset_y = -20.0f;
 // 武器アイコン/色半透明_a
 static const float WeaponIcon_color_translucent_a = 0.3f;
 // 武器アイコン/色減少_rb
 static const float WeaponIcon_color_decrease_rb = 0.4f;
 
 // 武器フレーム/位置_X
-static const float WeaponFrame_position_x = 1000.0f;
+static const float WeaponFrame_position_x = 400.0f;
 // 武器フレーム/オフセット
-static const DirectX::XMFLOAT2 WeaponFrame_offset = { 65.0f, -10.0f };
+static const DirectX::XMFLOAT2 WeaponFrame_offset = { 57.0f, -32.0f };
 // 武器フレーム/サイズ
-static const DirectX::XMFLOAT2 WeaponFrame_render_size = { 70.0f, 70.0f };
+static const DirectX::XMFLOAT2 WeaponFrame_render_size = { 60.0f, 60.0f };
 
 // ボタンフレーム/スプライトサイズ
 static const DirectX::XMFLOAT2 ButtonFrame_sprite_size = { 300.0f, 300.f };

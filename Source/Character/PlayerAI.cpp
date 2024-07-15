@@ -31,10 +31,19 @@ PlayerAI::PlayerAI()
 	nameColor = ai_name_color;
 	//UI
 	hpGaugePosition_Y = ai_hp_gauge_position_y;
+	iconCutPosition_X = message_icon_size.x;
 
 	// ボタンステート初期化
 	oldInput = nowInput = nextInput = InputState::None;
 	currentEnemySearch = EnemySearch::None;
+
+	// メッセージ初期化
+	for (int i = 0; i < message_max_count; i++) {
+		nowMessage[i] = Message::None;
+		nowMessageTypeNumber[i] = 0;
+	}
+	nextMessage = Message::Normal;
+	messageTimer = message_timer_initial;
 }
 
 PlayerAI::~PlayerAI()
@@ -53,24 +62,28 @@ void PlayerAI::Update(float elapsedTime)
 	nowInput = nextInput;
 	nextInput = InputState::None;
 
+	// 敵との距離更新
 	UpdateEnemyDistance(elapsedTime);
-	AttackUpdate();
+	// 攻撃時の更新処理
+	AttackUpdate(elapsedTime);
+	// Buddyメッセージの更新
+	MessageUpdate(elapsedTime);
+	// Player共通の更新処理
 	UpdateUtils(elapsedTime);
 }
 
 // 攻撃時の更新処理
-void PlayerAI::AttackUpdate()
+void PlayerAI::AttackUpdate(float elapsedTime)
 {
 	// timerUpdate
 	if (waitTimer > 0)
 	{
-		waitTimer++;
+		waitTimer += elapsedTime;
 		if (waitTimer > ai_wait_timer_max)
 		{
 			waitTimer = 0;
 			lastAvoidEnemy = currentAvoidEnemy;
 			currentAvoidEnemy = nullptr;
-			SetEnableShowMessage(Player::PlayerMessage::Attack, false);
 		}
 	}
 
@@ -78,15 +91,23 @@ void PlayerAI::AttackUpdate()
 	if (currentEnemySearch != EnemySearch::Attack) return;
 
 	// 50ダメージ以上与えたかつ、80%以上が自身の攻撃している
-	ranAwayFromPlayer1P = (allDamage > ai_ran_away_min_damage
+	bool ranAway = (allDamage > ai_ran_away_min_damage
 		&& (100 * allDamage / (Player1P::Instance().GetAllDamage() + allDamage)) > ai_ran_away_damage_rate/*%*/); // 自身が与えた全ダメージ量(%で示すため100を掛ける)/全員で与えた全ダメージ量
-	SetEnableShowMessage(Player::PlayerMessage::Indifference, ranAwayFromPlayer1P);
+	// 変更がある場合のみ更新
+	if (ranAwayFromPlayer1P != ranAway) 
+	{
+		ranAwayFromPlayer1P = ranAway;
+		// メッセージをセット
+		if (ranAway) {
+			SetShowMessage(PlayerAI::Message::Indifference);
+		}
+	}
 
 	// 自身のダメージが残り僅かなら逃げる
 	if (!ranAwayFromEnemy && GetHpWorning())
 	{
 		ranAwayFromEnemy = true;
-		SetEnableShowMessage(Player::PlayerMessage::RanAway, ranAwayFromEnemy);
+		SetShowMessage(PlayerAI::Message::RanAway);
 	}
 
 	// とどめを1Pに譲る
@@ -97,8 +118,8 @@ void PlayerAI::AttackUpdate()
 		&& lastAvoidEnemy != currentAttackEnemy && waitTimer == 0) // 重複処理防止/タイマーが動いていない
 	{
 		currentAvoidEnemy = currentAttackEnemy;
-		SetEnableShowMessage(Player::PlayerMessage::Attack,true);
-		waitTimer++;
+		SetShowMessage(PlayerAI::Message::KnockDown);
+		waitTimer += 0.1f;// タイマーを動かすために0.1秒追加する
 		return;
 	}
 
@@ -108,33 +129,116 @@ void PlayerAI::AttackUpdate()
 		&& nowInput != InputState::Attack) //長押しでないので今が攻撃の場合を除く
 	{
 		nextInput = InputState::Attack;
+		SetShowMessage(PlayerAI::Message::Attack);
 	}
 }
 
-// メッセージUI表示
-void PlayerAI::RenderMessageUI(ID3D11DeviceContext* dc, Sprite* frame, Sprite* message)
+void PlayerAI::MessageUpdate(float elapsedTime)
 {
-	frame->Render(dc,
-		{ message_frame_position.x, message_frame_position.y, SPRITE_position_default_z },
-		message_size,
-		SPRITE_cut_position_default,
-		message_frame_render_size,
-		SPRITE_angle_default,
-		SPRITE_color_default);
+	if (messageTimer < message_timer_max + 1.0f) {//ずっと動かさないために+1秒まで
+		messageTimer += elapsedTime;
+	}
+	// セットされていない
+	if (nextMessage == Message::None) return;
 
-	// カット位置を表示するメッセージに対応させる
+	// 更新するか
+	if (IsSetMessageUpdate())
+	{
+		for (int i = message_max_count - 1; i > 0; i--)
+		{
+			nowMessage[i] = nowMessage[i - 1];
+			nowMessageTypeNumber[i] = nowMessageTypeNumber[i - 1];
+		}
+		nowMessage[0] = nextMessage;
+		nowMessageTypeNumber[0] = (rand() % message_each_max_count);
+		// Normalはいったん強制する
+		if (nowMessage[0] == Message::Normal) {
+			nowMessageTypeNumber[0] = 0;
+		}
+
+		messageTimer = message_timer_initial;
+	}
+	nextMessage = Message::None;
+}
+bool  PlayerAI::IsSetMessageUpdate()
+{
+	if (messageTimer < message_timer_max)
+	{
+		// メッセージの種類によっては更新頻度を落とす
+		if (nextMessage == Message::Find && nowMessage[1] == Message::Find) return false;
+		if (nextMessage == Message::Attack && nowMessage[1] == Message::Attack) return false;
+		if (nextMessage == Message::Damage && nowMessage[1] == Message::Damage) return false;
+	}
+
+	// 現在のメッセージと異なるものの場合設定する
+	return nextMessage != nowMessage[0];
+}
 
 
-	message->Render(dc,
-		{ message_frame_position.x, message_frame_position.y, SPRITE_position_default_z },
-		message_size,
-		SPRITE_cut_position_default,
-		message_frame_render_size,
-		SPRITE_angle_default,
-		SPRITE_color_default);
+// メッセージUI表示
+void PlayerAI::RenderMessageUI(ID3D11DeviceContext* dc, Sprite* icon, Sprite* frame, Sprite* message)
+{
+	for (int i = 0; i < message_max_count; i++)
+	{
+		// Noneの時は何も表示しない
+		if (nowMessage[i] == Message::None) continue;
 
+		// 描画位置
+		float renderOffset_Y = -((message_frame_render_size.y + message_render_offset_Y) * i);
+		// messageSize
+		float sizeRate = (i == 0) ? message_size_rate_big : message_size_rate_normal;
 
+		// キャラクターアイコン
+		icon->Render(dc,
+			{ message_icon_position.x, message_icon_position.y + renderOffset_Y, SPRITE_position_default_z },
+			message_icon_render_size,
+			{ message_icon_size.x, SPRITE_cut_position_default.y },
+			message_icon_size,
+			SPRITE_angle_default,
+			SPRITE_color_default);
 
+		// メッセージフレーム
+		frame->Render(dc,
+			{ message_frame_position.x, message_frame_position.y + renderOffset_Y, SPRITE_position_default_z },
+			{ message_frame_render_size.x * sizeRate, message_frame_render_size.y * sizeRate },
+			SPRITE_cut_position_default,
+			message_frame_size,
+			SPRITE_angle_default,
+			SPRITE_color_default);
+
+		// カット位置を表示するメッセージに対応させる
+		// カット位置
+		DirectX::XMFLOAT2 messageCutPosition = { 0.0f,0.0f };
+		const int nowMessageNumber = SC_INT(nowMessage[i]);
+
+		// メッセージに対応するカット位置
+		messageCutPosition.x = message_sprite_size.x * nowMessageTypeNumber[i];
+		messageCutPosition.y = message_sprite_size.y * nowMessageNumber;
+
+		auto messageColor = SPRITE_color_default;
+		// メッセージの種類によって色を変える
+		if (nowMessage[i] == Message::KnockDown
+			|| nowMessage[i] == Message::Recover
+			|| nowMessage[i] == Message::RanAway
+			)
+			messageColor = message_outline_color;
+		// メッセージ本体
+		message->Render(dc,
+			{ message_frame_position.x, message_frame_position.y + renderOffset_Y, SPRITE_position_default_z },
+			{ message_size.x * sizeRate, message_size.y * sizeRate },
+			messageCutPosition,
+			message_sprite_size,
+			SPRITE_angle_default,
+			messageColor);
+	}
+}
+
+void PlayerAI::AddLevel(int lv)
+{
+	// ベース処理
+	Player::AddLevel(lv);
+	// メッセージセット
+	SetShowMessage(PlayerAI::Message::LevelUp);
 }
 
 // 移動ベクトル
@@ -217,8 +321,11 @@ XMFLOAT3 PlayerAI::GetMoveVec() const
 	else if (nearestDist < ai_go_toward_enemy_dist)
 	{
 		moveVec = nearestVec;
+		// PlayerAIのメッセージ
+		if (currentAttackEnemy == nullptr) {
+			instance->SetShowMessage(Message::Find);
+		}
 	}
-
 	return moveVec;
 }
 

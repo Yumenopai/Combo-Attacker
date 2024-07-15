@@ -8,7 +8,8 @@
 void SceneLoading::Initialize()
 {
 	ID3D11Device* device = Graphics::Instance().GetDevice();
-	sprite = std::make_unique<Sprite>(device, "Data/Sprite/loadingIcon.png");
+	sprite[0] = std::make_unique<Sprite>(device, "Data/Sprite/loadingIcon.png");
+	sprite[1] = std::make_unique<Sprite>(device, "Data/Sprite/loadingSprite.png");
 
 	font = std::make_unique<FontSprite>(device, "Data/Font/font6.png", 256);
 
@@ -62,23 +63,21 @@ void SceneLoading::Render()
 
 	//2DSprite
 	{
+		float texture1Width = static_cast<float>(sprite[1]->GetTextureWidth());
+		float texture1Height = static_cast<float>(sprite[1]->GetTextureHeight());
+		sprite[1]->Render(dc, 0.0f, 0.0f, 0.0f, texture1Width, texture1Height,
+			0, 0, texture1Width, texture1Height, 0.0f, { 1, 1, 1, 1 });
+
 		float screenWidth = static_cast<float>(graphics.GetScreenWidth());
 		float screenHeight = static_cast<float>(graphics.GetScreenHeight());
-		float textureWidth = static_cast<float>(sprite->GetTextureWidth());
-		float textureHeight = static_cast<float>(sprite->GetTextureHeight());
+		float texture0Width = static_cast<float>(sprite[0]->GetTextureWidth());
+		float texture0Height = static_cast<float>(sprite[0]->GetTextureHeight());
 
-		float positionX = screenWidth - textureWidth;
-		float positionY = screenHeight - textureHeight;
+		float positionX = screenWidth - texture0Width;
+		float positionY = screenHeight - texture0Height;
 
-		if (remain == loadingOnly)
-		sprite->Render(dc, positionX, positionY, 0.0f, textureWidth, textureHeight,
-			0, 0, textureWidth, textureHeight, angle, { 1, 1, 1, 1 });
-
-		if (remain != loadingOnly)
-		{
-			// ローディングじゃない時、表示できる
-
-		}
+		sprite[0]->Render(dc, positionX, positionY, 0.0f, texture0Width, texture0Height,
+			0, 0, texture0Width, texture0Height, angle, { 1, 1, 1, 1 });
 	}
 }
 

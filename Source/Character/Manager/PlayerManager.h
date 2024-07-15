@@ -27,7 +27,7 @@ public:
 
 	//デバッグプリミティブ描画
 	void Render2d(const RenderContext & rc, Sprite* gauge, FontSprite* font,
-		Sprite* frame, Sprite* weapon, Sprite* notification);
+		Sprite* icon, Sprite* frame, Sprite* weapon, Sprite* notification);
 
 	//プレイヤー登録
 	void Register(Player* player);

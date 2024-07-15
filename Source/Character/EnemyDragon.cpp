@@ -78,6 +78,6 @@ void EnemyDragon::UpdateDieState(float elapsedTime)
 	if (!model->IsPlayAnimation())
 	{
 		// ƒNƒŠƒA‰æ–Ê‚Ö‘JˆÚ
-		SceneManager::Instance().ChangeScene(new SceneLoading(new SceneClear(), -255));
+		SceneManager::Instance().ChangeScene(new SceneLoading(new SceneClear()));
 	}
 }

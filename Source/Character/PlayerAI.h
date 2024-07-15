@@ -4,6 +4,24 @@
 //プレイヤー
 class PlayerAI : public Player
 {
+public:
+	enum class Message
+	{
+		None = -1,
+		Normal,			// 通常
+		Find,			// 発見
+		Attack,			// 攻撃
+		KnockDown,		// とどめして
+		RanAway,		// 逃げる
+		Indifference,	// もう知らない
+		Recover,		// 回復する
+		Damage,			// ダメージを受ける
+		LevelUp,		// レベルアップ
+		Recovered,		// 回復してくれた
+		
+		MaxCount,
+	};
+
 private:
 	// 現在入力中
 	InputState nowInput = InputState::None;
@@ -20,9 +38,18 @@ private:
 	bool ranAwayFromPlayer1P = false;
 
 	// とどめを刺すための待機タイマー
-	int waitTimer = 0;
+	float waitTimer = 0;
 	// 直前の敵とどめ対象
 	Enemy* lastAvoidEnemy = nullptr;
+
+	// 現在のメッセージ
+	Message nowMessage[message_max_count];
+	// メッセージ
+	int nowMessageTypeNumber[message_max_count];
+	// 次表示させるメッセージ
+	Message nextMessage;
+	// メッセージタイマー
+	float messageTimer;
 
 public:
 	PlayerAI();
@@ -34,10 +61,16 @@ public:
 	// 更新
 	void Update(float elapsedTime);
 	// 攻撃時の更新処理
-	void AttackUpdate();
-
+	void AttackUpdate(float elapsedTime);
+	// メッセージの更新処理
+	void MessageUpdate(float elapsedTime);
+	// メッセージを更新するか
+	bool IsSetMessageUpdate();
 	// メッセージUI
-	void RenderMessageUI(ID3D11DeviceContext* dc, Sprite* frame, Sprite* message);
+	void RenderMessageUI(ID3D11DeviceContext* dc, Sprite* icon, Sprite* frame, Sprite* message);
+
+	// レベルアップ時の処理
+	void AddLevel(int lv) override;
 
 	// ボタン判定(押下時)
 	bool InputButtonDown(InputState button) override;
@@ -53,6 +86,7 @@ public:
 
 	// Setter
 	void SetRanAwayFromEnemy(bool isRanAway) { ranAwayFromEnemy = isRanAway; }
+	void SetShowMessage(Message message) { nextMessage = message; }
 
 private:
 	// 移動ベクトル

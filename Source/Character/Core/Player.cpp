@@ -87,6 +87,9 @@ void Player::Init()
 // 更新処理
 void Player::UpdateUtils(float elapsedTime)
 {
+	// 乱数系列の設定
+	srand(static_cast<unsigned int>(time(NULL)));
+
 	// 回復遷移可能か
 	enableRecoverTransition = EnableRecoverTransition();
 
@@ -248,28 +251,37 @@ void Player::Render3d(const RenderContext& rc, ModelShader* shader)
 }
 // 描画
 void Player::Render2d(const RenderContext& rc, Sprite* gauge, FontSprite* font, 
-	Sprite* button, Sprite* weapon, Sprite* notification)
+	Sprite* icon, Sprite* button, Sprite* weapon, Sprite* notification)
 {
-	RenderHPBar(rc.deviceContext, gauge, font);
+	RenderHPBar(rc.deviceContext, icon, gauge, font);
 	RenderCharacterOverHead(rc, font, notification);
 	RenderHaveWeapons(rc.deviceContext, button, weapon);
 }
 
 // HP描画
-void Player::RenderHPBar(ID3D11DeviceContext* dc, Sprite* gauge, FontSprite* font)
+void Player::RenderHPBar(ID3D11DeviceContext* dc, Sprite* icon, Sprite* gauge, FontSprite* font)
 {
 	Graphics& graphics = Graphics::Instance();
 	static const float screenWidth = static_cast<float>(graphics.GetScreenWidth());
 
+	// キャラクターアイコン
+	icon->Render(dc,
+		{ hp_icon_position_x, hpGaugePosition_Y + hp_icon_offset_y, SPRITE_position_default_z },
+		hp_icon_render_size,
+		{ iconCutPosition_X, SPRITE_cut_position_default.y },
+		message_icon_size,
+		SPRITE_angle_default,
+		SPRITE_color_default);
+
 	// 名前表示
 	StringRender(dc, font, playerName,
-		{ hp_gauge_name_offset.x, hpGaugePosition_Y + hp_gauge_name_offset.y },
+		{ name_display_position_x, hpGaugePosition_Y + display_upper_text_offset_y },
 		nameColor);
 
 	// Lv表示
 	std::string levelStr = "Lv:" + std::to_string(currentLevel);
 	StringRender(dc, font, levelStr,
-		{ lv_display_position_x, hpGaugePosition_Y + display_under_text_offset_y },
+		{ lv_display_position_x, hpGaugePosition_Y + display_upper_text_offset_y },
 		nameColor);
 
 	// HP表示;
@@ -278,12 +290,12 @@ void Player::RenderHPBar(ID3D11DeviceContext* dc, Sprite* gauge, FontSprite* fon
 	std::string hp(ss.str());
 	std::string hpStr = "HP:" + hp + '/' + std::to_string(GetMaxHealth());
 	StringRender(dc, font, hpStr,
-		{ hp_display_position_x, hpGaugePosition_Y + display_under_text_offset_y },
+		{ hp_display_position_x, hpGaugePosition_Y + display_upper_text_offset_y },
 		nameColor);
 
 	//ゲージ描画(下地)
 	gauge->Render(dc,
-		(screenWidth / 2) - (hp_gauge_size.x / 2), // X_中央に配置するため幅の半分とゲージ長さの半分で求める
+		hp_gauge_position_x, // X
 		hpGaugePosition_Y, // Y
 		SPRITE_position_default_z, // Z
 		hp_gauge_size.x + hp_gauge_frame_expansion,
@@ -293,8 +305,8 @@ void Player::RenderHPBar(ID3D11DeviceContext* dc, Sprite* gauge, FontSprite* fon
 	);
 	//ゲージ描画
 	gauge->Render(dc,
-		(screenWidth / 2) - (hp_gauge_size.x / 2) + hp_gauge_frame_expansion / 2, // X_中央に配置するため幅の半分とゲージ長さの半分で求める
-		hpGaugePosition_Y + hp_gauge_frame_expansion / 2, // Y_上下の拡張を合わせたサイズ分で足しているため半分足す
+		hp_gauge_position_x + hp_gauge_frame_expansion / 2, // X_拡張サイズの半分を足す
+		hpGaugePosition_Y + hp_gauge_frame_expansion / 2, // Y_拡張サイズの半分を足す
 		SPRITE_position_default_z, // Z
 		hp_gauge_size.x * (GetHealthRate() / 100.0f), //百分率を小数に変換
 		hp_gauge_size.y,
@@ -342,61 +354,44 @@ void Player::RenderCharacterOverHead(const RenderContext& rc, FontSprite* font, 
 			{ screenPosition.x + name_offset.x, screenPosition.y + name_offset.y },
 			nameColor);
 		// メッセージ描画
-		RenderCharacterMessage(rc.deviceContext, message, { screenPosition.x, screenPosition.y });
+		RenderNotificationMessage(rc.deviceContext, message, { screenPosition.x, screenPosition.y });
 	}
 }
 // キャラクターメッセージ描画
-void Player::RenderCharacterMessage(ID3D11DeviceContext* dc, Sprite* message, DirectX::XMFLOAT2 position)
+void Player::RenderNotificationMessage(ID3D11DeviceContext* dc, Sprite* message, DirectX::XMFLOAT2 position)
 {
 	// メッセージ
-	if (messageNumber == PlayerMessage::WeaponGet || messageNumber == PlayerMessage::LevelUp)
+	if (notificationMessageNumber == NotificationMessage::WeaponGet || notificationMessageNumber == NotificationMessage::LevelUp)
 	{
 		// タイマー増加
-		messageYTimer += message_timer_increase;
+		notificationTimer += notification_timer_increase;
 		// タイマーで自動的にfalseに切り替えるメッセージ描画
 		message->Render(dc,
-			{ position.x + message_offset.x, position.y + message_offset.y - messageYTimer, SPRITE_position_default_z },
-			message_size,
-			{ message_sprite_size.x, message_sprite_size.y * SC_INT(messageNumber) },
-			message_sprite_size,
+			{ position.x + notification_offset.x, position.y + notification_offset.y - notificationTimer, SPRITE_position_default_z },
+			notification_size,
+			{ notification_sprite_size.x, notification_sprite_size.y * SC_INT(notificationMessageNumber) },
+			notification_sprite_size,
 			SPRITE_angle_default,
 			SPRITE_color_default);
 
 		// タイマーが一定時間まできたら
-		if (messageYTimer > message_timer_max)
+		if (notificationTimer > notification_timer_max)
 		{
-			enableShowMessage[SC_INT(messageNumber)] = false;
-			messageNumber = PlayerMessage::None;
+			enableShowNotification[SC_INT(notificationMessageNumber)] = false;
+			notificationMessageNumber = NotificationMessage::None;
 		}
 	}
-	else if (enableShowMessage[SC_INT(PlayerMessage::WeaponGet)])
+	else if (enableShowNotification[SC_INT(NotificationMessage::WeaponGet)])
 	{
 		// trueになった時の初期処理
-		messageNumber = PlayerMessage::WeaponGet;
-		messageYTimer = 0.0f;
+		notificationMessageNumber = NotificationMessage::WeaponGet;
+		notificationTimer = 0.0f;
 	}
-	else if (enableShowMessage[SC_INT(PlayerMessage::LevelUp)])
+	else if (enableShowNotification[SC_INT(NotificationMessage::LevelUp)])
 	{
 		// trueになった時の初期処理
-		messageNumber = PlayerMessage::LevelUp;
-		messageYTimer = 0.0f;
-	}
-	else
-	{
-		for (PlayerMessage mes = PlayerMessage::Attack; mes < PlayerMessage::MaxCount; mes = SC_PM(SC_INT(mes) + 1))
-		{
-			if (!enableShowMessage[SC_INT(mes)]) continue;
-
-			// trueの時は常時表示するメッセージの描画
-			message->Render(dc,
-				{ position.x + message_offset.x, position.y + message_offset.y - messageYTimer, SPRITE_position_default_z },
-				message_size,
-				{ message_sprite_size.x, message_sprite_size.y * SC_INT(mes) },
-				message_sprite_size,
-				SPRITE_angle_default,
-				SPRITE_color_default);
-			break; // 一種類しか表示させないので一つ描画した時点でbreak
-		}
+		notificationMessageNumber = NotificationMessage::LevelUp;
+		notificationTimer = 0.0f;
 	}
 }
 
@@ -862,5 +857,10 @@ void Player::DebugMenu()
 
 		ImGui::End();
 	}
+}
+void Player::AddLevel(int lv)
+{
+	currentLevel += lv;
+	SetShowNotification(NotificationMessage::LevelUp);
 }
 #pragma endregion
