@@ -218,10 +218,15 @@ void PlayerAI::RenderMessageUI(ID3D11DeviceContext* dc, Sprite* icon, Sprite* fr
 		auto messageColor = SPRITE_color_default;
 		// メッセージの種類によって色を変える
 		if (nowMessage[i] == Message::KnockDown
-			|| nowMessage[i] == Message::Recover
 			|| nowMessage[i] == Message::RanAway
-			)
-			messageColor = message_outline_color;
+			) {
+			messageColor = message_color_worning;
+		}
+		else if (nowMessage[i] == Message::Recover
+			|| nowMessage[i] == Message::Recovered
+			) {
+			messageColor = message_color_recover;
+		}
 		// メッセージ本体
 		message->Render(dc,
 			{ message_frame_position.x, message_frame_position.y + renderOffset_Y, SPRITE_position_default_z },

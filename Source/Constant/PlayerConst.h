@@ -240,7 +240,9 @@ static const float message_size_rate_normal = 1.0f;
 // メッセージ/サイズ倍率
 static const float message_size_rate_big = 1.25f;
 // メッセージ/アウトラインカラー
-static const DirectX::XMFLOAT4 message_outline_color = { 1.0f,0.5f,0.4f,1.0f };
+static const DirectX::XMFLOAT4 message_color_worning = { 1.0f,0.5f,0.4f,1.0f };
+// メッセージ/アウトラインカラー
+static const DirectX::XMFLOAT4 message_color_recover = { 0.4f,0.5f,1.0f,1.0f };
 
 // メッセージ/最大表示数
 static const int message_max_count = 5;
