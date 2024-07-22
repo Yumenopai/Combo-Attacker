@@ -4,7 +4,4 @@
 - 制作期間：2023年8月～
 - 開発環境：自作ライブラリ　(C++ / DirectX11 / フルスクラッチ) 
 - ジャンル：3Dアクション
-
-詳しくは下記ポートフォリオをご覧ください。
-
-[https://sites.google.com/view/yumenoportfolio](https://sites.google.com/view/yumenoport)
+- こだわり：味方AIプレイヤーの動き / 各種攻撃の感触
